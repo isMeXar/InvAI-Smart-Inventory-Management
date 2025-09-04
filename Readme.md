@@ -61,3 +61,5 @@ frontend/
 │   └── App.tsx      # Root component
 backend/
 ```
+
+The backend is coming soon, with Django and Postgresql!
