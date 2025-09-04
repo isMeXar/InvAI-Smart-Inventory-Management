@@ -123,7 +123,9 @@ const Dashboard = () => {
   ];
 
   const recentOrders = data.orders.slice(0, 5);
-  const lowStockProducts = data.products.filter(p => p.quantity < 50);
+  const lowStockProducts = data.products.filter(p => p.quantity <= 20);
+  const warningStockProducts = data.products.filter(p => p.quantity > 20 && p.quantity <= 50);
+
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -157,7 +159,7 @@ const Dashboard = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row justify-between sm:items-center"
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center"
       >
         <div>
           <h1 className="text-3xl font-bold text-foreground">
@@ -302,6 +304,42 @@ const Dashboard = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-bold text-destructive">
+                          {product.quantity} {t.left}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {t.reorderNeeded}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <CheckCircle className="h-12 w-12 text-success mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">
+                      {t.allProductsStocked}
+                    </p>
+                  </div>
+                )}
+
+                {warningStockProducts.length > 0 ? (
+                  warningStockProducts.map((product, index) => (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 * index }}
+                      className="flex items-center justify-between p-3 bg-warning/5 border border-warning/20 rounded-lg"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          {product.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {product.category}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-warning">
                           {product.quantity} {t.left}
                         </p>
                         <p className="text-xs text-muted-foreground">

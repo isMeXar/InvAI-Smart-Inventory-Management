@@ -4,56 +4,45 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { Bar } from 'react-chartjs-2';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { 
-  Package, 
-  Plus, 
-  Search, 
-  // Filter, 
-  Eye, 
-  Edit, 
-  Trash2, 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
+import {
+  Package,
+  Plus,
+  Search,
+  Eye,
+  Edit,
+  Trash2,
   TrendingUp,
   AlertTriangle,
-  DollarSign
+  DollarSign,
+  Filter, AlertCircle, CheckCircle
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AIInsights from '@/components/shared/AIInsights';
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 interface Product {
   id: number;
@@ -71,11 +60,19 @@ interface Supplier {
   name: string;
 }
 
+interface Order {
+  id: number;
+  productId: number;
+  userId: number;
+  quantity: number;
+  status: string;
+}
+
 const Products = () => {
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -85,7 +82,16 @@ const Products = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [newProduct, setNewProduct] = useState({
+  const [addProduct, setAddProduct] = useState({
+    name: '',
+    category: '',
+    supplier: '',
+    price: '',
+    quantity: '',
+    minStock: '',
+    description: ''
+  });
+  const [editProduct, setEditProduct] = useState({
     name: '',
     category: '',
     supplier: '',
@@ -124,16 +130,18 @@ const Products = () => {
   };
 
   const categories = [...new Set(products.map(p => p.category))];
-  
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.category.toLowerCase().includes(searchTerm.toLowerCase());
+      product.category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
     const matchesSupplier = supplierFilter === 'all' || product.supplierId.toString() === supplierFilter;
     const matchesStock = stockFilter === 'all' ||
-                        (stockFilter === 'low' && product.quantity < 50) ||
-                        (stockFilter === 'sufficient' && product.quantity >= 50);
-    
+      (stockFilter === 'low' && product.quantity < 50) ||
+      (stockFilter === 'sufficient' && product.quantity >= 50);
+
     return matchesSearch && matchesCategory && matchesSupplier && matchesStock;
   });
 
@@ -142,89 +150,54 @@ const Products = () => {
     return supplier?.name || 'Unknown';
   };
 
-  const getProductRevenue = (productId: number) => {
-    const productOrders = orders.filter(o => o.productId === productId && o.status === 'Delivered');
-    const product = products.find(p => p.id === productId);
-    if (!product) return 0;
-    return productOrders.reduce((total, order) => total + (order.quantity * product.price), 0);
+  const getItemsSold = (productId: number) => {
+    return orders
+      .filter(order => order.productId === productId && (order.status === 'Delivered'))
+      .reduce((total, order) => total + order.quantity, 0);
   };
 
-  const getStockLevel = (quantity: number) => {
-    if (quantity < 30) return { level: 'Critical', color: 'destructive' };
-    if (quantity < 50) return { level: 'Low', color: 'warning' };
-    return { level: 'Good', color: 'success' };
+  const getProductRevenue = (productId: number) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return 0;
+    const itemsSold = getItemsSold(productId);
+    return itemsSold * product.price;
   };
+
+
+  const getStockLevel = (quantity: number) => {
+    if (quantity < 20) return { level: 'Critical', color: 'destructive' }; // red
+    if (quantity < 50) return { level: 'Low', color: 'warning' };         // orange
+    return { level: 'Good', color: 'success' };                            // green
+  };
+
 
   const getTotalRevenue = () => {
     return products.reduce((total, product) => total + getProductRevenue(product.id), 0);
   };
 
-  // Chart data for inventory levels with blue/red colors
-  const inventoryChartData = {
-    labels: products.map(p => p.name.split(' ').slice(0, 2).join(' ')),
-    datasets: [{
-      label: 'Stock Level',
-      data: products.map(p => p.quantity),
-      backgroundColor: products.map(p => {
-        if (p.quantity < 30) return 'hsl(0 84% 60% / 0.8)'; // Red for critical
-        if (p.quantity < 50) return 'hsl(38 92% 50% / 0.8)'; // Orange for low
-        return 'hsl(217 91% 60% / 0.8)'; // Blue for sufficient
-      }),
-      borderColor: products.map(p => {
-        if (p.quantity < 30) return 'hsl(0 84% 60%)';
-        if (p.quantity < 50) return 'hsl(38 92% 50%)';
-        return 'hsl(217 91% 60%)';
-      }),
-      borderWidth: 2
-    }]
-  };
+  const inventoryChartData = products.map(p => ({
+    name: p.name.split(' ').slice(0, 2).join(' '),
+    quantity: p.quantity,
+    fill: p.quantity < 20 ? 'hsl(0 84% 60% / 0.8)' : p.quantity < 50 ? 'hsl(38 92% 50% / 0.8)' : 'hsl(217 91% 60% / 0.8)'
+  }));
 
-  // Chart data for revenue per product - Bar chart instead of line
-  const revenueChartData = {
-    labels: products.map(p => p.name.split(' ').slice(0, 2).join(' ')),
-    datasets: [{
-      label: 'Revenue ($)',
-      data: products.map(p => getProductRevenue(p.id)),
-      backgroundColor: 'hsl(142 76% 46% / 0.8)',
-      borderColor: 'hsl(142 76% 46%)',
-      borderWidth: 2
-    }]
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'top' as const },
-      tooltip: {
-        backgroundColor: 'hsl(var(--popover))',
-        borderColor: 'hsl(var(--border))',
-        titleColor: 'hsl(var(--popover-foreground))',
-        bodyColor: 'hsl(var(--popover-foreground))',
-      }
-    },
-    scales: {
-      x: {
-        ticks: {
-          maxRotation: 45,
-          minRotation: 45,
-          color: 'hsl(var(--muted-foreground))'
-        },
-        // grid: { color: 'hsl(var(--border))' }
-      },
-      y: {
-        beginAtZero: true,
-        ticks: { color: 'hsl(var(--muted-foreground))' },
-        // grid: { color: 'hsl(var(--border))' }
-      }
-    }
-  };
+  const revenueChartData = products.map(p => ({
+    name: p.name.split(' ').slice(0, 2).join(' '),
+    revenue: getProductRevenue(p.id),
+    fill: 'hsl(142 76% 46% / 0.8)'
+  }));
 
   const handleAddProduct = () => {
-    console.log('Adding product:', newProduct);
+    console.log('Adding product:', addProduct);
     setIsAddModalOpen(false);
-    setNewProduct({
-      name: '', category: '', supplier: '', price: '', quantity: '', minStock: '', description: ''
+    setAddProduct({
+      name: '',
+      category: '',
+      supplier: '',
+      price: '',
+      quantity: '',
+      minStock: '',
+      description: ''
     });
   };
 
@@ -235,7 +208,7 @@ const Products = () => {
 
   const handleEditProduct = (product: Product) => {
     setSelectedProduct(product);
-    setNewProduct({
+    setEditProduct({
       name: product.name,
       category: product.category,
       supplier: product.supplierId.toString(),
@@ -277,7 +250,7 @@ const Products = () => {
             Manage your product inventory and track stock levels
           </p>
         </div>
-        
+
         {canEdit && (
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
@@ -295,14 +268,14 @@ const Products = () => {
                   <Label htmlFor="name">Product Name</Label>
                   <Input
                     id="name"
-                    value={newProduct.name}
-                    onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                    value={addProduct.name}
+                    onChange={(e) => setAddProduct({ ...addProduct, name: e.target.value })}
                     placeholder="Enter product name"
                   />
                 </div>
                 <div>
                   <Label htmlFor="category">Category</Label>
-                  <Select value={newProduct.category} onValueChange={(value) => setNewProduct({...newProduct, category: value})}>
+                  <Select value={addProduct.category} onValueChange={(value) => setAddProduct({ ...addProduct, category: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -315,7 +288,7 @@ const Products = () => {
                 </div>
                 <div>
                   <Label htmlFor="supplier">Supplier</Label>
-                  <Select value={newProduct.supplier} onValueChange={(value) => setNewProduct({...newProduct, supplier: value})}>
+                  <Select value={addProduct.supplier} onValueChange={(value) => setAddProduct({ ...addProduct, supplier: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select supplier" />
                     </SelectTrigger>
@@ -333,8 +306,8 @@ const Products = () => {
                   <Input
                     id="price"
                     type="number"
-                    value={newProduct.price}
-                    onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                    value={addProduct.price}
+                    onChange={(e) => setAddProduct({ ...addProduct, price: e.target.value })}
                     placeholder="0.00"
                   />
                 </div>
@@ -343,8 +316,8 @@ const Products = () => {
                   <Input
                     id="quantity"
                     type="number"
-                    value={newProduct.quantity}
-                    onChange={(e) => setNewProduct({...newProduct, quantity: e.target.value})}
+                    value={addProduct.quantity}
+                    onChange={(e) => setAddProduct({ ...addProduct, quantity: e.target.value })}
                     placeholder="0"
                   />
                 </div>
@@ -353,8 +326,8 @@ const Products = () => {
                   <Input
                     id="minStock"
                     type="number"
-                    value={newProduct.minStock}
-                    onChange={(e) => setNewProduct({...newProduct, minStock: e.target.value})}
+                    value={addProduct.minStock}
+                    onChange={(e) => setAddProduct({ ...addProduct, minStock: e.target.value })}
                     placeholder="0"
                   />
                 </div>
@@ -362,8 +335,8 @@ const Products = () => {
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    value={newProduct.description}
-                    onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                    value={addProduct.description}
+                    onChange={(e) => setAddProduct({ ...addProduct, description: e.target.value })}
                     placeholder="Product description..."
                   />
                 </div>
@@ -379,7 +352,7 @@ const Products = () => {
 
       {/* Stats Cards */}
       <div className="flex flex-col md:flex-row gap-6">
-        <Card className="border-0 shadow-lg flex-1">
+        <Card className="border-0 dark:border shadow-lg flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Products</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
@@ -391,7 +364,7 @@ const Products = () => {
         </Card>
 
         {canViewRevenue && (
-          <Card className="border-0 shadow-lg flex-1">
+          <Card className="border-0 dark:border shadow-lg flex-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -403,7 +376,7 @@ const Products = () => {
           </Card>
         )}
 
-        <Card className="border-0 shadow-lg flex-1">
+        <Card className="border-0 dark:border shadow-lg flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
@@ -416,7 +389,7 @@ const Products = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg flex-1">
+        <Card className="border-0 dark:border shadow-lg flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Categories</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -428,12 +401,10 @@ const Products = () => {
         </Card>
       </div>
 
-      
-
       {/* Charts */}
-      <div className="flex flex-col md:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Inventory Levels Chart */}
-        <Card className="border-0 shadow-lg flex-1">
+        <Card className="border-0 dark:border shadow-lg flex-1">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Package className="h-5 w-5 text-primary" />
@@ -441,15 +412,74 @@ const Products = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
-              <Bar data={inventoryChartData} options={chartOptions} />
-            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={inventoryChartData}>
+                <XAxis
+                  dataKey="name"
+                  angle={-45}
+                  textAnchor="end"
+                  interval={0}
+                  height={70}
+                  label={{
+                    value: "Products",
+                    position: "insideBottom",
+                    offset: -5
+                  }}
+                  tick={false}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  label={{
+                    value: "Stock Level",
+                    angle: -90,
+                    position: "insideLeft",
+                    offset: 10,
+                    fill: 'hsl(var(--muted-foreground))'
+                  }}
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <CartesianGrid strokeDasharray="5 5" stroke="hsl(var(--border))" vertical={false} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '0.5rem',
+                  }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
+                />
+                <Legend
+                  verticalAlign="top"
+                  height={36}
+                  content={() => (
+                    <div className="flex justify-center gap-4">
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(0 84% 60% / 0.8)' }}></div>
+                        <span className="text-sm text-muted-foreground">Critical (&lt; 20)</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(38 92% 50% / 0.8)' }}></div>
+                        <span className="text-sm text-muted-foreground">Low (20-50)</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(217 91% 60% / 0.8)' }}></div>
+                        <span className="text-sm text-muted-foreground">Sufficient (≥50)</span>
+                      </div>
+                    </div>
+                  )}
+                />
+                <Bar
+                  dataKey="quantity"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
         {/* Revenue per Product Chart (Admin/Manager only) */}
         {canViewRevenue && (
-          <Card className="border-0 shadow-lg flex-1">
+          <Card className="border-0 dark:border shadow-lg flex-1">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <TrendingUp className="h-5 w-5 text-success" />
@@ -457,41 +487,98 @@ const Products = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64">
-                <Bar data={revenueChartData} options={chartOptions} />
-              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={revenueChartData}>
+                  <CartesianGrid strokeDasharray="5 5" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    angle={-45}
+                    textAnchor="end"
+                    interval={0}
+                    height={70}
+                    label={{
+                      value: "Products",
+                      position: "insideBottom",
+                      offset: -5
+                    }}
+                    tick={false}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    label={{
+                      value: "Revenue ($)",
+                      angle: -90,
+                      position: "insideLeft",
+                      offset: 10,
+                      fill: 'hsl(var(--muted-foreground))'
+                    }}
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '0.5rem',
+                    }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    itemStyle={{ color: 'hsl(var(--foreground))' }}
+                  />
+                  <Legend
+                    verticalAlign="top"
+                    height={36}
+                    content={() => (
+                      <div className="flex justify-center gap-4">
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(142 76% 46% / 0.8)' }}></div>
+                          <span className="text-sm text-muted-foreground">Revenue</span>
+                        </div>
+                      </div>
+                    )}
+                  />
+                  <Bar
+                    dataKey="revenue"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         )}
       </div>
 
       {/* Products Table */}
-      <Card className="border-0 shadow-lg">
+      <Card className="border-0 dark:border shadow-lg">
         <CardHeader>
           <CardTitle>Product Inventory ({filteredProducts.length} products)</CardTitle>
         </CardHeader>
         {/* Filters */}
         <Card className="border-0 shadow-sm">
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="search">Search Products</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="search"
-                    className="pl-10"
-                    placeholder="Search by name or category..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="category-filter">Category</Label>
+            {/* Simple Filter */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
+              <Input
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="text-sm flex-1"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2 md:mt-0"
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              >
+                <Filter className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Advanced Filters (Toggleable) */}
+            {showAdvancedFilters && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
+                {/* Category Filter */}
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All categories" />
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
@@ -500,12 +587,11 @@ const Products = () => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label htmlFor="supplier-filter">Supplier</Label>
+
+                {/* Supplier Filter */}
                 <Select value={supplierFilter} onValueChange={setSupplierFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All suppliers" />
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="All Suppliers" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Suppliers</SelectItem>
@@ -516,12 +602,11 @@ const Products = () => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label htmlFor="stock-filter">Stock Level</Label>
+
+                {/* Stock Filter */}
                 <Select value={stockFilter} onValueChange={setStockFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All levels" />
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="All Levels" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Levels</SelectItem>
@@ -529,8 +614,10 @@ const Products = () => {
                     <SelectItem value="sufficient">Sufficient Stock</SelectItem>
                   </SelectContent>
                 </Select>
+
               </div>
-            </div>
+            )}
+
           </CardContent>
         </Card>
         <CardContent>
@@ -538,13 +625,14 @@ const Products = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Stock Level</TableHead>
-                  {canViewRevenue && <TableHead>Revenue</TableHead>}
+                  <TableHead>Product</TableHead>
+                  <TableHead className='hidden md:table-cell'>Category</TableHead>
+                  <TableHead className='hidden lg:table-cell'>Supplier</TableHead>
+                  <TableHead className='hidden md:table-cell'>Quantity</TableHead>
+                  <TableHead className='hidden lg:table-cell'>Price</TableHead>
+                  <TableHead className='hidden sm:table-cell'>Stock Level</TableHead>
+                  {canViewRevenue && <TableHead className='hidden lg:table-cell'>Sold</TableHead>}
+                  {canViewRevenue && <TableHead className='hidden lg:table-cell'>Revenue</TableHead>}
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -554,18 +642,33 @@ const Products = () => {
                   return (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>{getSupplierName(product.supplierId)}</TableCell>
-                      <TableCell>{product.quantity}</TableCell>
-                      <TableCell>${product.price}</TableCell>
-                      <TableCell>
-                        <Badge variant={stockLevel.color as any} className="flex items-center w-fit">
-                          {product.quantity < 30 && <AlertTriangle className="w-3 h-3 mr-1" />}
+                      <TableCell className='hidden md:table-cell'>{product.category}</TableCell>
+                      <TableCell className='hidden lg:table-cell'>{getSupplierName(product.supplierId)}</TableCell>
+                      <TableCell className='hidden md:table-cell'>{product.quantity.toLocaleString()}</TableCell>
+                      <TableCell className='hidden lg:table-cell'>${product.price.toLocaleString()}</TableCell>
+                      <TableCell className='hidden sm:table-cell'>
+                        <span
+                          className={`
+                            flex items-center w-fit px-3 py-1 rounded-full text-white text-xs font-medium
+                            ${stockLevel.level === 'Critical' ? 'bg-red-600' : ''}
+                            ${stockLevel.level === 'Low' ? 'bg-orange-500' : ''}
+                            ${stockLevel.level === 'Good' ? 'bg-green-600' : ''}
+                          `}
+                        >
+                          {stockLevel.level === 'Critical' && <AlertTriangle className="w-4 h-4 mr-1" />}
+                          {stockLevel.level === 'Low' && <AlertCircle className="w-4 h-4 mr-1" />}
+                          {stockLevel.level === 'Good' && <CheckCircle className="w-4 h-4 mr-1" />}
                           {stockLevel.level}
-                        </Badge>
+                        </span>
                       </TableCell>
+
+
+
                       {canViewRevenue && (
-                        <TableCell>${getProductRevenue(product.id).toLocaleString()}</TableCell>
+                        <TableCell className='hidden lg:table-cell'>{getItemsSold(product.id).toLocaleString()}</TableCell>
+                      )}
+                      {canViewRevenue && (
+                        <TableCell className='hidden lg:table-cell'>${getProductRevenue(product.id).toLocaleString()}</TableCell>
                       )}
                       <TableCell>
                         <div className="flex space-x-2">
@@ -615,7 +718,7 @@ const Products = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Product Name</Label>
+                  <Label>Name</Label>
                   <p className="text-foreground font-medium">{selectedProduct.name}</p>
                 </div>
                 <div>
@@ -628,31 +731,49 @@ const Products = () => {
                 </div>
                 <div>
                   <Label>Price</Label>
-                  <p className="text-foreground font-medium">${selectedProduct.price}</p>
+                  <p className="text-foreground font-medium">${selectedProduct.price.toLocaleString()}</p>
                 </div>
                 <div>
-                  <Label>Quantity in Stock</Label>
-                  <p className="text-foreground font-medium">{selectedProduct.quantity}</p>
+                  <Label>In Stock</Label>
+                  <p className="text-foreground font-medium">{selectedProduct.quantity.toLocaleString()}</p>
                 </div>
                 <div>
-                  <Label>Stock Status</Label>
-                  <Badge variant={getStockLevel(selectedProduct.quantity).color as any}>
+                  <Label>Status</Label><br />
+                  <div 
+                    // Use dynamic classes:
+                    className={`
+                      inline-flex items-center px-3 py-1 rounded-full text-white text-xs font-medium
+                      ${getStockLevel(selectedProduct.quantity).level === 'Critical' ? 'bg-red-700' : ''}
+                      ${getStockLevel(selectedProduct.quantity).level === 'Low' ? 'bg-orange-500' : ''}
+                      ${getStockLevel(selectedProduct.quantity).level === 'Good' ? 'bg-green-600' : ''}
+                    `}
+                  >
+                    {getStockLevel(selectedProduct.quantity).level === 'Critical' && <AlertTriangle className="w-4 h-4 mr-1" />}
+                    {getStockLevel(selectedProduct.quantity).level === 'Low' && <AlertCircle className="w-4 h-4 mr-1" />}
+                    {getStockLevel(selectedProduct.quantity).level === 'Good' && <CheckCircle className="w-4 h-4 mr-1" />}
                     {getStockLevel(selectedProduct.quantity).level}
-                  </Badge>
+                  </div>
+
                 </div>
+                {canViewRevenue && (
+                  <div>
+                    <Label>Items Sold</Label>
+                    <p className="text-foreground font-medium">{getItemsSold(selectedProduct.id).toLocaleString()}</p>
+                  </div>
+                )}
+                {canViewRevenue && (
+                  <div>
+                    <Label>Total Revenue</Label>
+                    <p className="text-foreground font-medium text-lg">
+                      ${getProductRevenue(selectedProduct.id).toLocaleString()}
+                    </p>
+                  </div>
+                )}
               </div>
               {selectedProduct.description && (
                 <div>
                   <Label>Description</Label>
                   <p className="text-muted-foreground">{selectedProduct.description}</p>
-                </div>
-              )}
-              {canViewRevenue && (
-                <div>
-                  <Label>Total Revenue</Label>
-                  <p className="text-foreground font-medium text-lg">
-                    ${getProductRevenue(selectedProduct.id).toLocaleString()}
-                  </p>
                 </div>
               )}
             </div>
@@ -671,13 +792,13 @@ const Products = () => {
               <Label htmlFor="edit-name">Product Name</Label>
               <Input
                 id="edit-name"
-                value={newProduct.name}
-                onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                value={editProduct.name}
+                onChange={(e) => setEditProduct({ ...editProduct, name: e.target.value })}
               />
             </div>
             <div>
               <Label htmlFor="edit-category">Category</Label>
-              <Select value={newProduct.category} onValueChange={(value) => setNewProduct({...newProduct, category: value})}>
+              <Select value={editProduct.category} onValueChange={(value) => setEditProduct({ ...editProduct, category: value })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -690,7 +811,7 @@ const Products = () => {
             </div>
             <div>
               <Label htmlFor="edit-supplier">Supplier</Label>
-              <Select value={newProduct.supplier} onValueChange={(value) => setNewProduct({...newProduct, supplier: value})}>
+              <Select value={editProduct.supplier} onValueChange={(value) => setEditProduct({ ...editProduct, supplier: value })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -708,8 +829,8 @@ const Products = () => {
               <Input
                 id="edit-price"
                 type="number"
-                value={newProduct.price}
-                onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                value={editProduct.price}
+                onChange={(e) => setEditProduct({ ...editProduct, price: e.target.value })}
               />
             </div>
             <div>
@@ -717,8 +838,8 @@ const Products = () => {
               <Input
                 id="edit-quantity"
                 type="number"
-                value={newProduct.quantity}
-                onChange={(e) => setNewProduct({...newProduct, quantity: e.target.value})}
+                value={editProduct.quantity}
+                onChange={(e) => setEditProduct({ ...editProduct, quantity: e.target.value })}
               />
             </div>
             <div>
@@ -726,23 +847,23 @@ const Products = () => {
               <Input
                 id="edit-minStock"
                 type="number"
-                value={newProduct.minStock}
-                onChange={(e) => setNewProduct({...newProduct, minStock: e.target.value})}
+                value={editProduct.minStock}
+                onChange={(e) => setEditProduct({ ...editProduct, minStock: e.target.value })}
               />
             </div>
             <div className="col-span-2">
               <Label htmlFor="edit-description">Description</Label>
               <Textarea
                 id="edit-description"
-                value={newProduct.description}
-                onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                value={editProduct.description}
+                onChange={(e) => setEditProduct({ ...editProduct, description: e.target.value })}
               />
             </div>
           </div>
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
             <Button onClick={() => {
-              console.log('Updating product:', newProduct);
+              console.log('Updating product:', editProduct);
               setIsEditModalOpen(false);
             }}>Update Product</Button>
           </div>
@@ -750,7 +871,7 @@ const Products = () => {
       </Dialog>
 
       {/* AI Insights */}
-      <AIInsights data={filteredProducts} pageType="products"/>
+      <AIInsights data={filteredProducts} pageType="products" />
     </motion.div>
   );
 };
