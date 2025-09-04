@@ -489,7 +489,7 @@ const Users = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="flex flex-col md:flex-row gap-4 space-y-3 md:space-y-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className='border-0 dark:border shadow-lg flex-1'>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t.totalUsers}</CardTitle>
@@ -561,23 +561,38 @@ const Users = () => {
                 dataKey="role" 
                 angle={-45} 
                 textAnchor="end" 
-                interval={0} // ensures all labels show
-                height={70} // give extra space so labels don’t get cut
+                interval={0}
+                height={70}
+                label={{ 
+                  value: "Roles", 
+                  position: "insideBottom", 
+                  offset: -5 
+                }}
               />
-              <YAxis />
+              <YAxis
+                allowDecimals={false}
+                label={{
+                  value: "Count",
+                  angle: -90,
+                  position: "insideLeft",
+                  offset: 10,
+                }}
+              />
+
+
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'hsl(var(--card))', // adapts to your theme colors
+                  backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
                   borderRadius: '0.5rem',
                 }}
-                labelStyle={{color: 'hsl(var(--foreground))'}}
-                itemStyle={{color: 'hsl(var(--foreground))'}}
+                labelStyle={{ color: 'hsl(var(--foreground))' }}
+                itemStyle={{ color: 'hsl(var(--foreground))' }}
               />
-
               <Bar dataKey="count" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+
         </CardContent>
       </Card>
 
