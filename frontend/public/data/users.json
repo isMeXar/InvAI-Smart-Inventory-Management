@@ -1,0 +1,7 @@
+[
+  { "id": 1, "name": "Alice Johnson", "role": "Admin", "email": "alice@example.com", "phone": "123-456-7890", "profilePic": "https://randomuser.me/api/portraits/women/1.jpg" },
+  { "id": 2, "name": "Bob Smith", "role": "Manager", "email": "bob@example.com", "phone": "987-654-3210", "profilePic": "https://randomuser.me/api/portraits/men/2.jpg" },
+  { "id": 3, "name": "Charlie Lee", "role": "Employee", "email": "charlie@example.com", "phone": "555-555-5555", "profilePic": "https://randomuser.me/api/portraits/men/3.jpg" },
+  { "id": 4, "name": "Diana Prince", "role": "Manager", "email": "diana@example.com", "phone": "222-333-4444", "profilePic": "https://randomuser.me/api/portraits/women/4.jpg" },
+  { "id": 5, "name": "Ethan Hunt", "role": "Employee", "email": "ethan@example.com", "phone": "666-777-8888", "profilePic": "https://randomuser.me/api/portraits/men/5.jpg" }
+]

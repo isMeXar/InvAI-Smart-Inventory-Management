@@ -1,0 +1,216 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Smart Inventory Management Design System
+Beautiful blue theme with modern styling, gradients, and animations.
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Base colors - clean whites and subtle greys */
+    --background: 240 10% 98%;
+    --foreground: 224 71% 4%;
+
+    /* Card styling - elevated white cards */
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+
+    /* Popover styling */
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+
+    /* Primary blue theme - professional blue */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 217 91% 55%;
+    --primary-light: 217 91% 65%;
+
+    /* Secondary styling - soft blue-gray */
+    --secondary: 215 20% 95%;
+    --secondary-foreground: 215 20% 25%;
+
+    /* Muted styling - light grays with blue undertone */
+    --muted: 215 15% 96%;
+    --muted-foreground: 215 15% 55%;
+
+    /* Accent styling - bright blue accent */
+    --accent: 210 95% 70%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive styling */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Border and input styling */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+
+    /* Success color */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+
+    /* Warning color */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+
+    /* Gradients for beautiful effects */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(210 95% 70%));
+    --gradient-secondary: linear-gradient(135deg, hsl(215 20% 95%), hsl(215 15% 96%));
+    --gradient-background: linear-gradient(180deg, hsl(240 10% 98%), hsl(215 20% 97%));
+
+    /* Shadows for depth */
+    --shadow-sm: 0 1px 2px 0 hsl(217 91% 60% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(217 91% 60% / 0.1), 0 2px 4px -1px hsl(217 91% 60% / 0.06);
+    --shadow-lg: 0 10px 15px -3px hsl(217 91% 60% / 0.1), 0 4px 6px -2px hsl(217 91% 60% / 0.05);
+    --shadow-xl: 0 20px 25px -5px hsl(217 91% 60% / 0.1), 0 10px 10px -5px hsl(217 91% 60% / 0.04);
+
+    /* Animation durations */
+    --duration-fast: 150ms;
+    --duration-normal: 200ms;
+    --duration-slow: 300ms;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark theme - professional dark blue palette */
+    --background: 224 71% 4%;
+    --foreground: 240 10% 98%;
+
+    /* Dark cards with subtle elevation */
+    --card: 224 71% 6%;
+    --card-foreground: 240 10% 98%;
+
+    /* Dark popover styling */
+    --popover: 224 71% 6%;
+    --popover-foreground: 240 10% 98%;
+
+    /* Primary blue in dark mode */
+    --primary: 217 91% 65%;
+    --primary-foreground: 224 71% 4%;
+    --primary-hover: 217 91% 60%;
+    --primary-light: 217 91% 70%;
+
+    /* Dark secondary styling */
+    --secondary: 215 20% 15%;
+    --secondary-foreground: 240 10% 98%;
+
+    /* Dark muted styling */
+    --muted: 215 15% 15%;
+    --muted-foreground: 215 15% 65%;
+
+    /* Dark accent */
+    --accent: 210 95% 75%;
+    --accent-foreground: 224 71% 4%;
+
+    /* Dark destructive */
+    --destructive: 0 76% 60%;
+    --destructive-foreground: 240 10% 98%;
+
+    /* Dark borders and inputs */
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 213 94% 68%;
+
+    /* Dark success */
+    --success: 142 76% 46%;
+    --success-foreground: 224 71% 4%;
+
+    /* Dark warning */
+    --warning: 38 92% 60%;
+    --warning-foreground: 224 71% 4%;
+
+    /* Dark gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 65%), hsl(210 95% 75%));
+    --gradient-secondary: linear-gradient(135deg, hsl(215 20% 15%), hsl(215 15% 15%));
+    --gradient-background: linear-gradient(180deg, hsl(224 71% 4%), hsl(215 20% 6%));
+
+    /* Dark shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.1);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.2), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.2), 0 4px 6px -2px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.3), 0 10px 10px -5px hsl(0 0% 0% / 0.2);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Custom component styles */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-primary bg-clip-text text-transparent;
+  }
+  
+  .nav-link {
+    @apply relative transition-colors duration-200;
+  }
+  
+  .nav-link::after {
+    @apply absolute bottom-0 left-0 h-0.5 w-0 bg-primary transition-all duration-300;
+    content: '';
+  }
+  
+  .nav-link:hover::after {
+    @apply w-full;
+  }
+}
+
+@layer utilities {
+  /* Custom utility classes */
+  .animation-delay-150 {
+    animation-delay: 150ms;
+  }
+  
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+  
+  .animation-delay-450 {
+    animation-delay: 450ms;
+  }
+}

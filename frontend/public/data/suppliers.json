@@ -1,0 +1,5 @@
+[
+  { "id": 201, "name": "TechSource Ltd", "contact": "techsource@example.com", "phone": "111-222-3333" },
+  { "id": 202, "name": "FurniCo", "contact": "furnico@example.com", "phone": "444-555-6666" },
+  { "id": 203, "name": "OfficeMart", "contact": "officemart@example.com", "phone": "777-888-9999" }
+]
