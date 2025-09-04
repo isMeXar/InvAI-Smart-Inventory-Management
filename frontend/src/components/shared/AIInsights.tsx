@@ -200,7 +200,7 @@ const AIInsights: React.FC<AIInsightsProps> = ({ data, pageType }) => {
   };
 
   return (
-    <Card className="mt-8 border-0 shadow-lg">
+    <Card className="mt-8 border-0 dark:border shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-accent" />
