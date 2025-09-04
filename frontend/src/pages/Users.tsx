@@ -557,7 +557,13 @@ const Users = () => {
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={getUsersByRoleData()}>
-              <XAxis dataKey="role" />
+              <XAxis 
+                dataKey="role" 
+                angle={-45} 
+                textAnchor="end" 
+                interval={0} // ensures all labels show
+                height={70} // give extra space so labels don’t get cut
+              />
               <YAxis />
               <Tooltip
                 contentStyle={{
@@ -565,12 +571,8 @@ const Users = () => {
                   border: '1px solid hsl(var(--border))',
                   borderRadius: '0.5rem',
                 }}
-                labelStyle={{
-                  color: 'hsl(var(--foreground))', // title text color
-                }}
-                itemStyle={{
-                  color: 'hsl(var(--foreground))', // value text color
-                }}
+                labelStyle={{color: 'hsl(var(--foreground))'}}
+                itemStyle={{color: 'hsl(var(--foreground))'}}
               />
 
               <Bar dataKey="count" radius={[4, 4, 0, 0]} />
