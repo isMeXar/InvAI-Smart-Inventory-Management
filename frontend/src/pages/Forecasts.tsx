@@ -224,7 +224,7 @@ const Forecasts = () => {
       className="p-6 space-y-6"
     >
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between md:items-center space-y-4 md:space-y-0">
         <div>
           <h1 className="text-3xl font-bold text-foreground">{t.demandForecasting}</h1>
           <p className="text-muted-foreground mt-1">

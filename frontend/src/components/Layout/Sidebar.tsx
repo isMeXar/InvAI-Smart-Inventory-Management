@@ -32,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
     { name: t.products, href: '/dashboard/products', icon: Package, roles: ['Admin', 'Manager', 'Employee'] },
     { name: t.suppliers, href: '/dashboard/suppliers', icon: Package2, roles: ['Admin', 'Manager', 'Employee'] },
     { name: t.orders, href: '/dashboard/orders', icon: ShoppingCart, roles: ['Admin', 'Manager', 'Employee'] },
-    { name: t.forecasts, href: '/dashboard/forecasts', icon: TrendingUp, roles: ['Admin', 'Manager'] },
+    // { name: t.forecasts, href: '/dashboard/forecasts', icon: TrendingUp, roles: ['Admin', 'Manager'] },
     { name: t.profile, href: '/dashboard/profile', icon: UserCog, roles: ['Admin', 'Manager', 'Employee'] },
     { name: t.settings, href: '/dashboard/settings', icon: Settings, roles: ['Admin', 'Manager', 'Employee'] },
   ];
