@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Package2,
+  Building2,
   Search,
   Plus,
   Edit,
@@ -9,7 +10,9 @@ import {
   Mail,
   Phone,
   TrendingUp,
-  Eye
+  Eye,
+  Copy,
+  CopyCheck,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -121,6 +124,18 @@ const Suppliers = () => {
     }));
   };
 
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const handleCopy = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error("Copy failed: ", err);
+    }
+  };
+
   const canEditSuppliers = user?.role === 'Admin' || user?.role === 'Manager';
   const canViewRevenue = user?.role === 'Admin' || user?.role === 'Manager';
 
@@ -226,7 +241,7 @@ const Suppliers = () => {
         <Card className='flex-1'>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t.totalSuppliers}</CardTitle>
-            <Package2 className="h-4 w-4 text-muted-foreground" />
+            <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-xl md:text-2xl font-bold">{suppliers.length}</div>
@@ -321,10 +336,11 @@ const Suppliers = () => {
                   <XAxis
                     dataKey="name"
                     label={{
-                      value: t.suppliers, 
-                      position: "insideBottom", 
-                      offset: 0, 
-                      fill: 'hsl(var(--foreground))'}}
+                      value: t.suppliers,
+                      position: "insideBottom",
+                      offset: 0,
+                      fill: 'hsl(var(--foreground))'
+                    }}
                     angle={-30}
                     textAnchor="end"
                     interval={0}
@@ -483,45 +499,96 @@ const Suppliers = () => {
       <AIInsights data={suppliers} pageType="suppliers" />
 
       {/* View Supplier Modal */}
+      {/* View Supplier Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t.supplier + " " + t.details}</DialogTitle>
+            <DialogTitle>{t.supplier} {t.details}</DialogTitle>
           </DialogHeader>
-          {selectedSupplier && (
-            <div className="space-y-4">
-              <div className="grid gap-4">
+          {selectedSupplier ? (
+            <div className="py-4 space-y-4">
+
+              {/* Supplier Name */}
+              <div className="bg-muted rounded-lg p-3 flex items-center space-x-3">
+                <Package2 className="h-4 w-4 text-muted-foreground" />
                 <div>
-                  <Label>{t.supplierName}</Label>
-                  <p className="text-foreground font-medium">{selectedSupplier.name}</p>
-                </div>
-                <div>
-                  <Label>{t.contactEmail}</Label>
-                  <div className="flex items-center">
-                    <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <p className="text-foreground">{selectedSupplier.contact}</p>
-                  </div>
-                </div>
-                <div>
-                  <Label>{t.phoneNumber}</Label>
-                  <div className="flex items-center">
-                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <p className="text-foreground">{selectedSupplier.phone}</p>
-                  </div>
-                </div>
-                <div>
-                  <Label>{t.products}</Label>
-                  <p className="text-foreground font-medium">{getProductsBySupplier(selectedSupplier.id).length} products</p>
-                </div>
-                <div>
-                  <Label>{t.revenue}</Label>
-                  <p className="text-foreground font-medium">${getSupplierRevenue(selectedSupplier.id).toLocaleString()}</p>
+                  <p className="text-sm font-medium text-foreground">{t.supplierName}</p>
+                  <p className="text-sm text-muted-foreground">{selectedSupplier.name}</p>
                 </div>
               </div>
+
+              {/* Email */}
+              <div className="flex items-center justify-between bg-muted rounded-lg">
+                <div className="flex items-center space-x-3 p-3">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{t.email}</p>
+                    <p className="text-sm text-muted-foreground">{selectedSupplier.contact}</p>
+                  </div>
+                </div>
+                <Button
+                  className="mx-2"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleCopy(selectedSupplier.contact, "email")}
+                >
+                  {copiedField === "email" ? (
+                    <CopyCheck className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+
+              {/* Phone */}
+              <div className="flex items-center justify-between bg-muted rounded-lg">
+                <div className="flex items-center space-x-3 p-3">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{t.phone}</p>
+                    <p className="text-sm text-muted-foreground">{selectedSupplier.phone}</p>
+                  </div>
+                </div>
+                <Button
+                  className="mx-2"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleCopy(selectedSupplier.phone, "phone")}
+                >
+                  {copiedField === "phone" ? (
+                    <CopyCheck className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+
+
+              {/* Stats */}
+              <div className="flex gap-4">
+                <div className="flex-1 p-3 bg-muted rounded-lg flex flex-col items-center">
+                  <p className="text-sm text-muted-foreground">{t.products}</p>
+                  <p className="text-lg font-bold text-foreground">
+                    {getProductsBySupplier(selectedSupplier.id).length}
+                  </p>
+                </div>
+                <div className="flex-1 p-3 bg-muted rounded-lg flex flex-col items-center">
+                  <p className="text-sm text-muted-foreground">{t.revenue}</p>
+                  <p className="text-lg font-bold text-foreground">
+                    ${getSupplierRevenue(selectedSupplier.id).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          ) : (
+            <div className="py-4 text-center">
+              <p className="text-muted-foreground">No Supplier Selected</p>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
 
       {/* Edit Supplier Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
