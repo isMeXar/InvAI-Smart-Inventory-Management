@@ -535,7 +535,7 @@ const Users = () => {
 
         <Card className='border-0 dark:border shadow-lg flex-1'>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.managers}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.employees}</CardTitle>
             <UsersIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -543,7 +543,7 @@ const Users = () => {
               {users.filter(u => u.role === 'Employee').length}
             </div>
             <p className="text-xs text-muted-foreground">
-              {t.departmentManagers}
+              {t.staffMembers}
             </p>
           </CardContent>
         </Card>

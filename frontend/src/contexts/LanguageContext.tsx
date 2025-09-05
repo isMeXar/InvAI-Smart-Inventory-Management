@@ -201,12 +201,14 @@ interface TranslationValues {
   activeSystemUsers: string;
   systemAdministrators: string;
   departmentManagers: string;
+  staffMembers: string;
   usersByRole: string;
   onlyAdministrators: string;
   searchUsers: string;
   filterByRole: string;
   allRoles: string;
   userNotFound: string;
+  employees: string;
   
   // Products
   productManagement: string;
@@ -571,12 +573,14 @@ const translations: Record<Language, TranslationValues> = {
     activeSystemUsers: 'Active system users',
     systemAdministrators: 'System administrators',
     departmentManagers: 'Department managers',
+    staffMembers: 'Staff / Team Members',
     usersByRole: 'Users by Role',
     onlyAdministrators: 'Only administrators can access the user management page.',
     searchUsers: 'Search users...',
     filterByRole: 'Filter by role',
     allRoles: 'All Roles',
     userNotFound: 'No users found matching your criteria.',
+    employees: 'Employees',
     
     // Products
     productManagement: 'Product Management',
@@ -934,12 +938,14 @@ const translations: Record<Language, TranslationValues> = {
     activeSystemUsers: 'Aktive Systembenutzer',
     systemAdministrators: 'Systemadministratoren',
     departmentManagers: 'Abteilungsleiter',
+    staffMembers: 'Personal / Teammitglieder',
     usersByRole: 'Benutzer nach Rolle',
     onlyAdministrators: 'Nur Administratoren können auf die Benutzerverwaltungsseite zugreifen.',
     searchUsers: 'Benutzer suchen...',
     filterByRole: 'Nach Rolle filtern',
     allRoles: 'Alle Rollen',
     userNotFound: 'Keine Benutzer gefunden, die Ihren Kriterien entsprechen.',
+    employees: 'Mitarbeiter',
     
     // Products
     productManagement: 'Produktverwaltung',
@@ -1295,12 +1301,14 @@ const translations: Record<Language, TranslationValues> = {
     activeSystemUsers: 'Utilisateurs système actifs',
     systemAdministrators: 'Administrateurs système',
     departmentManagers: 'Managers de département',
+    staffMembers: 'Personnel / Équipe',
     usersByRole: 'Utilisateurs par rôle',
     onlyAdministrators: 'Seuls les administrateurs peuvent accéder à la page de gestion des utilisateurs.',
     searchUsers: 'Rechercher des utilisateurs...',
     filterByRole: 'Filtrer par rôle',
     allRoles: 'Tous les rôles',
     userNotFound: 'Aucun utilisateur trouvé correspondant à vos critères.',
+    employees: 'Employés',
     
     // Products
     productManagement: 'Gestion des produits',
