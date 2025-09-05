@@ -65,11 +65,9 @@ const Suppliers = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
-  const [newSupplier, setNewSupplier] = useState({
-    name: '',
-    contact: '',
-    phone: ''
-  });
+  const [newSupplier, setNewSupplier] = useState({ name: '', contact: '', phone: '' }); // for add
+  const [editSupplier, setEditSupplier] = useState({ name: '', contact: '', phone: '' }); // for edit
+
 
   useEffect(() => {
     fetchData();
@@ -179,7 +177,12 @@ const Suppliers = () => {
           <p className="text-muted-foreground mt-1">{t.manageSupplierRelationships}</p>
         </div>
         {canEditSuppliers && (
-          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+          <Dialog open={isAddModalOpen} onOpenChange={(open) => {
+            setIsAddModalOpen(open);
+            if (open) {
+              setNewSupplier({ name: '', contact: '', phone: '' });
+            }
+          }}>
             <DialogTrigger asChild>
               <Button className="bg-gradient-primary hover:opacity-90">
                 <Plus className="h-4 w-4 mr-2" />
@@ -465,16 +468,18 @@ const Suppliers = () => {
                           size="sm"
                           onClick={() => {
                             setSelectedSupplier(supplier);
-                            setNewSupplier({
+                            // Populate editSupplier with the current supplier info
+                            setEditSupplier({
                               name: supplier.name,
                               contact: supplier.contact,
-                              phone: supplier.phone
+                              phone: supplier.phone,
                             });
                             setIsEditModalOpen(true);
                           }}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
+
                         <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -600,36 +605,39 @@ const Suppliers = () => {
               <Label htmlFor="edit-name">{t.supplierName}</Label>
               <Input
                 id="edit-name"
-                value={newSupplier.name}
-                onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
+                value={editSupplier.name} // Use editSupplier here
+                onChange={(e) => setEditSupplier({ ...editSupplier, name: e.target.value })}
               />
             </div>
             <div>
               <Label htmlFor="edit-contact">{t.contactEmail}</Label>
               <Input
                 id="edit-contact"
-                value={newSupplier.contact}
-                onChange={(e) => setNewSupplier({ ...newSupplier, contact: e.target.value })}
+                value={editSupplier.contact}
+                onChange={(e) => setEditSupplier({ ...editSupplier, contact: e.target.value })}
               />
             </div>
             <div>
               <Label htmlFor="edit-phone">{t.phoneNumber}</Label>
               <Input
                 id="edit-phone"
-                value={newSupplier.phone}
-                onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })}
+                value={editSupplier.phone}
+                onChange={(e) => setEditSupplier({ ...editSupplier, phone: e.target.value })}
               />
             </div>
           </div>
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>{t.cancel}</Button>
             <Button onClick={() => {
-              console.log('Updating supplier:', newSupplier);
+              console.log('Updating supplier:', editSupplier);
+              setSuppliers(prev => prev.map(s => s.id === selectedSupplier?.id ? { ...s, ...editSupplier } : s));
               setIsEditModalOpen(false);
             }}>{t.edit}</Button>
           </div>
         </DialogContent>
       </Dialog>
+
+
     </motion.div>
   );
 };
