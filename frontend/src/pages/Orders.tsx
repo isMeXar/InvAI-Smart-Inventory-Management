@@ -217,6 +217,8 @@ const Orders = () => {
 
   const canEditOrders = user?.role === 'Admin' || user?.role === 'Manager';
   const canViewRevenue = user?.role === 'Admin' || user?.role === 'Manager';
+  // const [activeFilter, setActiveFilter] = useState<'search' | 'status' | null>(null);
+  const [activeFilter, setActiveFilter] = useState<'search' | 'status'>('status');
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
@@ -259,14 +261,14 @@ const Orders = () => {
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Add New Order</DialogTitle>
+                <DialogTitle>{t.addNewOrder}</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div>
-                  <Label htmlFor="product">Product</Label>
+                  <Label htmlFor="product">{t.product}</Label>
                   <Select value={newOrder.productId} onValueChange={(value) => setNewOrder({ ...newOrder, productId: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select product" />
+                      <SelectValue placeholder={t.selectProduct} />
                     </SelectTrigger>
                     <SelectContent>
                       {products.map(product => (
@@ -278,10 +280,10 @@ const Orders = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="customer">Customer</Label>
+                  <Label htmlFor="employee">Employee</Label>
                   <Select value={newOrder.userId} onValueChange={(value) => setNewOrder({ ...newOrder, userId: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select customer" />
+                      <SelectValue placeholder={t.selectEmployee} />
                     </SelectTrigger>
                     <SelectContent>
                       {users.map(user => (
@@ -293,32 +295,32 @@ const Orders = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="quantity">Quantity</Label>
+                  <Label htmlFor="quantity">{t.quantity}</Label>
                   <Input
                     id="quantity"
                     type="number"
                     value={newOrder.quantity}
                     onChange={(e) => setNewOrder({ ...newOrder, quantity: e.target.value })}
-                    placeholder="Enter quantity"
+                    placeholder={t.enterQuantity}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="status">Status</Label>
+                  <Label htmlFor="status">{t.status}</Label>
                   <Select value={newOrder.status} onValueChange={(value) => setNewOrder({ ...newOrder, status: value as any })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Pending">Pending</SelectItem>
-                      <SelectItem value="Processing">Processing</SelectItem>
-                      <SelectItem value="Shipped">Shipped</SelectItem>
-                      <SelectItem value="Delivered">Delivered</SelectItem>
+                      <SelectItem value="Pending">{t.pending}</SelectItem>
+                      <SelectItem value="Processing">{t.processing}</SelectItem>
+                      <SelectItem value="Shipped">{t.shipped}</SelectItem>
+                      <SelectItem value="Delivered">{t.delivered}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>{t.cancel}</Button>
                 <Button onClick={() => {
                   console.log('Adding order:', newOrder);
                   setIsAddModalOpen(false);
@@ -328,7 +330,7 @@ const Orders = () => {
                     quantity: '',
                     status: 'Pending'
                   });
-                }}>Add Order</Button>
+                }}>{t.add}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -343,7 +345,7 @@ const Orders = () => {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{orders.length}</div>
+            <div className="text-xl md:text-2xl font-bold">{orders.length}</div>
             <p className="text-xs text-muted-foreground">
               {t.allTimeOrders}
             </p>
@@ -357,7 +359,7 @@ const Orders = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${getTotalRevenue().toLocaleString()}</div>
+              <div className="text-xl md:text-2xl font-bold">${getTotalRevenue().toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">
                 {t.fromAllOrders}
               </p>
@@ -371,7 +373,7 @@ const Orders = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl md:text-2xl font-bold">
               {orders.filter(o => o.status === 'Pending' || o.status === 'Processing').length}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -386,7 +388,7 @@ const Orders = () => {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl md:text-2xl font-bold">
               {orders.filter(o => o.status === 'Delivered').length}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -403,7 +405,7 @@ const Orders = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <ClipboardList className="h-5 w-5 text-primary" />
-              <span>{t.ordersByStatus}</span>
+              <span className='text-xl md:text-2xl'>{t.ordersByStatus}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -449,7 +451,7 @@ const Orders = () => {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Package2 className="h-5 w-5 text-primary" />
-                <span>{t.ordersPerProduct}</span>
+                <span className='text-xl md:text-2xl'>{t.ordersPerProduct}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -496,7 +498,7 @@ const Orders = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Calendar className="h-5 w-5 text-primary" />
-            <span>{t.monthlyOrdersRevenue}</span>
+            <span className='text-xl md:text-2xl'>{t.monthlyOrdersRevenue}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -565,11 +567,12 @@ const Orders = () => {
       {/* Orders Table */}
       <Card className="border-0 dark:border shadow-lg">
         <CardHeader>
-          <CardTitle>{t.orderHistory}</CardTitle>
+          <CardTitle className='text-xl md:text-2xl'>{t.orderHistory}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4">
-            <div className="relative flex-1">
+            {/* Search */}
+            <div className="relative flex-1 hidden md:block">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={t.searchOrders}
@@ -578,27 +581,82 @@ const Orders = () => {
                 className="pl-10"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder={t.filterByStatus} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t.allStatus}</SelectItem>
-                <SelectItem value="Pending">{t.pending}</SelectItem>
-                <SelectItem value="Processing">{t.processing}</SelectItem>
-                <SelectItem value="Shipped">{t.shipped}</SelectItem>
-                <SelectItem value="Delivered">{t.delivered}</SelectItem>
-              </SelectContent>
-            </Select>
+
+            {/* Status Filter */}
+            <div className="hidden md:block">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-48">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder={t.filterByStatus} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t.allStatus}</SelectItem>
+                  <SelectItem value="Pending">{t.pending}</SelectItem>
+                  <SelectItem value="Processing">{t.processing}</SelectItem>
+                  <SelectItem value="Shipped">{t.shipped}</SelectItem>
+                  <SelectItem value="Delivered">{t.delivered}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Mobile version */}
+            <div className="flex flex-1 gap-2 md:hidden">
+              {activeFilter === 'search' ? (
+                <div className="relative flex-1">
+                  <Search
+                    onClick={() => setActiveFilter('status')}
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
+                  />
+                  <Input
+                    placeholder={t.searchOrders}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActiveFilter('search')}
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              )}
+
+              {activeFilter === 'status' ? (
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="flex-1">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder={t.filterByStatus} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t.allStatus}</SelectItem>
+                    <SelectItem value="Pending">{t.pending}</SelectItem>
+                    <SelectItem value="Processing">{t.processing}</SelectItem>
+                    <SelectItem value="Shipped">{t.shipped}</SelectItem>
+                    <SelectItem value="Delivered">{t.delivered}</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActiveFilter('status')}
+                >
+                  <Filter className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
+
 
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t.orderID}</TableHead>
+                <TableHead>ID</TableHead>
                 <TableHead>{t.product}</TableHead>
-                <TableHead className='hidden lg:table-cell'>{t.customer}</TableHead>
+                <TableHead className='hidden lg:table-cell'>{t.employee}</TableHead>
                 <TableHead className='hidden md:table-cell'>{t.quantity}</TableHead>
                 <TableHead>{t.status}</TableHead>
                 {canViewRevenue && <TableHead className='hidden md:table-cell'>{t.total}</TableHead>}
@@ -705,18 +763,18 @@ const Orders = () => {
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Order Details</DialogTitle>
+            <DialogTitle>{t.orders + " " + t.details}</DialogTitle>
           </DialogHeader>
           {selectedOrder && (
             <div className="space-y-6">
               {/* General Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Order ID</Label>
+                  <Label>{t.orderID}</Label>
                   <p className="text-foreground font-medium">#{selectedOrder.id}</p>
                 </div>
                 <div>
-                  <Label>Status</Label>
+                  <Label>{t.status}</Label>
                   <Badge
                     className={`${getStatusColor(
                       selectedOrder.status
@@ -727,7 +785,7 @@ const Orders = () => {
                   </Badge>
                 </div>
                 <div>
-                  <Label>Product</Label>
+                  <Label>{t.product}</Label>
                   <p className="text-foreground font-medium">
                     {getProduct(selectedOrder.productId)?.name || "Unknown Product"}
                   </p>
@@ -736,13 +794,13 @@ const Orders = () => {
                   </p>
                 </div>
                 <div>
-                  <Label>Quantity</Label>
+                  <Label>{t.quantity}</Label>
                   <p className="text-foreground font-medium">
                     {selectedOrder.quantity}
                   </p>
                 </div>
                 <div>
-                  <Label>Total Value</Label>
+                  <Label>{t.totalValue}</Label>
                   <p className="text-foreground font-medium">
                     ${getOrderValue(selectedOrder).toLocaleString()}
                   </p>
@@ -752,15 +810,17 @@ const Orders = () => {
               {/* Employee Info */}
               <div className="border-t pt-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <h3 className="text-lg font-semibold">Employee Info</h3>
+                  <h3 className="text-lg font-semibold">{t.employee}</h3>
                   <div className="relative group">
                     <div className="w-5 h-5 flex items-center justify-center rounded-full border-2 bg-muted text-muted-foreground cursor-pointer">
                       <span className="text-xs font-bold">!</span>
                     </div>
                     {/* Tooltip */}
-                    <div className="absolute right-0 top-full mt-1 w-64 p-2 rounded-md bg-gray-800 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      This is the user who entered this order into the system.
+                    <div className="absolute left-1/2 top-full mt-1 -translate-x-1/2 min-w-[200px] max-w-[90vw] p-2 rounded-md bg-gray-800 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity z-50 text-left break-words">
+                      {t.userTooltip}
                     </div>
+
+
                   </div>
                 </div>
 
@@ -790,7 +850,7 @@ const Orders = () => {
                         {/* Email */}
                         <div className="w-full bg-muted px-3 py-2 rounded-lg flex items-center justify-between">
                           <div className="flex flex-col">
-                            <Label className="text-sm">Email Contact</Label>
+                            <Label className="text-sm">{t.contactEmail}</Label>
                             <span className="text-sm text-foreground truncate">
                               {employee?.email || "Unavailable"}
                             </span>
@@ -812,7 +872,7 @@ const Orders = () => {
                         {/* Phone */}
                         <div className="w-full bg-muted px-3 py-2 rounded-lg flex items-center justify-between">
                           <div className="flex flex-col">
-                            <Label className="text-sm">Phone Contact</Label>
+                            <Label className="text-sm">{t.phoneNumber}</Label>
                             <span className="text-sm text-foreground truncate">
                               {employee?.phone || "Unavailable"}
                             </span>
@@ -849,12 +909,12 @@ const Orders = () => {
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Order</DialogTitle>
+            <DialogTitle>{t.editOrder}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             {/* Product */}
             <div>
-              <Label htmlFor="edit-product">Product</Label>
+              <Label htmlFor="edit-product">{t.product}</Label>
               <Select
                 value={newOrder.productId}
                 onValueChange={(value) =>
@@ -876,13 +936,14 @@ const Orders = () => {
             {/* Employee */}
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Label htmlFor="edit-employee">Employee</Label>
+                <Label htmlFor="edit-employee">{t.employee}</Label>
                 {/* Exclamation mark like in ViewModal */}
                 <div className="w-5 h-5 flex items-center justify-center rounded-full border-2 bg-muted text-muted-foreground cursor-pointer relative group">
                   <span className="text-xs font-bold">!</span> {/* Tooltip */}
-                  <div className="absolute right-0 top-full mt-1 w-64 p-2 rounded-md bg-gray-800 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    This is the user who entered this order into the system.
+                  <div className="absolute left-1/2 top-full mt-1 -translate-x-1/2 min-w-[200px] max-w-[90vw] p-2 rounded-md bg-gray-800 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity z-50 text-left break-words">
+                    {t.userTooltip}
                   </div>
+
                 </div>
               </div>
               <Select
@@ -890,7 +951,7 @@ const Orders = () => {
                 onValueChange={(value) => setNewOrder({ ...newOrder, userId: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select employee" />
+                  <SelectValue placeholder={t.selectEmployee} />
                 </SelectTrigger>
                 <SelectContent>
                   {users.map((user) => (
@@ -904,7 +965,7 @@ const Orders = () => {
             </div>
             {/* Quantity */}
             <div>
-              <Label htmlFor="edit-quantity">Quantity</Label>
+              <Label htmlFor="edit-quantity">{t.quantity}</Label>
               <Input
                 id="edit-quantity"
                 type="number"
@@ -916,7 +977,7 @@ const Orders = () => {
             </div>
             {/* Status */}
             <div>
-              <Label htmlFor="edit-status">Status</Label>
+              <Label htmlFor="edit-status">{t.status}</Label>
               <Select
                 value={newOrder.status}
                 onValueChange={(value) =>
@@ -927,17 +988,17 @@ const Orders = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Processing">Processing</SelectItem>
-                  <SelectItem value="Shipped">Shipped</SelectItem>
-                  <SelectItem value="Delivered">Delivered</SelectItem>
+                  <SelectItem value="Pending">{t.pending}</SelectItem>
+                  <SelectItem value="Processing">{t.processing}</SelectItem>
+                  <SelectItem value="Shipped">{t.shipped}</SelectItem>
+                  <SelectItem value="Delivered">{t.delivered}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="flex justify-end space-x-2 mt-4">
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
-              Cancel
+              {t.cancel}
             </Button>
             <Button
               onClick={() => {
@@ -945,7 +1006,7 @@ const Orders = () => {
                 setIsEditModalOpen(false);
               }}
             >
-              Update Order
+              {t.edit}
             </Button>
           </div>
         </DialogContent>

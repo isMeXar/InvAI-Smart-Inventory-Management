@@ -289,11 +289,16 @@ interface TranslationValues {
   pending: string;
   orderNotFound: string;
   addNewOrder: string;
+  editOrder: string;
   clientName: string;
   orderDate: string;
   orderStatus: string;
   ordersLineName: string;
   revenueLineName: string;
+  selectProduct: string;
+  selectEmployee: string;
+  enterQuantity: string;
+  userTooltip: string;
   
   // Profile
   personalInformation: string;
@@ -655,7 +660,12 @@ const translations: Record<Language, TranslationValues> = {
     orderStatus: 'Order Status',
     ordersLineName: 'Orders',
     revenueLineName: 'Revenue',
-    
+    selectProduct: 'Select product',
+    selectEmployee: 'Select employee',
+    enterQuantity: 'Enter quantity',
+    userTooltip: 'This is the user who entered this order into the system.',
+    editOrder: 'Edit Order',
+
     // Profile
     personalInformation: 'Personal Information',
     activitySummary: 'Activity Summary',
@@ -1013,7 +1023,12 @@ const translations: Record<Language, TranslationValues> = {
     orderStatus: 'Bestellstatus',
     ordersLineName: 'Bestellungen',
     revenueLineName: 'Umsatz',
-    
+    selectProduct: 'Produkt auswählen',
+    selectEmployee: 'Mitarbeiter auswählen',
+    enterQuantity: 'Menge eingeben',
+    userTooltip: 'Dies ist der Benutzer, der diese Bestellung in das System eingegeben hat.',
+    editOrder: 'Bestellung bearbeiten',
+
     // Profile
     personalInformation: 'Persönliche Informationen',
     activitySummary: 'Aktivitätszusammenfassung',
@@ -1372,7 +1387,12 @@ const translations: Record<Language, TranslationValues> = {
     orderStatus: 'Statut de commande',
     ordersLineName: 'Commandes',
     revenueLineName: 'Revenus',
-    
+    selectProduct: 'Sélectionner un produit',
+    selectEmployee: 'Sélectionner un employé',
+    enterQuantity: 'Entrer la quantité',
+    userTooltip: 'Ceci est l\'utilisateur qui a saisi cette commande dans le système.',
+    editOrder: 'Modifier la commande',
+
     // Profile
     personalInformation: 'Informations personnelles',
     activitySummary: 'Résumé d\'activité',
