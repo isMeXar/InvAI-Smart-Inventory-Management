@@ -1,38 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  ShoppingCart, 
-  Search, 
-  Plus, 
-  Edit, 
-  Trash2, 
+import {
+  ShoppingCart,
+  Search,
+  Plus,
+  Edit,
+  Trash2,
   DollarSign,
   TrendingUp,
   Filter,
   CheckCircle,
   Clock,
   Package,
-  Eye
+  Eye,
+  Copy,
+  CopyCheck,
+  ClipboardList,
+  Calendar,
+  Package2
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from '@/components/ui/dialog';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
 import {
   Select,
@@ -41,7 +46,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, LineChart, Line } from 'recharts';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import AIInsights from '@/components/shared/AIInsights';
@@ -133,8 +138,8 @@ const Orders = () => {
     const product = getProduct(order.productId);
     const user = getUser(order.userId);
     const matchesSearch = product?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.id.toString().includes(searchTerm);
+      user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.id.toString().includes(searchTerm);
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -176,9 +181,9 @@ const Orders = () => {
     return Object.entries(statusCounts).map(([status, count]) => ({
       status,
       count,
-      fill: status === 'Delivered' ? 'hsl(var(--success))' : 
-            status === 'Shipped' ? 'hsl(var(--primary))' : 
-            status === 'Processing' ? 'hsl(var(--warning))' : 
+      fill: status === 'Delivered' ? 'hsl(var(--success))' :
+        status === 'Shipped' ? 'hsl(var(--primary))' :
+          status === 'Processing' ? 'hsl(var(--warning))' :
             'hsl(var(--muted))'
     }));
   };
@@ -212,6 +217,15 @@ const Orders = () => {
 
   const canEditOrders = user?.role === 'Admin' || user?.role === 'Manager';
   const canViewRevenue = user?.role === 'Admin' || user?.role === 'Manager';
+
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const handleCopy = (text: string, field: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    });
+  };
 
   if (loading) {
     return (
@@ -250,7 +264,7 @@ const Orders = () => {
               <div className="grid gap-4 py-4">
                 <div>
                   <Label htmlFor="product">Product</Label>
-                  <Select value={newOrder.productId} onValueChange={(value) => setNewOrder({...newOrder, productId: value})}>
+                  <Select value={newOrder.productId} onValueChange={(value) => setNewOrder({ ...newOrder, productId: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select product" />
                     </SelectTrigger>
@@ -265,7 +279,7 @@ const Orders = () => {
                 </div>
                 <div>
                   <Label htmlFor="customer">Customer</Label>
-                  <Select value={newOrder.userId} onValueChange={(value) => setNewOrder({...newOrder, userId: value})}>
+                  <Select value={newOrder.userId} onValueChange={(value) => setNewOrder({ ...newOrder, userId: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select customer" />
                     </SelectTrigger>
@@ -284,13 +298,13 @@ const Orders = () => {
                     id="quantity"
                     type="number"
                     value={newOrder.quantity}
-                    onChange={(e) => setNewOrder({...newOrder, quantity: e.target.value})}
+                    onChange={(e) => setNewOrder({ ...newOrder, quantity: e.target.value })}
                     placeholder="Enter quantity"
                   />
                 </div>
                 <div>
                   <Label htmlFor="status">Status</Label>
-                  <Select value={newOrder.status} onValueChange={(value) => setNewOrder({...newOrder, status: value as any})}>
+                  <Select value={newOrder.status} onValueChange={(value) => setNewOrder({ ...newOrder, status: value as any })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -323,7 +337,7 @@ const Orders = () => {
 
       {/* Stats Cards */}
       <div className="flex flex-col md:flex-row gap-6">
-        <Card className="flex-1">
+        <Card className="border-0 dark:border shadow-lg flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t.totalOrders}</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
@@ -337,7 +351,7 @@ const Orders = () => {
         </Card>
 
         {canViewRevenue && (
-          <Card className="flex-1">
+          <Card className="border-0 dark:border shadow-lg flex-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{t.revenue}</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -351,7 +365,7 @@ const Orders = () => {
           </Card>
         )}
 
-        <Card className="flex-1">
+        <Card className="border-0 dark:border shadow-lg flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t.pendingOrders}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
@@ -366,7 +380,7 @@ const Orders = () => {
           </CardContent>
         </Card>
 
-        <Card className="flex-1">
+        <Card className="border-0 dark:border shadow-lg flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t.completed}</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
@@ -384,32 +398,91 @@ const Orders = () => {
 
       {/* Charts */}
       <div className="flex flex-col lg:flex-row gap-6">
-        <Card className="flex-1">
+        {/* Orders By Status */}
+        <Card className="border-0 dark:border shadow-lg flex-1">
           <CardHeader>
-            <CardTitle>{t.ordersByStatus}</CardTitle>
+            <CardTitle className="flex items-center space-x-2">
+              <ClipboardList className="h-5 w-5 text-primary" />
+              <span>{t.ordersByStatus}</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={getOrdersByStatusData()}>
-                <XAxis dataKey="status" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" radius={[4, 4, 0, 0]} />
+              <BarChart
+                data={getOrdersByStatusData()}
+                margin={{ top: 20, right: 0, bottom: 80, left: 0 }} // extra space
+              >
+                <CartesianGrid strokeDasharray="5 5" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis
+                  dataKey="status"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  label={{ value: t.status, position: 'insideBottom', offset: -70, fill: 'hsl(var(--foreground))' }}
+                  angle={-45}
+                  textAnchor="end"
+                />
+                <YAxis
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  label={{ value: t.orders, angle: -90, position: 'insideLeft', fill: 'hsl(var(--foreground))' }}
+                />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="p-2 rounded-md border bg-[hsl(var(--card))] shadow-md">
+                          <p className="font-medium text-foreground">{label}</p>
+                          <p className="text-sm text-muted-foreground">{t.orders}: {payload[0].value}</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
+
+        {/* Orders By Product */}
         {canViewRevenue && (
-          <Card className="flex-1">
+          <Card className="border-0 dark:border shadow-lg flex-1">
             <CardHeader>
-              <CardTitle>{t.ordersPerProduct}</CardTitle>
+              <CardTitle className="flex items-center space-x-2">
+                <Package2 className="h-5 w-5 text-primary" />
+                <span>{t.ordersPerProduct}</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={getOrdersByProductData()}>
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
+                <BarChart
+                  data={getOrdersByProductData()}
+                  margin={{ top: 20, right: 0, bottom: 80, left: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="5 5" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    label={{ value: t.products, position: 'insideBottom', offset: -70, fill: 'hsl(var(--foreground))' }}
+                    angle={-45}
+                    textAnchor="end"
+                  />
+                  <YAxis
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    label={{ value: t.orders, angle: -90, position: 'insideLeft', fill: 'hsl(var(--foreground))' }}
+                  />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="p-2 rounded-md border bg-[hsl(var(--card))] shadow-md">
+                            <p className="font-medium text-foreground">{label}</p>
+                            <p className="text-sm text-muted-foreground">{t.orders}: {payload[0].value}</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                   <Bar dataKey="orders" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -418,30 +491,67 @@ const Orders = () => {
         )}
       </div>
 
-      <Card>
+      {/* Monthly Orders & Revenue */}
+      <Card className="border-0 dark:border shadow-lg flex-1 mt-6">
         <CardHeader>
-          <CardTitle>{t.monthlyOrdersRevenue}</CardTitle>
+          <CardTitle className="flex items-center space-x-2">
+            <Calendar className="h-5 w-5 text-primary" />
+            <span>{t.monthlyOrdersRevenue}</span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={getMonthlyRevenueData()}>
-              <XAxis dataKey="month" />
-              <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" />
-              <Tooltip />
-              <Line 
+            <LineChart
+              data={getMonthlyRevenueData()}
+              margin={{ top: 20, right: 30, bottom: 50, left: 0 }} // extra space for x & y labels
+            >
+              <CartesianGrid strokeDasharray="5 5" stroke="hsl(var(--border))" vertical={false} />
+              <XAxis
+                dataKey="month"
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                label={{ value: t.month, position: 'insideBottom', offset: -30, fill: 'hsl(var(--foreground))' }}
+              />
+              <YAxis
                 yAxisId="left"
-                type="monotone" 
-                dataKey="orders" 
-                stroke="hsl(var(--primary))" 
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                label={{ value: t.orders, angle: -90, position: 'insideLeft', fill: 'hsl(var(--foreground))' }}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                label={{ value: t.revenue + ' ($)', angle: 90, position: 'insideRight', offset: -20, fill: 'hsl(var(--foreground))' }}
+              />
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="p-2 rounded-md border bg-[hsl(var(--card))] shadow-md">
+                        <p className="font-medium text-foreground">{label}</p>
+                        {payload.map(p => (
+                          <p key={p.dataKey} className="text-sm text-muted-foreground">
+                            {p.name}: {p.value.toLocaleString()}
+                          </p>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Line
+                yAxisId="left"
+                type="monotone"
+                dataKey="orders"
+                stroke="hsl(var(--primary))"
                 strokeWidth={3}
                 name={t.ordersLineName}
               />
-              <Line 
+              <Line
                 yAxisId="right"
-                type="monotone" 
-                dataKey="revenue" 
-                stroke="hsl(var(--accent))" 
+                type="monotone"
+                dataKey="revenue"
+                stroke="hsl(var(--accent))"
                 strokeWidth={3}
                 name={t.revenueLineName}
               />
@@ -450,8 +560,10 @@ const Orders = () => {
         </CardContent>
       </Card>
 
+
+
       {/* Orders Table */}
-      <Card>
+      <Card className="border-0 dark:border shadow-lg">
         <CardHeader>
           <CardTitle>{t.orderHistory}</CardTitle>
         </CardHeader>
@@ -486,10 +598,10 @@ const Orders = () => {
               <TableRow>
                 <TableHead>{t.orderID}</TableHead>
                 <TableHead>{t.product}</TableHead>
-                <TableHead>{t.customer}</TableHead>
-                <TableHead>{t.quantity}</TableHead>
+                <TableHead className='hidden lg:table-cell'>{t.customer}</TableHead>
+                <TableHead className='hidden md:table-cell'>{t.quantity}</TableHead>
                 <TableHead>{t.status}</TableHead>
-                {canViewRevenue && <TableHead>{t.total}</TableHead>}
+                {canViewRevenue && <TableHead className='hidden md:table-cell'>{t.total}</TableHead>}
                 {canEditOrders && <TableHead className="text-right">{t.actions}</TableHead>}
               </TableRow>
             </TableHeader>
@@ -512,7 +624,7 @@ const Orders = () => {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className='hidden lg:table-cell'>
                       <div>
                         <div className="font-medium text-foreground">
                           {user?.name || t.unknownUser}
@@ -522,7 +634,7 @@ const Orders = () => {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>{order.quantity}</TableCell>
+                    <TableCell className='hidden md:table-cell'>{order.quantity}</TableCell>
                     <TableCell>
                       <Badge className={`${getStatusColor(order.status)} flex items-center gap-1 w-fit`}>
                         {getStatusIcon(order.status)}
@@ -530,7 +642,7 @@ const Orders = () => {
                       </Badge>
                     </TableCell>
                     {canViewRevenue && (
-                      <TableCell>
+                      <TableCell className='hidden md:table-cell'>
                         <div className="font-medium">
                           ${getOrderValue(order).toLocaleString()}
                         </div>
@@ -591,12 +703,13 @@ const Orders = () => {
 
       {/* View Order Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Order Details</DialogTitle>
           </DialogHeader>
           {selectedOrder && (
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* General Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Order ID</Label>
@@ -604,7 +717,11 @@ const Orders = () => {
                 </div>
                 <div>
                   <Label>Status</Label>
-                  <Badge className={`${getStatusColor(selectedOrder.status)} flex items-center gap-1 w-fit mt-1`}>
+                  <Badge
+                    className={`${getStatusColor(
+                      selectedOrder.status
+                    )} flex items-center gap-1 w-fit mt-1`}
+                  >
                     {getStatusIcon(selectedOrder.status)}
                     {selectedOrder.status}
                   </Badge>
@@ -612,44 +729,143 @@ const Orders = () => {
                 <div>
                   <Label>Product</Label>
                   <p className="text-foreground font-medium">
-                    {getProduct(selectedOrder.productId)?.name || 'Unknown Product'}
+                    {getProduct(selectedOrder.productId)?.name || "Unknown Product"}
                   </p>
-                </div>
-                <div>
-                  <Label>Customer</Label>
-                  <p className="text-foreground font-medium">
-                    {getUser(selectedOrder.userId)?.name || 'Unknown Customer'}
+                  <p className="text-sm text-muted-foreground">
+                    {getProduct(selectedOrder.productId)?.category || "Unavailable"}
                   </p>
                 </div>
                 <div>
                   <Label>Quantity</Label>
-                  <p className="text-foreground font-medium">{selectedOrder.quantity}</p>
+                  <p className="text-foreground font-medium">
+                    {selectedOrder.quantity}
+                  </p>
                 </div>
                 <div>
                   <Label>Total Value</Label>
-                  <p className="text-foreground font-medium">${getOrderValue(selectedOrder).toLocaleString()}</p>
+                  <p className="text-foreground font-medium">
+                    ${getOrderValue(selectedOrder).toLocaleString()}
+                  </p>
                 </div>
               </div>
+
+              {/* Employee Info */}
+              <div className="border-t pt-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <h3 className="text-lg font-semibold">Employee Info</h3>
+                  <div className="relative group">
+                    <div className="w-5 h-5 flex items-center justify-center rounded-full border-2 bg-muted text-muted-foreground cursor-pointer">
+                      <span className="text-xs font-bold">!</span>
+                    </div>
+                    {/* Tooltip */}
+                    <div className="absolute right-0 top-full mt-1 w-64 p-2 rounded-md bg-gray-800 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      This is the user who entered this order into the system.
+                    </div>
+                  </div>
+                </div>
+
+                {(() => {
+                  const employee = getUser(selectedOrder.userId);
+                  return (
+                    <div className="space-y-4">
+                      {/* Top row: Avatar + Name + Role */}
+                      <div className="flex items-center gap-4">
+                        <img
+                          src={employee?.profilePic || "/placeholder-user.png"}
+                          alt={employee?.name || "Employee"}
+                          className="w-14 h-14 rounded-full object-cover border"
+                        />
+                        <div>
+                          <p className="text-foreground font-medium">
+                            {employee?.name || "Unavailable"}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {employee?.role || "Unavailable"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Contact Info: Email + Phone */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Email */}
+                        <div className="w-full bg-muted px-3 py-2 rounded-lg flex items-center justify-between">
+                          <div className="flex flex-col">
+                            <Label className="text-sm">Email Contact</Label>
+                            <span className="text-sm text-foreground truncate">
+                              {employee?.email || "Unavailable"}
+                            </span>
+                          </div>
+                          {employee?.email && (
+                            <button
+                              onClick={() => handleCopy(employee.email, "email")}
+                              className="ml-4 text-muted-foreground hover:text-foreground flex-shrink-0"
+                            >
+                              {copiedField === "email" ? (
+                                <CopyCheck className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <Copy className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Phone */}
+                        <div className="w-full bg-muted px-3 py-2 rounded-lg flex items-center justify-between">
+                          <div className="flex flex-col">
+                            <Label className="text-sm">Phone Contact</Label>
+                            <span className="text-sm text-foreground truncate">
+                              {employee?.phone || "Unavailable"}
+                            </span>
+                          </div>
+                          {employee?.phone && (
+                            <button
+                              onClick={() => handleCopy(employee.phone, "phone")}
+                              className="ml-4 text-muted-foreground hover:text-foreground flex-shrink-0"
+                            >
+                              {copiedField === "phone" ? (
+                                <CopyCheck className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <Copy className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+
+                    </div>
+                  );
+                })()}
+              </div>
+
+
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Edit Order Modal */}
+
+      {/* Update Order Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Order</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            {/* Product */}
             <div>
               <Label htmlFor="edit-product">Product</Label>
-              <Select value={newOrder.productId} onValueChange={(value) => setNewOrder({...newOrder, productId: value})}>
+              <Select
+                value={newOrder.productId}
+                onValueChange={(value) =>
+                  setNewOrder({ ...newOrder, productId: value })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {products.map(product => (
+                  {products.map((product) => (
                     <SelectItem key={product.id} value={product.id.toString()}>
                       {product.name}
                     </SelectItem>
@@ -657,33 +873,56 @@ const Orders = () => {
                 </SelectContent>
               </Select>
             </div>
+            {/* Employee */}
             <div>
-              <Label htmlFor="edit-customer">Customer</Label>
-              <Select value={newOrder.userId} onValueChange={(value) => setNewOrder({...newOrder, userId: value})}>
+              <div className="flex items-center gap-2 mb-1">
+                <Label htmlFor="edit-employee">Employee</Label>
+                {/* Exclamation mark like in ViewModal */}
+                <div className="w-5 h-5 flex items-center justify-center rounded-full border-2 bg-muted text-muted-foreground cursor-pointer relative group">
+                  <span className="text-xs font-bold">!</span> {/* Tooltip */}
+                  <div className="absolute right-0 top-full mt-1 w-64 p-2 rounded-md bg-gray-800 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    This is the user who entered this order into the system.
+                  </div>
+                </div>
+              </div>
+              <Select
+                value={newOrder.userId}
+                onValueChange={(value) => setNewOrder({ ...newOrder, userId: value })}
+              >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select employee" />
                 </SelectTrigger>
                 <SelectContent>
-                  {users.map(user => (
+                  {users.map((user) => (
                     <SelectItem key={user.id} value={user.id.toString()}>
+
                       {user.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            {/* Quantity */}
             <div>
               <Label htmlFor="edit-quantity">Quantity</Label>
               <Input
                 id="edit-quantity"
                 type="number"
                 value={newOrder.quantity}
-                onChange={(e) => setNewOrder({...newOrder, quantity: e.target.value})}
+                onChange={(e) =>
+                  setNewOrder({ ...newOrder, quantity: e.target.value })
+                }
               />
             </div>
+            {/* Status */}
             <div>
               <Label htmlFor="edit-status">Status</Label>
-              <Select value={newOrder.status} onValueChange={(value) => setNewOrder({...newOrder, status: value as any})}>
+              <Select
+                value={newOrder.status}
+                onValueChange={(value) =>
+                  setNewOrder({ ...newOrder, status: value as any })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -696,15 +935,22 @@ const Orders = () => {
               </Select>
             </div>
           </div>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
-            <Button onClick={() => {
-              console.log('Updating order:', newOrder);
-              setIsEditModalOpen(false);
-            }}>Update Order</Button>
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                console.log("Updating order:", newOrder);
+                setIsEditModalOpen(false);
+              }}
+            >
+              Update Order
+            </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog>;
+
     </motion.div>
   );
 };

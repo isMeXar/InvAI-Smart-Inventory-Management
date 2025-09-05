@@ -499,7 +499,6 @@ const Suppliers = () => {
       <AIInsights data={suppliers} pageType="suppliers" />
 
       {/* View Supplier Modal */}
-      {/* View Supplier Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
