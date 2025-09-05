@@ -354,6 +354,10 @@ interface TranslationValues {
   export: string;
   languageRegion: string;
   timezone: string;
+
+  // Other
+  details: string;
+
 }
 
 const translations: Record<Language, TranslationValues> = {
@@ -710,7 +714,10 @@ const translations: Record<Language, TranslationValues> = {
     downloadYourData: 'Download your data',
     export: 'Export',
     languageRegion: 'Language & Region',
-    timezone: 'Timezone'
+    timezone: 'Timezone',
+
+    // Other
+    details: 'Details', 
   },
 
   de: {
@@ -1066,7 +1073,10 @@ const translations: Record<Language, TranslationValues> = {
     downloadYourData: 'Ihre Daten herunterladen',
     export: 'Exportieren',
     languageRegion: 'Sprache & Region',
-    timezone: 'Zeitzone'
+    timezone: 'Zeitzone',
+
+    // Other
+    details: 'Details', 
   },
   fr: {
     // Navigation
@@ -1421,7 +1431,10 @@ const translations: Record<Language, TranslationValues> = {
     downloadYourData: 'Télécharger vos données',
     export: 'Exporter',
     languageRegion: 'Langue & Région',
-    timezone: 'Fuseau horaire'
+    timezone: 'Fuseau horaire',
+
+    // Other
+    details: 'Détails', 
   }
 };
 

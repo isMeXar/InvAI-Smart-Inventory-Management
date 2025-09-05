@@ -214,7 +214,7 @@ const Suppliers = () => {
                     contact: '',
                     phone: ''
                   });
-                }}>{t.addSupplier}</Button>
+                }}>{t.add}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -229,7 +229,7 @@ const Suppliers = () => {
             <Package2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{suppliers.length}</div>
+            <div className="text-xl md:text-2xl font-bold">{suppliers.length}</div>
             <p className="text-xs text-muted-foreground">
               {t.activeSuppliers}
             </p>
@@ -242,7 +242,7 @@ const Suppliers = () => {
             <Package2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
+            <div className="text-lg md:text-2xl font-bold">{products.length}</div>
             <p className="text-xs text-muted-foreground">
               {t.suppliedProducts}
             </p>
@@ -255,7 +255,7 @@ const Suppliers = () => {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-xl md:text-2xl  font-bold">
                 ${suppliers.reduce((total, supplier) => total + getSupplierRevenue(supplier.id), 0).toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -272,7 +272,7 @@ const Suppliers = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Package2 className="h-5 w-5 text-primary" />
-              <span>{t.productsBySupplier}</span>
+              <span className='text-md'>{t.productsBySupplier}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -282,7 +282,7 @@ const Suppliers = () => {
                   data={supplierDistributionData}
                   cx="40%"
                   cy="50%"
-                  outerRadius={100}
+                  outerRadius="80%"
                   dataKey="value"
                 >
                   {supplierDistributionData.map((entry, index) => (
@@ -295,7 +295,7 @@ const Suppliers = () => {
                   align="right"
                   verticalAlign="middle"
                   formatter={(value) => (
-                    <span className="text-sm text-muted-foreground">{value}</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground">{value}</span>
                   )}
                 />
               </PieChart>
@@ -486,7 +486,7 @@ const Suppliers = () => {
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Supplier Details</DialogTitle>
+            <DialogTitle>{t.supplier + " " + t.details}</DialogTitle>
           </DialogHeader>
           {selectedSupplier && (
             <div className="space-y-4">
@@ -560,7 +560,7 @@ const Suppliers = () => {
             <Button onClick={() => {
               console.log('Updating supplier:', newSupplier);
               setIsEditModalOpen(false);
-            }}>{t.editSupplier}</Button>
+            }}>{t.edit}</Button>
           </div>
         </DialogContent>
       </Dialog>
