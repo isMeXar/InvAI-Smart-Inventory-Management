@@ -40,7 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import AIInsights from '@/components/shared/AIInsights';
@@ -473,7 +473,7 @@ const Users = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-6 space-y-6 max-w-7xl mx-auto"
+      className="p-6 space-y-6"
     >
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-center space-y-4 md:space-y-0">
@@ -559,15 +559,6 @@ const Users = () => {
             <BarChart data={getUsersByRoleData()}>
               <XAxis 
                 dataKey="role" 
-                angle={-45} 
-                textAnchor="end" 
-                interval={0}
-                height={70}
-                label={{ 
-                  value: "Roles", 
-                  position: "insideBottom", 
-                  offset: -5 
-                }}
               />
               <YAxis
                 allowDecimals={false}
@@ -578,7 +569,8 @@ const Users = () => {
                   offset: 10,
                 }}
               />
-
+              <CartesianGrid strokeDasharray="5 5" stroke="hsl(var(--border))" vertical={false} />
+              
 
               <Tooltip
                 contentStyle={{

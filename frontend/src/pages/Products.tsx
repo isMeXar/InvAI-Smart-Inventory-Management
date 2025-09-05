@@ -423,18 +423,19 @@ const Products = () => {
                   label={{
                     value: "Products",
                     position: "insideBottom",
-                    offset: -5
+                    offset: 5,
+                    fill: 'hsl(var(--foreground))'
                   }}
                   tick={false}
                 />
                 <YAxis
                   allowDecimals={false}
                   label={{
-                    value: "Stock Level",
+                    value: "Quantity",
                     angle: -90,
                     position: "insideLeft",
-                    offset: 10,
-                    fill: 'hsl(var(--muted-foreground))'
+                    offset: 0,
+                    fill: 'hsl(var(--foreground))'
                   }}
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
                 />
@@ -499,7 +500,8 @@ const Products = () => {
                     label={{
                       value: "Products",
                       position: "insideBottom",
-                      offset: -5
+                      offset: 5,
+                      fill: 'hsl(var(--foreground))'
                     }}
                     tick={false}
                   />
@@ -509,8 +511,8 @@ const Products = () => {
                       value: "Revenue ($)",
                       angle: -90,
                       position: "insideLeft",
-                      offset: 10,
-                      fill: 'hsl(var(--muted-foreground))'
+                      offset: 0,
+                      fill: 'hsl(var(--foreground))'
                     }}
                     tick={{ fill: 'hsl(var(--muted-foreground))' }}
                   />

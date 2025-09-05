@@ -262,6 +262,10 @@ interface TranslationValues {
   productsSupplied: string;
   viewSupplier: string;
   editSupplier: string;
+  supplierName: string;
+  enterSupplierName: string;
+  enterContactEmail: string;
+  enterPhoneNumber: string;
   
   // Orders
   orderManagement: string;
@@ -419,6 +423,10 @@ const translations: Record<Language, TranslationValues> = {
     recommendedSafetyStock: 'Recommended safety stock increase for Wireless Headphones',
     considerPreordering: 'Consider pre-ordering Laptop Pro for Q4 holiday season demand',
     
+    // Placeholders
+    enterSupplierName: 'Enter supplier name',
+    enterContactEmail: 'Enter contact email',
+    enterPhoneNumber: 'Enter phone number',
     // Login
     welcomeBack: 'Welcome Back',
     signInToAccount: 'Sign in to your Smart Inventory account',
@@ -613,6 +621,7 @@ const translations: Record<Language, TranslationValues> = {
     productsSupplied: 'Products Supplied',
     viewSupplier: 'View Supplier',
     editSupplier: 'Edit Supplier',
+    supplierName: 'Supplier Name',
     
     // Orders
     orderManagement: 'Order Management',
@@ -703,6 +712,7 @@ const translations: Record<Language, TranslationValues> = {
     languageRegion: 'Language & Region',
     timezone: 'Timezone'
   },
+
   de: {
     // Navigation
     dashboard: 'Dashboard',
@@ -716,6 +726,11 @@ const translations: Record<Language, TranslationValues> = {
     logout: 'Abmelden',
     manageAccount: 'Verwalten Sie Ihre Kontoeinstellungen und sehen Sie Ihre Aktivität',
     
+    // Placeholders
+    enterSupplierName: 'Lieferantenname eingeben',
+    enterContactEmail: 'Kontakt-E-Mail eingeben',
+    enterPhoneNumber: 'Telefonnummer eingeben',
+
     // Dashboard translations
     welcomeBackUser: 'Willkommen zurück, {name}! 👋',
     inventoryToday: 'Hier ist, was heute mit Ihrem Inventar passiert.',
@@ -961,6 +976,7 @@ const translations: Record<Language, TranslationValues> = {
     productsSupplied: 'Gelieferte Produkte',
     viewSupplier: 'Lieferant anzeigen',
     editSupplier: 'Lieferant bearbeiten',
+    supplierName: 'Name des Lieferanten',
     
     // Orders
     orderManagement: 'Bestellverwaltung',
@@ -1065,6 +1081,11 @@ const translations: Record<Language, TranslationValues> = {
     logout: 'Déconnexion',
     manageAccount: 'Gérer vos paramètres de compte et vos activités',
     
+    // Placeholders
+    enterSupplierName: 'Entrer le nom du fournisseur',
+    enterContactEmail: 'Entrer l\'email de contact',
+    enterPhoneNumber: 'Entrer le numéro de téléphone',
+
     // Dashboard translations
     welcomeBackUser: 'Bon retour, {name}! 👋',
     inventoryToday: 'Voici ce qui se passe avec votre inventaire aujourd\'hui.',
@@ -1311,6 +1332,7 @@ const translations: Record<Language, TranslationValues> = {
     productsSupplied: 'Produits fournis',
     viewSupplier: 'Voir le fournisseur',
     editSupplier: 'Modifier le fournisseur',
+    supplierName: 'Nom du fournisseur',
     
     // Orders
     orderManagement: 'Gestion des commandes',

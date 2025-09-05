@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Package2, 
-  Search, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Mail, 
+import {
+  Package2,
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  Mail,
   Phone,
   TrendingUp,
   Eye
@@ -15,22 +15,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from '@/components/ui/dialog';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, Legend, CartesianGrid } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import AIInsights from '@/components/shared/AIInsights';
@@ -105,7 +105,7 @@ const Suppliers = () => {
 
   const getSupplierDistributionData = () => {
     const colors = ['hsl(var(--primary))', 'hsl(var(--warning))', 'hsl(var(--success))', 'hsl(var(--accent))'];
-    
+
     return suppliers.map((supplier, index) => ({
       name: supplier.name,
       value: getProductsBySupplier(supplier.id).length,
@@ -123,6 +123,26 @@ const Suppliers = () => {
 
   const canEditSuppliers = user?.role === 'Admin' || user?.role === 'Manager';
   const canViewRevenue = user?.role === 'Admin' || user?.role === 'Manager';
+
+  // inside your component:
+  const supplierDistributionData = useMemo(() => getSupplierDistributionData(), [suppliers, products]);
+
+  const CustomPieTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const { name, value } = payload[0].payload;
+      const total = supplierDistributionData.reduce((acc, cur) => acc + cur.value, 0);
+      const percent = ((value / total) * 100).toFixed(1);
+
+      return (
+        <div className="p-2 rounded-md border bg-[hsl(var(--card))] shadow-md">
+          <p className="font-medium text-foreground">{name}</p>
+          <p className="text-sm text-muted-foreground">{value} {t.products}</p>
+          <p className="text-sm text-muted-foreground">{percent}%</p>
+        </div>
+      );
+    }
+    return null;
+  };
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -139,10 +159,10 @@ const Suppliers = () => {
     >
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-center space-y-4 md:space-y-0">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t.supplierManagement}</h1>
-            <p className="text-muted-foreground mt-1">{t.manageSupplierRelationships}</p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">{t.supplierManagement}</h1>
+          <p className="text-muted-foreground mt-1">{t.manageSupplierRelationships}</p>
+        </div>
         {canEditSuppliers && (
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
@@ -153,39 +173,39 @@ const Suppliers = () => {
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Add New Supplier</DialogTitle>
+                <DialogTitle>{t.addNewSupplier}</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div>
-                  <Label htmlFor="name">Supplier Name</Label>
+                  <Label htmlFor="name">{t.supplierName}</Label>
                   <Input
                     id="name"
                     value={newSupplier.name}
-                    onChange={(e) => setNewSupplier({...newSupplier, name: e.target.value})}
-                    placeholder="Enter supplier name"
+                    onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
+                    placeholder={t.enterSupplierName}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="contact">Contact Email</Label>
+                  <Label htmlFor="contact">{t.contactEmail}</Label>
                   <Input
                     id="contact"
                     value={newSupplier.contact}
-                    onChange={(e) => setNewSupplier({...newSupplier, contact: e.target.value})}
-                    placeholder="Enter contact email"
+                    onChange={(e) => setNewSupplier({ ...newSupplier, contact: e.target.value })}
+                    placeholder={t.enterContactEmail}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone">{t.phoneNumber}</Label>
                   <Input
                     id="phone"
                     value={newSupplier.phone}
-                    onChange={(e) => setNewSupplier({...newSupplier, phone: e.target.value})}
-                    placeholder="Enter phone number"
+                    onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })}
+                    placeholder={t.enterPhoneNumber}
                   />
                 </div>
               </div>
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>{t.cancel}</Button>
                 <Button onClick={() => {
                   console.log('Adding supplier:', newSupplier);
                   setIsAddModalOpen(false);
@@ -194,7 +214,7 @@ const Suppliers = () => {
                     contact: '',
                     phone: ''
                   });
-                }}>Add Supplier</Button>
+                }}>{t.addSupplier}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -210,9 +230,9 @@ const Suppliers = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{suppliers.length}</div>
-                          <p className="text-xs text-muted-foreground">
-                {t.activeSuppliers}
-              </p>
+            <p className="text-xs text-muted-foreground">
+              {t.activeSuppliers}
+            </p>
           </CardContent>
         </Card>
 
@@ -223,9 +243,9 @@ const Suppliers = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{products.length}</div>
-                          <p className="text-xs text-muted-foreground">
-                {t.suppliedProducts}
-              </p>
+            <p className="text-xs text-muted-foreground">
+              {t.suppliedProducts}
+            </p>
           </CardContent>
         </Card>
         {canViewRevenue && (
@@ -238,9 +258,9 @@ const Suppliers = () => {
               <div className="text-2xl font-bold">
                 ${suppliers.reduce((total, supplier) => total + getSupplierRevenue(supplier.id), 0).toLocaleString()}
               </div>
-                            <p className="text-xs text-muted-foreground">
-                  {t.fromAllSuppliers}
-                </p>
+              <p className="text-xs text-muted-foreground">
+                {t.fromAllSuppliers}
+              </p>
             </CardContent>
           </Card>
         )}
@@ -248,75 +268,132 @@ const Suppliers = () => {
 
       {/* Charts */}
       <div className="flex flex-col lg:flex-row gap-6">
-        <Card className="flex-1">
+        <Card className="border-0 dark:border shadow-lg flex-1">
           <CardHeader>
-            <CardTitle>{t.productsBySupplier}</CardTitle>
+            <CardTitle className="flex items-center space-x-2">
+              <Package2 className="h-5 w-5 text-primary" />
+              <span>{t.productsBySupplier}</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={getSupplierDistributionData()}
-                  cx="50%"
+                  data={supplierDistributionData}
+                  cx="40%"
                   cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} :  ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
+                  outerRadius={100}
                   dataKey="value"
                 >
-                  {getSupplierDistributionData().map((entry, index) => (
+                  {supplierDistributionData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip content={<CustomPieTooltip />} />
+                <Legend
+                  layout="vertical"
+                  align="right"
+                  verticalAlign="middle"
+                  formatter={(value) => (
+                    <span className="text-sm text-muted-foreground">{value}</span>
+                  )}
+                />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        
+
+
+
+
         {canViewRevenue && (
-          <Card className="flex-1"> 
+          <Card className="border-0 dark:border shadow-lg flex-1">
             <CardHeader>
-              <CardTitle>{t.revenueBySupplier}</CardTitle>
+              <CardTitle className="flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                <span>{t.revenueBySupplier}</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={getRevenueData()}>
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`$${value}`, 'Revenue']} />
-                  <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="5 5" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    label={{
+                      value: t.suppliers, 
+                      position: "insideBottom", 
+                      offset: 0, 
+                      fill: 'hsl(var(--foreground))'}}
+                    angle={-30}
+                    textAnchor="end"
+                    interval={0}
+                    height={70}
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    label={{
+                      value: t.revenue + " ($)",
+                      angle: -90,
+                      position: "insideLeft",
+                      offset: 0,
+                      fill: 'hsl(var(--foreground))'
+                    }}
+                  />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        const revenue = payload[0].value;
+                        return (
+                          <div className="p-2 rounded-md border bg-[hsl(var(--card))] shadow-md">
+                            <p className="font-medium text-foreground">{label}</p>
+                            <p className="text-muted-foreground text-sm">
+                              {t.revenue}: ${revenue.toLocaleString()}
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar
+                    dataKey="revenue"
+                    fill="hsl(var(--primary))"
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
+
+
         )}
       </div>
 
       {/* Suppliers Table */}
-      <Card>
+      <Card className="border-0 dark:border shadow-lg">
         <CardHeader>
-                      <CardTitle>{t.supplierDirectory}</CardTitle>
+          <CardTitle>{t.supplierDirectory}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                placeholder={t.searchSuppliers}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+            <Input
+              placeholder={t.searchSuppliers}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
 
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>{t.supplier}</TableHead>
-                <TableHead>{t.contactInformation}</TableHead>
-                <TableHead>{t.products}</TableHead>
-                {canViewRevenue && <TableHead>{t.revenue}</TableHead>}
+                <TableHead className='hidden sm:table-cell'>{t.contactInformation}</TableHead>
+                <TableHead className='hidden md:table-cell'>{t.products}</TableHead>
+                {canViewRevenue && <TableHead className='hidden lg:table-cell'>{t.revenue}</TableHead>}
                 {canEditSuppliers && <TableHead className="text-right">{t.actions}</TableHead>}
               </TableRow>
             </TableHeader>
@@ -329,7 +406,7 @@ const Suppliers = () => {
                       <div className="text-sm text-muted-foreground">ID: {supplier.id}</div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className='hidden sm:table-cell'>
                     <div className="space-y-1">
                       <div className="flex items-center text-sm">
                         <Mail className="h-3 w-3 mr-2 text-muted-foreground" />
@@ -341,14 +418,14 @@ const Suppliers = () => {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className='hidden md:table-cell'>
                     <div className="text-sm">
                       <span className="font-medium">{getProductsBySupplier(supplier.id).length}</span>
-                      <span className="text-muted-foreground"> {t.products}</span>
+                      {/* <span className="text-muted-foreground"> {t.products}</span> */}
                     </div>
                   </TableCell>
-                  {canViewRevenue &&(
-                    <TableCell>
+                  {canViewRevenue && (
+                    <TableCell className='hidden lg:table-cell'>
                       <div className="font-medium">
                         ${getSupplierRevenue(supplier.id).toLocaleString()}
                       </div>
@@ -415,29 +492,29 @@ const Suppliers = () => {
             <div className="space-y-4">
               <div className="grid gap-4">
                 <div>
-                  <Label>Supplier Name</Label>
+                  <Label>{t.supplierName}</Label>
                   <p className="text-foreground font-medium">{selectedSupplier.name}</p>
                 </div>
                 <div>
-                  <Label>Contact Email</Label>
+                  <Label>{t.contactEmail}</Label>
                   <div className="flex items-center">
                     <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
                     <p className="text-foreground">{selectedSupplier.contact}</p>
                   </div>
                 </div>
                 <div>
-                  <Label>Phone Number</Label>
+                  <Label>{t.phoneNumber}</Label>
                   <div className="flex items-center">
                     <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
                     <p className="text-foreground">{selectedSupplier.phone}</p>
                   </div>
                 </div>
                 <div>
-                  <Label>Products</Label>
+                  <Label>{t.products}</Label>
                   <p className="text-foreground font-medium">{getProductsBySupplier(selectedSupplier.id).length} products</p>
                 </div>
                 <div>
-                  <Label>Revenue</Label>
+                  <Label>{t.revenue}</Label>
                   <p className="text-foreground font-medium">${getSupplierRevenue(selectedSupplier.id).toLocaleString()}</p>
                 </div>
               </div>
@@ -450,40 +527,40 @@ const Suppliers = () => {
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Supplier</DialogTitle>
+            <DialogTitle>{t.editSupplier}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div>
-              <Label htmlFor="edit-name">Supplier Name</Label>
+              <Label htmlFor="edit-name">{t.supplierName}</Label>
               <Input
                 id="edit-name"
                 value={newSupplier.name}
-                onChange={(e) => setNewSupplier({...newSupplier, name: e.target.value})}
+                onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
               />
             </div>
             <div>
-              <Label htmlFor="edit-contact">Contact Email</Label>
+              <Label htmlFor="edit-contact">{t.contactEmail}</Label>
               <Input
                 id="edit-contact"
                 value={newSupplier.contact}
-                onChange={(e) => setNewSupplier({...newSupplier, contact: e.target.value})}
+                onChange={(e) => setNewSupplier({ ...newSupplier, contact: e.target.value })}
               />
             </div>
             <div>
-              <Label htmlFor="edit-phone">Phone Number</Label>
+              <Label htmlFor="edit-phone">{t.phoneNumber}</Label>
               <Input
                 id="edit-phone"
                 value={newSupplier.phone}
-                onChange={(e) => setNewSupplier({...newSupplier, phone: e.target.value})}
+                onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })}
               />
             </div>
           </div>
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>{t.cancel}</Button>
             <Button onClick={() => {
               console.log('Updating supplier:', newSupplier);
               setIsEditModalOpen(false);
-            }}>Update Supplier</Button>
+            }}>{t.editSupplier}</Button>
           </div>
         </DialogContent>
       </Dialog>
