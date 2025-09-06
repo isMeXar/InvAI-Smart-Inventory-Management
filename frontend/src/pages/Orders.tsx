@@ -192,7 +192,8 @@ const Orders = () => {
     const productOrders = products.map(product => {
       const orderCount = orders.filter(order => order.productId === product.id).length;
       return {
-        name: product.name.length > 10 ? product.name.substring(0, 10) + '...' : product.name,
+        name: product.name.length > 10 ? product.name.substring(0, 10) + '...' : product.name, // for X-axis
+        fullName: product.name, // full name for tooltip
         orders: orderCount,
         fill: 'hsl(var(--primary))'
       };
@@ -200,6 +201,7 @@ const Orders = () => {
 
     return productOrders;
   };
+
 
   const getMonthlyRevenueData = () => {
     // Simulate monthly data
@@ -477,7 +479,7 @@ const Orders = () => {
                       if (active && payload && payload.length) {
                         return (
                           <div className="p-2 rounded-md border bg-[hsl(var(--card))] shadow-md">
-                            <p className="font-medium text-foreground">{label}</p>
+                            <p className="font-medium text-foreground">{payload[0].payload.fullName}</p> {/* full name */}
                             <p className="text-sm text-muted-foreground">{t.orders}: {payload[0].value}</p>
                           </div>
                         );
@@ -485,6 +487,7 @@ const Orders = () => {
                       return null;
                     }}
                   />
+
                   <Bar dataKey="orders" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>

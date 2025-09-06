@@ -237,11 +237,30 @@ interface TranslationValues {
   allSuppliers: string;
   allLevels: string;
   low: string;
+  good: string;
   stockLevel: string;
   minStock: string;
   totalValue: string;
   loadingProducts: string;
   unknownProduct: string;
+  enterProductName: string;
+  totalRevenue: string;
+  inventoryLevels: string;
+  criticalLegend: string;
+  lowLegend: string;
+  sufficientLegend: string;
+  revenueDollar: string;
+  productInventory: string;
+  searchProductsPlaceholder: string;
+  lowStock: string;
+  sufficientStock: string;
+  sold: string;
+  critical: string;
+  productDetails: string;
+  inStock: string;
+  itemsSold: string;
+  editProduct: string;
+  updateProduct: string;
   
   // Suppliers
   supplierManagement: string;
@@ -608,12 +627,31 @@ const translations: Record<Language, TranslationValues> = {
     allSuppliers: 'All Suppliers',
     allLevels: 'All Levels',
     low: 'Low',
+    good: 'Good',
     stockLevel: 'Stock Level',
     minStock: 'Min Stock',
     totalValue: 'Total Value',
     loadingProducts: 'Loading products...',
     unknownProduct: 'Unknown Product',
-    
+    enterProductName: 'Enter product name',
+    totalRevenue: 'Total Revenue',
+    inventoryLevels: 'Inventory Levels',
+    criticalLegend: 'Critical (<20)',
+    lowLegend: 'Low (20-50)',
+    sufficientLegend: 'Sufficient (≥50)',
+    revenueDollar: 'Revenue ($)',
+    productInventory: 'Product Inventory',
+    searchProductsPlaceholder: 'Search products...',
+    lowStock: 'Low Stock',
+    sufficientStock: 'Sufficient Stock',
+    sold: 'Sold',
+    critical: 'Critical',
+    productDetails: 'Product Details',
+    inStock: 'In Stock',
+    itemsSold: 'Items Sold',
+    editProduct: 'Edit Product',
+    updateProduct: 'Update Product',
+
     // Suppliers
     supplierManagement: 'Supplier Management',
     addSupplier: 'Add Supplier',
@@ -973,12 +1011,32 @@ const translations: Record<Language, TranslationValues> = {
     allSuppliers: 'Alle Lieferanten',
     allLevels: 'Alle Ebenen',
     low: 'Niedrig',
+    good: 'Gut',
     stockLevel: 'Lagerbestand',
     minStock: 'Min. Lager',
     totalValue: 'Gesamtwert',
     loadingProducts: 'Produkte werden geladen...',
     unknownProduct: 'Unbekanntes Produkt',
-    
+    enterProductName: 'Produktname eingeben',
+    totalRevenue: 'Gesamteinnahmen',
+    inventoryLevels: 'Lagerbestände',
+    criticalLegend: 'Kritisch (<20)',
+    lowLegend: 'Niedrig (20-50)',
+    sufficientLegend: 'Ausreichend (≥50)',
+    revenueDollar: 'Umsatz ($)',
+    productInventory: 'Produktbestand',
+    searchProductsPlaceholder: 'Produkte suchen...',
+    lowStock: 'Niedriger Bestand',
+    sufficientStock: 'Ausreichender Bestand',
+    sold: 'Verkauft',
+    critical: 'Kritisch',
+    productDetails: 'Produktdetails',
+    inStock: 'Auf Lager',
+    itemsSold: 'Verkaufte Artikel',
+    editProduct: 'Produkt bearbeiten',
+    updateProduct: 'Produkt aktualisieren',
+
+
     // Suppliers
     supplierManagement: 'Lieferantenverwaltung',
     addSupplier: 'Lieferant hinzufügen',
@@ -1338,12 +1396,31 @@ const translations: Record<Language, TranslationValues> = {
     allLevels: 'Tous les niveaux',
     sufficient: 'Suffisant',
     low: 'Faible',
+    good: 'Bon',
     stockLevel: 'Niveau de stock',
     minStock: 'Stock min',
     totalValue: 'Valeur totale',
     loadingProducts: 'Chargement des produits...',
     unknownProduct: 'Produit inconnue',
-    
+    enterProductName: 'Entrer le nom du produit',
+    totalRevenue: 'Revenu total',
+    inventoryLevels: 'Niveaux d\'inventaire',
+    criticalLegend: 'Critique (<20)',
+    lowLegend: 'Faible (20-50)',
+    sufficientLegend: 'Suffisant (≥50)',
+    revenueDollar: 'Revenu ($)',
+    productInventory: 'Inventaire des produits',
+    searchProductsPlaceholder: 'Rechercher des produits...',
+    lowStock: 'Stock faible',
+    sufficientStock: 'Stock suffisant',
+    sold: 'Vendu',
+    critical: 'Critique',
+    productDetails: 'Détails du produit',
+    inStock: 'En stock',
+    itemsSold: 'Articles vendus',
+    editProduct: 'Modifier le produit',
+    updateProduct: 'Mettre à jour le produit',
+
     // Suppliers
     supplierManagement: 'Gestion des fournisseurs',
     addSupplier: 'Ajouter un fournisseur',

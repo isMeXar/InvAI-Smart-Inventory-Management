@@ -116,11 +116,14 @@ const Suppliers = () => {
 
   const getRevenueData = () => {
     return suppliers.map(supplier => ({
-      name: supplier.name.length > 10 ? supplier.name.substring(0, 10) + '...' : supplier.name,
+      fullName: supplier.name, // full name for tooltip
+      name: supplier.name.length > 10 ? supplier.name.substring(0, 10) + '...' : supplier.name, // for x-axis
       revenue: getSupplierRevenue(supplier.id),
       fill: 'hsl(var(--primary))'
     }));
   };
+
+
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
@@ -361,14 +364,14 @@ const Suppliers = () => {
                     }}
                   />
                   <Tooltip
-                    content={({ active, payload, label }) => {
+                    content={({ active, payload }) => {
                       if (active && payload && payload.length) {
-                        const revenue = payload[0].value;
+                        const data = payload[0].payload;
                         return (
                           <div className="p-2 rounded-md border bg-[hsl(var(--card))] shadow-md">
-                            <p className="font-medium text-foreground">{label}</p>
+                            <p className="font-medium text-foreground">{data.fullName}</p>
                             <p className="text-muted-foreground text-sm">
-                              {t.revenue}: ${revenue.toLocaleString()}
+                              {t.revenue}: ${data.revenue.toLocaleString()}
                             </p>
                           </div>
                         );
@@ -378,10 +381,17 @@ const Suppliers = () => {
                   />
                   <Bar
                     dataKey="revenue"
-                    fill="hsl(var(--primary))"
                     radius={[4, 4, 0, 0]}
-                  />
+                  >
+                    {getRevenueData().map((entry, index) => {
+                      // find the corresponding color from supplierDistributionData
+                      const colorEntry = supplierDistributionData.find(s => s.name === entry.fullName);
+                      const fillColor = colorEntry ? colorEntry.fill : 'hsl(var(--primary))';
+                      return <Cell key={`cell-${index}`} fill={fillColor} />;
+                    })}
+                  </Bar>
                 </BarChart>
+
               </ResponsiveContainer>
             </CardContent>
           </Card>

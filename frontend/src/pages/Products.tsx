@@ -19,7 +19,6 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -42,6 +41,7 @@ import {
   Filter, AlertCircle, CheckCircle
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import AIInsights from '@/components/shared/AIInsights';
 
 interface Product {
@@ -69,6 +69,7 @@ interface Order {
 }
 
 const Products = () => {
+  const { t } = useLanguage();
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -231,7 +232,7 @@ const Products = () => {
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full"
         />
-        <span className="ml-3 text-muted-foreground">Loading products...</span>
+        <span className="ml-3 text-muted-foreground">{t.loadingProducts}</span>
       </div>
     );
   }
@@ -245,9 +246,9 @@ const Products = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-center space-y-4 md:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Products</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t.products}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage your product inventory and track stock levels
+            {t.manageProductInventory}
           </p>
         </div>
 
@@ -256,28 +257,28 @@ const Products = () => {
             <DialogTrigger asChild>
               <Button className="bg-gradient-primary hover:opacity-90">
                 <Plus className="mr-2 h-4 w-4" />
-                Add Product
+                {t.addProduct}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Add New Product</DialogTitle>
+                <DialogTitle>{t.addNewProduct}</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-4 py-4">
                 <div>
-                  <Label htmlFor="name">Product Name</Label>
+                  <Label htmlFor="name">{t.productName}</Label>
                   <Input
                     id="name"
                     value={addProduct.name}
                     onChange={(e) => setAddProduct({ ...addProduct, name: e.target.value })}
-                    placeholder="Enter product name"
+                    placeholder={t.enterProductName}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="category">Category</Label>
+                  <Label htmlFor="category">{t.category}</Label>
                   <Select value={addProduct.category} onValueChange={(value) => setAddProduct({ ...addProduct, category: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder={t.selectCategory} />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map(cat => (
@@ -287,10 +288,10 @@ const Products = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="supplier">Supplier</Label>
+                  <Label htmlFor="supplier">{t.supplier}</Label>
                   <Select value={addProduct.supplier} onValueChange={(value) => setAddProduct({ ...addProduct, supplier: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select supplier" />
+                      <SelectValue placeholder={t.selectSupplier} />
                     </SelectTrigger>
                     <SelectContent>
                       {suppliers.map(supplier => (
@@ -302,7 +303,7 @@ const Products = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="price">Price ($)</Label>
+                  <Label htmlFor="price">{t.price} ($)</Label>
                   <Input
                     id="price"
                     type="number"
@@ -312,7 +313,7 @@ const Products = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="quantity">Quantity in Stock</Label>
+                  <Label htmlFor="quantity">{t.quantityInStock}</Label>
                   <Input
                     id="quantity"
                     type="number"
@@ -322,7 +323,7 @@ const Products = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="minStock">Minimum Stock Level</Label>
+                  <Label htmlFor="minStock">{t.minimumStockLevel}</Label>
                   <Input
                     id="minStock"
                     type="number"
@@ -332,18 +333,18 @@ const Products = () => {
                   />
                 </div>
                 <div className="col-span-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">{t.description}</Label>
                   <Textarea
                     id="description"
                     value={addProduct.description}
                     onChange={(e) => setAddProduct({ ...addProduct, description: e.target.value })}
-                    placeholder="Product description..."
+                    placeholder={t.productDescription}
                   />
                 </div>
               </div>
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-                <Button onClick={handleAddProduct}>Add Product</Button>
+                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>{t.cancel}</Button>
+                <Button onClick={handleAddProduct}>{t.add}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -354,49 +355,49 @@ const Products = () => {
       <div className="flex flex-col md:flex-row gap-6">
         <Card className="border-0 dark:border shadow-lg flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.totalProducts}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{products.length}</div>
-            <p className="text-xs text-muted-foreground">Active products</p>
+            <p className="text-xs text-muted-foreground">{t.activeProducts}</p>
           </CardContent>
         </Card>
 
         {canViewRevenue && (
           <Card className="border-0 dark:border shadow-lg flex-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium">{t.totalRevenue}</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">${getTotalRevenue().toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">From product sales</p>
+              <p className="text-xs text-muted-foreground">{t.fromProductSales}</p>
             </CardContent>
           </Card>
         )}
 
         <Card className="border-0 dark:border shadow-lg flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.lowStockItems}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {products.filter(p => p.quantity < 50).length}
             </div>
-            <p className="text-xs text-muted-foreground">Need restocking</p>
+            <p className="text-xs text-muted-foreground">{t.needRestocking}</p>
           </CardContent>
         </Card>
 
         <Card className="border-0 dark:border shadow-lg flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Categories</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.categories}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{categories.length}</div>
-            <p className="text-xs text-muted-foreground">Product categories</p>
+            <p className="text-xs text-muted-foreground">{t.productCategories}</p>
           </CardContent>
         </Card>
       </div>
@@ -408,7 +409,7 @@ const Products = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Package className="h-5 w-5 text-primary" />
-              <span>Inventory Levels</span>
+              <span>{t.inventoryLevels}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -421,7 +422,7 @@ const Products = () => {
                   interval={0}
                   height={70}
                   label={{
-                    value: "Products",
+                    value: t.products,
                     position: "insideBottom",
                     offset: 5,
                     fill: 'hsl(var(--foreground))'
@@ -431,7 +432,7 @@ const Products = () => {
                 <YAxis
                   allowDecimals={false}
                   label={{
-                    value: "Quantity",
+                    value: t.quantity,
                     angle: -90,
                     position: "insideLeft",
                     offset: 0,
@@ -441,14 +442,23 @@ const Products = () => {
                 />
                 <CartesianGrid strokeDasharray="5 5" stroke="hsl(var(--border))" vertical={false} />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '0.5rem',
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="p-2 rounded-md border bg-[hsl(var(--card))] shadow-md">
+                          {/* Title: product name or translated text */}
+                          <p className="font-medium text-foreground">{label}</p>
+                          {/* Value line with translation */}
+                          <p className="text-sm text-muted-foreground">
+                            {t.quantity}: {payload[0].value}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
                   }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                 />
+
                 <Legend
                   verticalAlign="top"
                   height={36}
@@ -456,15 +466,15 @@ const Products = () => {
                     <div className="flex justify-center gap-4">
                       <div className="flex items-center">
                         <div className="w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(0 84% 60% / 0.8)' }}></div>
-                        <span className="text-sm text-muted-foreground">Critical (&lt; 20)</span>
+                        <span className="text-sm text-muted-foreground">{t.critical} (&lt; 20)</span>
                       </div>
                       <div className="flex items-center">
                         <div className="w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(38 92% 50% / 0.8)' }}></div>
-                        <span className="text-sm text-muted-foreground">Low (20-50)</span>
+                        <span className="text-sm text-muted-foreground">{t.low} (20-50)</span>
                       </div>
                       <div className="flex items-center">
                         <div className="w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(217 91% 60% / 0.8)' }}></div>
-                        <span className="text-sm text-muted-foreground">Sufficient (≥50)</span>
+                        <span className="text-sm text-muted-foreground">{t.sufficient} (≥50)</span>
                       </div>
                     </div>
                   )}
@@ -484,7 +494,7 @@ const Products = () => {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <TrendingUp className="h-5 w-5 text-success" />
-                <span>Revenue per Product</span>
+                <span>{t.revenuePerProduct}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -498,7 +508,7 @@ const Products = () => {
                     interval={0}
                     height={70}
                     label={{
-                      value: "Products",
+                      value: t.products,
                       position: "insideBottom",
                       offset: 5,
                       fill: 'hsl(var(--foreground))'
@@ -508,7 +518,7 @@ const Products = () => {
                   <YAxis
                     allowDecimals={false}
                     label={{
-                      value: "Revenue ($)",
+                      value: t.revenue + " ($)",
                       angle: -90,
                       position: "insideLeft",
                       offset: 0,
@@ -517,14 +527,21 @@ const Products = () => {
                     tick={{ fill: 'hsl(var(--muted-foreground))' }}
                   />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '0.5rem',
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="p-2 rounded-md border bg-[hsl(var(--card))] shadow-md">
+                            <p className="font-medium text-foreground">{label}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {t.revenue}: ${payload[0].value.toLocaleString()}
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
                     }}
-                    labelStyle={{ color: 'hsl(var(--foreground))' }}
-                    itemStyle={{ color: 'hsl(var(--foreground))' }}
                   />
+
                   <Legend
                     verticalAlign="top"
                     height={36}
@@ -532,7 +549,7 @@ const Products = () => {
                       <div className="flex justify-center gap-4">
                         <div className="flex items-center">
                           <div className="w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(142 76% 46% / 0.8)' }}></div>
-                          <span className="text-sm text-muted-foreground">Revenue</span>
+                          <span className="text-sm text-muted-foreground">{t.revenue}</span>
                         </div>
                       </div>
                     )}
@@ -551,28 +568,29 @@ const Products = () => {
       {/* Products Table */}
       <Card className="border-0 dark:border shadow-lg">
         <CardHeader>
-          <CardTitle>Product Inventory ({filteredProducts.length} products)</CardTitle>
+          <CardTitle>{t.productInventory} ({filteredProducts.length} {t.products})</CardTitle>
         </CardHeader>
         {/* Filters */}
         <Card className="border-0 shadow-sm">
           <CardContent className="p-6">
             {/* Simple Filter */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
+            <div className="flex gap-2 mb-2">
               <Input
-                placeholder="Search products..."
+                placeholder={t.searchProductsPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="text-sm flex-1"
+                className="text-sm flex-1 h-10" // fixed height
               />
               <Button
                 variant="outline"
                 size="sm"
-                className="mt-2 md:mt-0"
+                className="h-10 flex items-center justify-center" // same height as input
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
               >
                 <Filter className="h-4 w-4" />
               </Button>
             </div>
+
 
             {/* Advanced Filters (Toggleable) */}
             {showAdvancedFilters && (
@@ -580,10 +598,10 @@ const Products = () => {
                 {/* Category Filter */}
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                   <SelectTrigger className="text-sm">
-                    <SelectValue placeholder="All Categories" />
+                    <SelectValue placeholder={t.allCategories} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="all">{t.allCategories}</SelectItem>
                     {categories.map(cat => (
                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                     ))}
@@ -593,10 +611,10 @@ const Products = () => {
                 {/* Supplier Filter */}
                 <Select value={supplierFilter} onValueChange={setSupplierFilter}>
                   <SelectTrigger className="text-sm">
-                    <SelectValue placeholder="All Suppliers" />
+                    <SelectValue placeholder={t.allSuppliers} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Suppliers</SelectItem>
+                    <SelectItem value="all">{t.allSuppliers}</SelectItem>
                     {suppliers.map(supplier => (
                       <SelectItem key={supplier.id} value={supplier.id.toString()}>
                         {supplier.name}
@@ -608,12 +626,12 @@ const Products = () => {
                 {/* Stock Filter */}
                 <Select value={stockFilter} onValueChange={setStockFilter}>
                   <SelectTrigger className="text-sm">
-                    <SelectValue placeholder="All Levels" />
+                    <SelectValue placeholder={t.allLevels} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Levels</SelectItem>
-                    <SelectItem value="low">Low Stock</SelectItem>
-                    <SelectItem value="sufficient">Sufficient Stock</SelectItem>
+                    <SelectItem value="all">{t.allLevels}</SelectItem>
+                    <SelectItem value="low">{t.lowStock}</SelectItem>
+                    <SelectItem value="sufficient">{t.sufficientStock}</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -628,14 +646,14 @@ const Products = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
-                  <TableHead className='hidden md:table-cell'>Category</TableHead>
-                  <TableHead className='hidden lg:table-cell'>Supplier</TableHead>
-                  <TableHead className='hidden md:table-cell'>Quantity</TableHead>
-                  <TableHead className='hidden lg:table-cell'>Price</TableHead>
-                  <TableHead className='hidden sm:table-cell'>Stock Level</TableHead>
-                  {canViewRevenue && <TableHead className='hidden lg:table-cell'>Sold</TableHead>}
-                  {canViewRevenue && <TableHead className='hidden lg:table-cell'>Revenue</TableHead>}
-                  <TableHead>Actions</TableHead>
+                  <TableHead className='hidden md:table-cell'>{t.category}</TableHead>
+                  <TableHead className='hidden lg:table-cell'>{t.supplier}</TableHead>
+                  <TableHead className='hidden md:table-cell'>{t.quantity}</TableHead>
+                  <TableHead className='hidden lg:table-cell'>{t.price}</TableHead>
+                  <TableHead className='hidden sm:table-cell'>{t.stockLevel}</TableHead>
+                  {canViewRevenue && <TableHead className='hidden lg:table-cell'>{t.sold}</TableHead>}
+                  {canViewRevenue && <TableHead className='hidden lg:table-cell'>{t.revenue}</TableHead>}
+                  <TableHead>{t.actions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -714,34 +732,34 @@ const Products = () => {
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Product Details</DialogTitle>
+            <DialogTitle>{t.productDetails}</DialogTitle>
           </DialogHeader>
           {selectedProduct && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Name</Label>
+                  <Label>{t.name}</Label>
                   <p className="text-foreground font-medium">{selectedProduct.name}</p>
                 </div>
                 <div>
-                  <Label>Category</Label>
+                  <Label>{t.category}</Label>
                   <p className="text-foreground font-medium">{selectedProduct.category}</p>
                 </div>
                 <div>
-                  <Label>Supplier</Label>
+                  <Label>{t.supplier}</Label>
                   <p className="text-foreground font-medium">{getSupplierName(selectedProduct.supplierId)}</p>
                 </div>
                 <div>
-                  <Label>Price</Label>
+                  <Label>{t.price}</Label>
                   <p className="text-foreground font-medium">${selectedProduct.price.toLocaleString()}</p>
                 </div>
                 <div>
-                  <Label>In Stock</Label>
+                  <Label>{t.inStock}</Label>
                   <p className="text-foreground font-medium">{selectedProduct.quantity.toLocaleString()}</p>
                 </div>
                 <div>
-                  <Label>Status</Label><br />
-                  <div 
+                  <Label>{t.status}</Label><br />
+                  <div
                     // Use dynamic classes:
                     className={`
                       inline-flex items-center px-3 py-1 rounded-full text-white text-xs font-medium
@@ -759,13 +777,13 @@ const Products = () => {
                 </div>
                 {canViewRevenue && (
                   <div>
-                    <Label>Items Sold</Label>
+                    <Label>{t.itemsSold}</Label>
                     <p className="text-foreground font-medium">{getItemsSold(selectedProduct.id).toLocaleString()}</p>
                   </div>
                 )}
                 {canViewRevenue && (
                   <div>
-                    <Label>Total Revenue</Label>
+                    <Label>{t.totalRevenue}</Label>
                     <p className="text-foreground font-medium text-lg">
                       ${getProductRevenue(selectedProduct.id).toLocaleString()}
                     </p>
@@ -774,7 +792,7 @@ const Products = () => {
               </div>
               {selectedProduct.description && (
                 <div>
-                  <Label>Description</Label>
+                  <Label>{t.description}</Label>
                   <p className="text-muted-foreground">{selectedProduct.description}</p>
                 </div>
               )}
@@ -787,11 +805,11 @@ const Products = () => {
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
+            <DialogTitle>{t.editProduct}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-4">
             <div>
-              <Label htmlFor="edit-name">Product Name</Label>
+              <Label htmlFor="edit-name">{t.productName}</Label>
               <Input
                 id="edit-name"
                 value={editProduct.name}
@@ -799,7 +817,7 @@ const Products = () => {
               />
             </div>
             <div>
-              <Label htmlFor="edit-category">Category</Label>
+              <Label htmlFor="edit-category">{t.category}</Label>
               <Select value={editProduct.category} onValueChange={(value) => setEditProduct({ ...editProduct, category: value })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -812,7 +830,7 @@ const Products = () => {
               </Select>
             </div>
             <div>
-              <Label htmlFor="edit-supplier">Supplier</Label>
+              <Label htmlFor="edit-supplier">{t.supplier}</Label>
               <Select value={editProduct.supplier} onValueChange={(value) => setEditProduct({ ...editProduct, supplier: value })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -827,7 +845,7 @@ const Products = () => {
               </Select>
             </div>
             <div>
-              <Label htmlFor="edit-price">Price ($)</Label>
+              <Label htmlFor="edit-price">{t.price} ($)</Label>
               <Input
                 id="edit-price"
                 type="number"
@@ -836,7 +854,7 @@ const Products = () => {
               />
             </div>
             <div>
-              <Label htmlFor="edit-quantity">Quantity in Stock</Label>
+              <Label htmlFor="edit-quantity">{t.quantityInStock}</Label>
               <Input
                 id="edit-quantity"
                 type="number"
@@ -845,7 +863,7 @@ const Products = () => {
               />
             </div>
             <div>
-              <Label htmlFor="edit-minStock">Minimum Stock Level</Label>
+              <Label htmlFor="edit-minStock">{t.minimumStockLevel}</Label>
               <Input
                 id="edit-minStock"
                 type="number"
@@ -854,7 +872,7 @@ const Products = () => {
               />
             </div>
             <div className="col-span-2">
-              <Label htmlFor="edit-description">Description</Label>
+              <Label htmlFor="edit-description">{t.description}</Label>
               <Textarea
                 id="edit-description"
                 value={editProduct.description}
@@ -863,11 +881,11 @@ const Products = () => {
             </div>
           </div>
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>{t.cancel}</Button>
             <Button onClick={() => {
               console.log('Updating product:', editProduct);
               setIsEditModalOpen(false);
-            }}>Update Product</Button>
+            }}>{t.edit}</Button>
           </div>
         </DialogContent>
       </Dialog>
