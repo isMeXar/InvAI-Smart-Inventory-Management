@@ -14,7 +14,7 @@ interface TranslationValues {
   settings: string;
   logout: string;
   manageAccount: string;
-  
+
   // Dashboard translations
   welcomeBackUser: string;
   inventoryToday: string;
@@ -31,7 +31,7 @@ interface TranslationValues {
   shipped: string;
   processing: string;
   totalOrders: string;   // Added to match fr translations
-  
+
   // AI Insights translations
   aiInsights: string;
   analyzingData: string;
@@ -52,7 +52,7 @@ interface TranslationValues {
   topPerformerHeadphones: string;
   slowMoverDesk: string;
   reorderAlertSmartphone: string;
-  
+
   // Forecasts translations
   demandForecasting: string;
   aiPoweredPredictions: string;
@@ -97,7 +97,7 @@ interface TranslationValues {
   seasonalDeclineOfficeSupplies: string;
   recommendedSafetyStock: string;
   considerPreordering: string;
-  
+
   // Login
   welcomeBack: string;
   signInToAccount: string;
@@ -111,7 +111,7 @@ interface TranslationValues {
   admin: string;
   manager: string;
   employee: string;
-  
+
   // Landing Page
   smartInventory: string;
   management: string;
@@ -143,7 +143,7 @@ interface TranslationValues {
   configureTeamDesc: string;
   getAIInsights: string;
   getAIInsightsDesc: string;
-  
+
   // Common
   search: string;
   add: string;
@@ -168,7 +168,7 @@ interface TranslationValues {
   customer: string;
   date: string;
   client: string;
-  
+
   // Auth & Registration
   confirmPassword: string;
   fullName: string;
@@ -189,7 +189,7 @@ interface TranslationValues {
   passwordMismatchDescription: string;
   accountCreatedTitle: string;
   accountCreatedDescription: string;
-  
+
   // User Management
   userManagement: string;
   addUser: string;
@@ -209,7 +209,7 @@ interface TranslationValues {
   allRoles: string;
   userNotFound: string;
   employees: string;
-  
+
   // Products
   productManagement: string;
   addProduct: string;
@@ -261,7 +261,7 @@ interface TranslationValues {
   itemsSold: string;
   editProduct: string;
   updateProduct: string;
-  
+
   // Suppliers
   supplierManagement: string;
   addSupplier: string;
@@ -287,7 +287,7 @@ interface TranslationValues {
   enterSupplierName: string;
   enterContactEmail: string;
   enterPhoneNumber: string;
-  
+
   // Orders
   orderManagement: string;
   newOrder: string;
@@ -320,7 +320,7 @@ interface TranslationValues {
   selectEmployee: string;
   enterQuantity: string;
   userTooltip: string;
-  
+
   // Profile
   personalInformation: string;
   activitySummary: string;
@@ -332,7 +332,12 @@ interface TranslationValues {
   totalGenerated: string;
   noUserData: string;
   unableToLoadProfile: string;
-  
+  noOrdersForUser: string;
+  yearly: string;
+  monthly: string;
+  daily: string;
+  spent: string;
+
   // Settings
   accountSecurity: string;
   appearance: string;
@@ -399,7 +404,7 @@ const translations: Record<Language, TranslationValues> = {
     settings: 'Settings',
     logout: 'Logout',
     manageAccount: 'Manage your account settings and view your activity',
-    
+
     // Dashboard translations
     welcomeBackUser: 'Welcome back, {name}! 👋',
     inventoryToday: 'Here\'s what\'s happening with your inventory today.',
@@ -418,7 +423,7 @@ const translations: Record<Language, TranslationValues> = {
     totalProducts: 'Total Products', // Added to match interface
     totalUsers: 'Total Users',       // Added to match interface
     totalSuppliers: 'Total Suppliers', // Added to match interface
-    
+
     // AI Insights translations
     aiInsights: 'AI Insights',
     analyzingData: 'Analyzing data with AI...',
@@ -452,7 +457,7 @@ const translations: Record<Language, TranslationValues> = {
     seasonalDeclineOfficeSupplies: 'Seasonal decline expected for Office Supplies in summer months',
     recommendedSafetyStock: 'Recommended safety stock increase for Wireless Headphones',
     considerPreordering: 'Consider pre-ordering Laptop Pro for Q4 holiday season demand',
-    
+
     // Placeholders
     enterSupplierName: 'Enter supplier name',
     enterContactEmail: 'Enter contact email',
@@ -470,7 +475,7 @@ const translations: Record<Language, TranslationValues> = {
     admin: 'Admin',
     manager: 'Manager',
     employee: 'Employee',
-    
+
     // Landing Page
     smartInventory: 'Smart Inventory',
     management: 'Management',
@@ -503,7 +508,7 @@ const translations: Record<Language, TranslationValues> = {
     configureTeamDesc: 'Add team members with appropriate roles and permissions for seamless collaboration.',
     getAIInsights: 'Get AI Insights',
     getAIInsightsDesc: 'Let our AI analyze your data and provide actionable insights for optimal inventory management.',
-    
+
     // Common
     search: 'Search',
     add: 'Add',
@@ -530,7 +535,7 @@ const translations: Record<Language, TranslationValues> = {
     customer: 'Customer',
     date: 'Date',
     client: 'Client',
-    
+
     // Forecasts
     aiPoweredPredictions: 'AI-powered predictions for inventory planning and revenue forecasting',
     forecastPeriod: 'September - October 2024',
@@ -559,7 +564,7 @@ const translations: Record<Language, TranslationValues> = {
     noPermissionToView: 'You don\'t have permission to view this page',
     onlyManagersAndAdminsCanAccessForecasting: 'Only managers and administrators can access forecasting data',
     unitsNextMonths: 'Units next 2 months',
-    
+
     // Auth & Registration
     confirmPassword: 'Confirm Password',
     fullName: 'Full Name',
@@ -580,7 +585,7 @@ const translations: Record<Language, TranslationValues> = {
     passwordMismatchDescription: 'The passwords you entered do not match.',
     accountCreatedTitle: 'Account Created',
     accountCreatedDescription: 'Your account has been created successfully! You are now logged in.',
-    
+
     // User Management
     userManagement: 'User Management',
     addUser: 'Add User',
@@ -600,7 +605,7 @@ const translations: Record<Language, TranslationValues> = {
     allRoles: 'All Roles',
     userNotFound: 'No users found matching your criteria.',
     employees: 'Employees',
-    
+
     // Products
     productManagement: 'Product Management',
     addProduct: 'Add Product',
@@ -673,7 +678,7 @@ const translations: Record<Language, TranslationValues> = {
     viewSupplier: 'View Supplier',
     editSupplier: 'Edit Supplier',
     supplierName: 'Supplier Name',
-    
+
     // Orders
     orderManagement: 'Order Management',
     newOrder: 'New Order',
@@ -707,6 +712,12 @@ const translations: Record<Language, TranslationValues> = {
     enterQuantity: 'Enter quantity',
     userTooltip: 'This is the user who entered this order into the system.',
     editOrder: 'Edit Order',
+    noOrdersForUser: 'No orders found for this user.',
+    daily: "Daily",
+    monthly: "Monthly",
+    yearly: "Yearly",
+    spent: "Spent",
+
 
     // Profile
     personalInformation: 'Personal Information',
@@ -719,7 +730,7 @@ const translations: Record<Language, TranslationValues> = {
     totalGenerated: 'Total Generated',
     noUserData: 'No user data available',
     unableToLoadProfile: 'Unable to load user profile information.',
-    
+
     // Settings
     accountSecurity: 'Account Security',
     appearance: 'Appearance',
@@ -769,7 +780,7 @@ const translations: Record<Language, TranslationValues> = {
     timezone: 'Timezone',
 
     // Other
-    details: 'Details', 
+    details: 'Details',
   },
 
   de: {
@@ -784,7 +795,7 @@ const translations: Record<Language, TranslationValues> = {
     settings: 'Einstellungen',
     logout: 'Abmelden',
     manageAccount: 'Verwalten Sie Ihre Kontoeinstellungen und sehen Sie Ihre Aktivität',
-    
+
     // Placeholders
     enterSupplierName: 'Lieferantenname eingeben',
     enterContactEmail: 'Kontakt-E-Mail eingeben',
@@ -807,7 +818,7 @@ const translations: Record<Language, TranslationValues> = {
     totalProducts: 'Produkte gesamt', // Added to match interface
     totalUsers: 'Benutzer gesamt',    // Added to match interface
     totalSuppliers: 'Lieferanten gesamt', // Added to match interface
-    
+
     // AI Insights translations
     aiInsights: 'KI-Erkenntnisse',
     analyzingData: 'Analysiere Daten mit KI...',
@@ -841,7 +852,7 @@ const translations: Record<Language, TranslationValues> = {
     seasonalDeclineOfficeSupplies: 'Saisonaler Rückgang für Bürobedarf in den Sommermonaten erwartet',
     recommendedSafetyStock: 'Empfohlene Erhöhung des Sicherheitsbestands für Wireless Kopfhörer',
     considerPreordering: 'Erwägen Sie Vorbestellungen für Laptop Pro für die Nachfrage in der Weihnachtssaison im 4. Quartal',
-    
+
     // Login
     welcomeBack: 'Willkommen zurück',
     signInToAccount: 'Melden Sie sich bei Ihrem Smart Inventory-Konto an',
@@ -855,7 +866,7 @@ const translations: Record<Language, TranslationValues> = {
     admin: 'Administrator',
     manager: 'Manager',
     employee: 'Mitarbeiter',
-    
+
     // Landing Page
     smartInventory: 'Smart Inventory',
     management: 'Verwaltung',
@@ -888,7 +899,7 @@ const translations: Record<Language, TranslationValues> = {
     configureTeamDesc: 'Fügen Sie Teammitglieder mit entsprechenden Rollen und Berechtigungen für nahtlose Zusammenarbeit hinzu.',
     getAIInsights: 'KI-Einblicke erhalten',
     getAIInsightsDesc: 'Lassen Sie unsere KI Ihre Daten analysieren und umsetzbare Einblicke für optimale Lagerverwaltung bereitstellen.',
-    
+
     // Common
     search: 'Suche',
     add: 'Hinzufügen',
@@ -915,7 +926,7 @@ const translations: Record<Language, TranslationValues> = {
     customer: 'Kunde',
     date: 'Datum',
     client: 'Kunde',
-    
+
     // Forecasts
     aiPoweredPredictions: 'KI-gestützte Prognosen für Bestandsplanung und Umsatzprognose',
     forecastPeriod: 'September - Oktober 2024',
@@ -944,7 +955,7 @@ const translations: Record<Language, TranslationValues> = {
     noPermissionToView: 'Sie haben keine Berechtigung, diese Seite anzusehen',
     onlyManagersAndAdminsCanAccessForecasting: 'Nur Manager und Administratoren können auf Prognosedaten zugreifen',
     unitsNextMonths: 'Einheiten in den nächsten 2 Monaten',
-    
+
     // Auth & Registration
     confirmPassword: 'Passwort bestätigen',
     fullName: 'Vollständiger Name',
@@ -965,7 +976,7 @@ const translations: Record<Language, TranslationValues> = {
     passwordMismatchDescription: 'Die Passwörter, die Sie eingegeben haben, stimmen nicht überein.',
     accountCreatedTitle: 'Konto erstellt',
     accountCreatedDescription: 'Ihr Konto wurde erfolgreich erstellt! Sie sind jetzt angemeldet.',
-    
+
     // User Management
     userManagement: 'Benutzerverwaltung',
     addUser: 'Benutzer hinzufügen',
@@ -984,7 +995,7 @@ const translations: Record<Language, TranslationValues> = {
     allRoles: 'Alle Rollen',
     userNotFound: 'Keine Benutzer gefunden, die Ihren Kriterien entsprechen.',
     employees: 'Mitarbeiter',
-    
+
     // Products
     productManagement: 'Produktverwaltung',
     addProduct: 'Produkt hinzufügen',
@@ -1058,7 +1069,7 @@ const translations: Record<Language, TranslationValues> = {
     viewSupplier: 'Lieferant anzeigen',
     editSupplier: 'Lieferant bearbeiten',
     supplierName: 'Name des Lieferanten',
-    
+
     // Orders
     orderManagement: 'Bestellverwaltung',
     newOrder: 'Neue Bestellung',
@@ -1105,7 +1116,12 @@ const translations: Record<Language, TranslationValues> = {
     totalGenerated: 'Gesamt generiert',
     noUserData: 'Keine Benutzerdaten verfügbar',
     unableToLoadProfile: 'Benutzerprofilinformationen konnten nicht geladen werden.',
-    
+    noOrdersForUser: 'Keine Bestellungen für diesen Benutzer gefunden.',
+    daily: "Daily",
+    monthly: "Monthly",
+    yearly: "Yearly",
+    spent: "Spent",
+
     // Settings
     accountSecurity: 'Kontosicherheit',
     appearance: 'Erscheinungsbild',
@@ -1155,7 +1171,7 @@ const translations: Record<Language, TranslationValues> = {
     timezone: 'Zeitzone',
 
     // Other
-    details: 'Details', 
+    details: 'Details',
   },
   fr: {
     // Navigation
@@ -1169,7 +1185,7 @@ const translations: Record<Language, TranslationValues> = {
     settings: 'Paramètres',
     logout: 'Déconnexion',
     manageAccount: 'Gérer vos paramètres de compte et vos activités',
-    
+
     // Placeholders
     enterSupplierName: 'Entrer le nom du fournisseur',
     enterContactEmail: 'Entrer l\'email de contact',
@@ -1190,7 +1206,7 @@ const translations: Record<Language, TranslationValues> = {
     delivered: 'Livré',
     shipped: 'Expédié',
     processing: 'En traitement',
-    
+
     // AI Insights translations
     aiInsights: 'Insights IA',
     analyzingData: 'Analyse des données avec l\'IA...',
@@ -1224,7 +1240,7 @@ const translations: Record<Language, TranslationValues> = {
     seasonalDeclineOfficeSupplies: 'Baisse saisonnière attendue pour les fournitures de bureau pendant les mois d\'été',
     recommendedSafetyStock: 'Augmentation recommandée du stock de sécurité pour les écouteurs sans fil',
     considerPreordering: 'Envisagez de précommander Laptop Pro pour la demande de la saison des fêtes du Q4',
-    
+
     // Login
     welcomeBack: 'Bienvenue à nouveau',
     signInToAccount: 'Connectez-vous à votre compte Smart Inventory',
@@ -1238,7 +1254,7 @@ const translations: Record<Language, TranslationValues> = {
     admin: 'Administrateur',
     manager: 'Responsable',
     employee: 'Employé',
-    
+
     // Landing Page
     smartInventory: 'Smart Inventory',
     management: 'Gestion',
@@ -1271,7 +1287,7 @@ const translations: Record<Language, TranslationValues> = {
     configureTeamDesc: 'Ajoutez des membres d\'équipe avec des rôles et permissions appropriés pour une collaboration fluide.',
     getAIInsights: 'Obtenez des insights IA',
     getAIInsightsDesc: 'Laissez notre IA analyser vos données et fournir des insights actionnables pour une gestion d\'inventaire optimale.',
-    
+
     // Common
     search: 'Rechercher',
     add: 'Ajouter',
@@ -1298,7 +1314,7 @@ const translations: Record<Language, TranslationValues> = {
     customer: 'Client',
     date: 'Date',
     client: 'Client',
-    
+
     // Forecasts
     aiPoweredPredictions: 'Prévisions alimentées par l\'IA pour la planification des stocks et la prévision des revenus',
     forecastPeriod: 'Septembre - Octobre 2024',
@@ -1326,7 +1342,7 @@ const translations: Record<Language, TranslationValues> = {
     noPermissionToView: 'Vous n\'avez pas la permission de voir cette page',
     onlyManagersAndAdminsCanAccessForecasting: 'Seuls les managers et les administrateurs peuvent accéder aux données de prévision',
     unitsNextMonths: 'Unités pour les 2 prochains mois',
-    
+
     // Auth & Registration
     confirmPassword: 'Confirmer le mot de passe',
     fullName: 'Nom complet',
@@ -1347,7 +1363,7 @@ const translations: Record<Language, TranslationValues> = {
     passwordMismatchDescription: 'Les mots de passe que vous avez entrés ne correspondent pas.',
     accountCreatedTitle: 'Compte créé',
     accountCreatedDescription: 'Votre compte a été créé avec succès ! Vous êtes maintenant connecté.',
-    
+
     // User Management
     userManagement: 'Gestion des utilisateurs',
     addUser: 'Ajouter un utilisateur',
@@ -1367,7 +1383,7 @@ const translations: Record<Language, TranslationValues> = {
     allRoles: 'Tous les rôles',
     userNotFound: 'Aucun utilisateur trouvé correspondant à vos critères.',
     employees: 'Employés',
-    
+
     // Products
     productManagement: 'Gestion des produits',
     addProduct: 'Ajouter un produit',
@@ -1443,7 +1459,7 @@ const translations: Record<Language, TranslationValues> = {
     viewSupplier: 'Voir le fournisseur',
     editSupplier: 'Modifier le fournisseur',
     supplierName: 'Nom du fournisseur',
-    
+
     // Orders
     orderManagement: 'Gestion des commandes',
     newOrder: 'Nouvelle commande',
@@ -1489,7 +1505,12 @@ const translations: Record<Language, TranslationValues> = {
     totalGenerated: 'Total généré',
     noUserData: 'Aucune donnée d\'utilisateur disponible',
     unableToLoadProfile: 'Impossible de charger les informations de profil utilisateur.',
-    
+    noOrdersForUser: 'Aucune commande trouvée pour cet utilisateur.',
+    daily: "Daily",
+    monthly: "Monthly",
+    yearly: "Yearly",
+    spent: "Spent",
+
     // Settings
     accountSecurity: 'Sécurité du compte',
     appearance: 'Apparence',
@@ -1539,7 +1560,7 @@ const translations: Record<Language, TranslationValues> = {
     timezone: 'Fuseau horaire',
 
     // Other
-    details: 'Détails', 
+    details: 'Détails',
   }
 };
 

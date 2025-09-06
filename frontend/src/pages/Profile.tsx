@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Shield, 
-  Edit, 
+import {
+  User,
+  Mail,
+  Phone,
+  Shield,
+  Edit,
   Camera,
   ShoppingCart,
   Package,
@@ -23,13 +23,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,6 +42,7 @@ interface Order {
   userId: number;
   quantity: number;
   status: 'Shipped' | 'Processing' | 'Delivered' | 'Pending';
+  date: string;
 }
 
 interface Product {
@@ -53,6 +54,8 @@ interface Product {
   supplierId: number;
 }
 
+type ChartView = "daily" | "monthly" | "yearly";
+
 const Profile = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -62,6 +65,8 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [chartView, setChartView] = useState<"daily" | "monthly" | "yearly">("monthly");
+
 
   useEffect(() => {
     fetchData();
@@ -118,15 +123,15 @@ const Profile = () => {
     }));
   };
 
-  const getOrderHistory = () => {
-    // Simulate monthly order data
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    return months.map(month => ({
-      month,
-      orders: Math.floor(Math.random() * 5) + 1,
-      spent: Math.floor(Math.random() * 5000) + 1000
-    }));
-  };
+  // const getOrderHistory = () => {
+  //   // Simulate monthly order data
+  //   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  //   return months.map(month => ({
+  //     month,
+  //     orders: Math.floor(Math.random() * 5) + 1,
+  //     spent: Math.floor(Math.random() * 5000) + 1000
+  //   }));
+  // };
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -153,6 +158,39 @@ const Profile = () => {
         return 'bg-muted text-muted-foreground';
     }
   };
+
+  const getOrderHistory = useMemo(() => {
+    const userOrders = getUserOrders();
+    const grouped: Record<string, { orders: number; spent: number }> = {};
+
+    userOrders.forEach(order => {
+      const product = getProduct(order.productId);
+      if (!product || !order.date) return;
+
+      const date = new Date(order.date);
+      let key = "";
+
+      if (chartView === "daily") {
+        key = date.toISOString().split("T")[0]; // YYYY-MM-DD
+      } else if (chartView === "monthly") {
+        key = `${date.getFullYear()}-${date.getMonth() + 1}`; // YYYY-M
+      } else if (chartView === "yearly") {
+        key = `${date.getFullYear()}`;
+      }
+
+      if (!grouped[key]) {
+        grouped[key] = { orders: 0, spent: 0 };
+      }
+      grouped[key].orders += 1;
+      grouped[key].spent += product.price * order.quantity;
+    });
+
+    return Object.entries(grouped).map(([period, values]) => ({
+      period,
+      ...values
+    }));
+  }, [orders, products, chartView, user]);
+
 
   if (loading) {
     return (
@@ -192,7 +230,7 @@ const Profile = () => {
             {t.manageAccount}
           </p>
         </div>
-        <Button 
+        <Button
           onClick={() => setIsEditing(!isEditing)}
           variant={isEditing ? "outline" : "default"}
           className={!isEditing ? "bg-gradient-primary hover:opacity-90" : ""}
@@ -227,13 +265,13 @@ const Profile = () => {
                   <h2 className="text-2xl font-bold text-foreground">{user.name}</h2>
                   <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
                 </div>
-                <p className="text-muted-foreground">User ID: {user.id}</p>
+                <p className="text-muted-foreground">ID: {user.id}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">{t.fullName}</Label>
                 <Input
                   id="name"
                   value={user.name}
@@ -242,7 +280,7 @@ const Profile = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
+                <Label htmlFor="role">{t.role}</Label>
                 <Input
                   id="role"
                   value={user.role}
@@ -251,7 +289,7 @@ const Profile = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">{t.emailAddress}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -263,7 +301,7 @@ const Profile = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phone">{t.phoneNumber}</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -279,10 +317,10 @@ const Profile = () => {
             {isEditing && (
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsEditing(false)}>
-                  Cancel
+                  {t.cancel}
                 </Button>
                 <Button className="bg-gradient-primary hover:opacity-90">
-                  Save Changes
+                  {t.save}
                 </Button>
               </div>
             )}
@@ -292,13 +330,13 @@ const Profile = () => {
         {/* Stats Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Activity Summary</CardTitle>
+            <CardTitle>{t.activitySummary}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <div className="flex items-center space-x-2">
                 <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Total Orders</span>
+                <span className="text-sm font-medium">{t.totalOrders}</span>
               </div>
               <span className="text-lg font-bold">{getUserOrders().length}</span>
             </div>
@@ -306,13 +344,13 @@ const Profile = () => {
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <div className="flex items-center space-x-2">
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Total Spent</span>
+                <span className="text-sm font-medium">{t.totalGenerated}</span>
               </div>
               <span className="text-lg font-bold">${getTotalSpent().toLocaleString()}</span>
             </div>
 
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-foreground">Favorite Categories</h4>
+              <h4 className="text-sm font-medium text-foreground">{t.favoriteCategories}</h4>
               {getOrdersByCategory().slice(0, 3).map((item, index) => (
                 <div key={index} className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{item.category}</span>
@@ -325,43 +363,75 @@ const Profile = () => {
       </div>
 
       {/* Order History Chart */}
+      {/* Order History Chart */}
       <Card>
-        <CardHeader>
-          <CardTitle>Order History</CardTitle>
+        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
+          <CardTitle>{t.orderHistory}</CardTitle>
+          <div className="flex space-x-2 mt-2 md:mt-0">
+            <Button
+              variant={chartView === "daily" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartView("daily")}
+            >
+              {t.daily}
+            </Button>
+            <Button
+              variant={chartView === "monthly" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartView("monthly")}
+            >
+              {t.monthly}
+            </Button>
+            <Button
+              variant={chartView === "yearly" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartView("yearly")}
+            >
+              {t.yearly}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={getOrderHistory()}>
-              <XAxis dataKey="month" />
+            <LineChart data={getOrderHistory}>
+              <XAxis dataKey="period" />
               <YAxis />
               <Tooltip />
-              <Line 
-                type="monotone" 
-                dataKey="orders" 
-                stroke="hsl(var(--primary))" 
+              <Line
+                type="monotone"
+                dataKey="orders"
+                stroke="hsl(var(--primary))"
                 strokeWidth={3}
-                name="Orders"
+                name={t.orders}
+              />
+              <Line
+                type="monotone"
+                dataKey="spent"
+                stroke="hsl(var(--secondary))"
+                strokeWidth={3}
+                name={t.spent}
               />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
 
+
       {/* Recent Orders */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
+          <CardTitle>{t.recentOrders}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>ID</TableHead>
+                <TableHead>{t.product}</TableHead>
+                <TableHead>{t.quantity}</TableHead>
+                <TableHead>{t.status}</TableHead>
+                <TableHead>{t.total}</TableHead>
+                <TableHead>{t.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -373,7 +443,7 @@ const Profile = () => {
                     <TableCell>
                       <div>
                         <div className="font-medium text-foreground">
-                          {product?.name || 'Unknown Product'}
+                          {product?.name || t.unknownProduct}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           {product?.category}
@@ -388,8 +458,8 @@ const Profile = () => {
                     </TableCell>
                     <TableCell>${getOrderValue(order).toLocaleString()}</TableCell>
                     <TableCell>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => {
                           setSelectedOrder(order);
@@ -408,7 +478,7 @@ const Profile = () => {
           {getUserOrders().length === 0 && (
             <div className="text-center py-8">
               <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No orders found for this user.</p>
+              <p className="text-muted-foreground">{t.noOrdersForUser}</p>
             </div>
           )}
         </CardContent>
@@ -421,39 +491,39 @@ const Profile = () => {
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Order Details</DialogTitle>
+            <DialogTitle>{t.orders} {t.details}</DialogTitle>
           </DialogHeader>
           {selectedOrder && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Order ID</Label>
+                  <Label>{t.orderID}</Label>
                   <p className="text-foreground font-medium">#{selectedOrder.id}</p>
                 </div>
                 <div>
-                  <Label>Status</Label>
+                  <Label>{t.status}</Label><br />
                   <Badge className={getStatusColor(selectedOrder.status)}>
                     {selectedOrder.status}
                   </Badge>
                 </div>
                 <div>
-                  <Label>Product</Label>
+                  <Label>{t.product}</Label>
                   <p className="text-foreground font-medium">
                     {getProduct(selectedOrder.productId)?.name || 'Unknown Product'}
                   </p>
                 </div>
                 <div>
-                  <Label>Category</Label>
+                  <Label>{t.category}</Label>
                   <p className="text-foreground font-medium">
                     {getProduct(selectedOrder.productId)?.category || 'Unknown'}
                   </p>
                 </div>
                 <div>
-                  <Label>Quantity</Label>
+                  <Label>{t.quantity}</Label>
                   <p className="text-foreground font-medium">{selectedOrder.quantity}</p>
                 </div>
                 <div>
-                  <Label>Total Value</Label>
+                  <Label>{t.totalValue}</Label>
                   <p className="text-foreground font-medium">${getOrderValue(selectedOrder).toLocaleString()}</p>
                 </div>
               </div>
