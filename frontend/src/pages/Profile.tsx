@@ -10,7 +10,10 @@ import {
   ShoppingCart,
   Package,
   TrendingUp,
-  Eye
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  Calendar
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,6 +38,13 @@ import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'rec
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import AIInsights from '@/components/shared/AIInsights';
+import { DatePicker } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import dayjs, { Dayjs } from 'dayjs';
+import minMax from 'dayjs/plugin/minMax';
+
+dayjs.extend(minMax);
 
 interface Order {
   id: number;
@@ -54,9 +64,13 @@ interface Product {
   supplierId: number;
 }
 
-type ChartView = "daily" | "monthly" | "yearly";
+type ChartView = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
-const Profile = () => {
+const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const shortMonthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+const Profile: React.FC = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
@@ -65,8 +79,10 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [chartView, setChartView] = useState<"daily" | "monthly" | "yearly">("monthly");
-
+  const [chartView, setChartView] = useState<ChartView>("monthly");
+  const currentDate = dayjs('2025-09-07');
+  const [selectedRefDate, setSelectedRefDate] = useState<Dayjs | null>(getPeriodStart("monthly", currentDate));
+  const [selectedYearRange, setSelectedYearRange] = useState<[Dayjs | null, Dayjs | null]>([currentDate.startOf('year'), currentDate.endOf('year')]);
 
   useEffect(() => {
     fetchData();
@@ -90,7 +106,8 @@ const Profile = () => {
   };
 
   const getUserOrders = () => {
-    return orders.filter(order => order.userId === user?.id);
+    if (!user?.id) return [];
+    return orders.filter(order => order.userId === user.id);
   };
 
   const getProduct = (productId: number) => {
@@ -119,19 +136,198 @@ const Profile = () => {
     return Object.entries(categoryData).map(([category, count]) => ({
       category,
       count,
-      percentage: Math.round((count / userOrders.length) * 100)
+      percentage: userOrders.length ? Math.round((count / userOrders.length) * 100) : 0
     }));
   };
 
-  // const getOrderHistory = () => {
-  //   // Simulate monthly order data
-  //   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  //   return months.map(month => ({
-  //     month,
-  //     orders: Math.floor(Math.random() * 5) + 1,
-  //     spent: Math.floor(Math.random() * 5000) + 1000
-  //   }));
-  // };
+  function getPeriodStart(view: ChartView, date: Dayjs) {
+    const start = date.startOf('day');
+    if (view === "weekly") {
+      return start.startOf('week');
+    } else if (view === "monthly") {
+      return start.startOf('year');
+    } else if (view === "yearly") {
+      return start.startOf('year');
+    }
+    return start;
+  }
+
+  function getPeriodEnd(view: ChartView, start: Dayjs) {
+    if (view === "daily") {
+      return start.endOf('day');
+    } else if (view === "weekly") {
+      return start.endOf('week');
+    } else if (view === "monthly") {
+      return start.endOf('year');
+    } else if (view === "yearly") {
+      return start.endOf('year');
+    }
+    return start;
+  }
+
+  function getPeriodLabel(view: ChartView, start: Dayjs, end?: Dayjs) {
+    if (view === "daily") {
+      return start.format('MMMM D, YYYY');
+    } else if (view === "weekly") {
+      const endDay = start.endOf('week');
+      return `${start.format('MMMM D, YYYY')} - ${endDay.format('MMMM D, YYYY')}`;
+    } else if (view === "monthly") {
+      return start.format('YYYY');
+    } else if (view === "yearly") {
+      return `${start.format('YYYY')} - ${end!.format('YYYY')}`;
+    }
+    return "";
+  }
+
+  const handleSetChartView = (view: ChartView) => {
+    if (view === "yearly") {
+      setSelectedYearRange([currentDate.startOf('year'), currentDate.endOf('year')]);
+    } else {
+      setSelectedRefDate(getPeriodStart(view, currentDate));
+    }
+    setChartView(view);
+  };
+
+  const canGoNext = () => {
+    let tempStart = selectedRefDate ? selectedRefDate.clone() : currentDate;
+    let tempEnd: Dayjs;
+
+    switch (chartView) {
+      case 'yearly':
+        const [start, end] = selectedYearRange;
+        if (!start || !end) return false;
+        tempStart = end.add(1, 'year');
+        return tempStart <= currentDate;
+      case 'daily':
+        tempStart = tempStart.add(1, 'day');
+        tempEnd = getPeriodEnd(chartView, tempStart);
+        return tempEnd <= currentDate;
+      case 'weekly':
+        tempStart = tempStart.add(7, 'day');
+        tempEnd = getPeriodEnd(chartView, tempStart);
+        return tempEnd <= currentDate;
+      case 'monthly':
+        tempStart = tempStart.add(1, 'year');
+        tempEnd = getPeriodEnd(chartView, tempStart);
+        return tempStart <= currentDate;
+      default:
+        return false;
+    }
+  };
+
+  const goPrev = () => {
+    if (chartView === "yearly") {
+      const [start, end] = selectedYearRange;
+      if (!start || !end) return;
+      const rangeLength = end.year() - start.year() + 1;
+      setSelectedYearRange([
+        start.subtract(rangeLength, 'year').startOf('year'),
+        end.subtract(rangeLength, 'year').endOf('year')
+      ]);
+    } else if (selectedRefDate) {
+      let newStart = selectedRefDate.clone();
+      if (chartView === "daily") {
+        newStart = newStart.subtract(1, 'day');
+      } else if (chartView === "weekly") {
+        newStart = newStart.subtract(7, 'day');
+      } else if (chartView === "monthly") {
+        newStart = newStart.subtract(1, 'year');
+      }
+      setSelectedRefDate(newStart);
+    }
+  };
+
+  const goNext = () => {
+    if (!canGoNext()) return;
+    if (chartView === "yearly") {
+      const [start, end] = selectedYearRange;
+      if (!start || !end) return;
+      const rangeLength = end.year() - start.year() + 1;
+      setSelectedYearRange([
+        start.add(rangeLength, 'year').startOf('year'),
+        end.add(rangeLength, 'year').endOf('year')
+      ]);
+    } else if (selectedRefDate) {
+      let newStart = selectedRefDate.clone();
+      if (chartView === "daily") {
+        newStart = newStart.add(1, 'day');
+      } else if (chartView === "weekly") {
+        newStart = newStart.add(7, 'day');
+      } else if (chartView === "monthly") {
+        newStart = newStart.add(1, 'year');
+      }
+      setSelectedRefDate(newStart);
+    }
+  };
+
+  const handleDateSelect = (date: Dayjs | null) => {
+    if (date && date <= currentDate) {
+      setSelectedRefDate(getPeriodStart(chartView, date));
+    }
+  };
+
+  const handleYearRangeSelect = (index: number, date: Dayjs | null) => {
+    if (date && date <= currentDate) {
+      setSelectedYearRange(prev => {
+        const newRange = [...prev] as [Dayjs | null, Dayjs | null];
+        newRange[index] = date.startOf('year');
+        if (index === 0 && newRange[1] && newRange[0]! > newRange[1]) {
+          newRange[1] = newRange[0];
+        } else if (index === 1 && newRange[0] && newRange[1]! < newRange[0]) {
+          newRange[0] = newRange[1];
+        }
+        return newRange;
+      });
+    }
+  };
+
+  const minDate = useMemo(() => dayjs('2000-01-01'), []);
+
+  const getOrderHistory = () => {
+    const userOrders = getUserOrders().map(order => ({
+      ...order,
+      parsedDate: dayjs(order.date)
+    })).filter(o => o.parsedDate.isValid());
+    const data: { period: string; orders: number }[] = [];
+
+    if (chartView === "daily" && selectedRefDate) {
+      for (let h = 0; h < 24; h++) {
+        const hourStart = selectedRefDate.set('hour', h).set('minute', 0).set('second', 0).set('millisecond', 0);
+        const hourEnd = hourStart.add(1, 'hour').subtract(1, 'millisecond');
+        const effectiveEnd = dayjs.min(hourEnd, currentDate)!;
+        const ordersCount = hourStart > currentDate ? 0 : userOrders.filter(o => o.parsedDate >= hourStart && o.parsedDate <= effectiveEnd).length;
+        data.push({ period: `${h.toString().padStart(2, '0')}:00`, orders: ordersCount });
+      }
+    } else if (chartView === "weekly" && selectedRefDate) {
+      const weekStart = selectedRefDate.startOf('week');
+      for (let d = 0; d < 7; d++) {
+        const dayStart = weekStart.add(d, 'day');
+        const dayEnd = dayStart.endOf('day');
+        const effectiveEnd = dayjs.min(dayEnd, currentDate)!;
+        const ordersCount = dayStart > currentDate ? 0 : userOrders.filter(o => o.parsedDate >= dayStart && o.parsedDate <= effectiveEnd).length;
+        data.push({ period: dayNames[d], orders: ordersCount });
+      }
+    } else if (chartView === "monthly" && selectedRefDate) {
+      const year = selectedRefDate.year();
+      for (let m = 0; m < 12; m++) {
+        const monthStart = dayjs(new Date(year, m, 1));
+        const monthEnd = monthStart.endOf('month');
+        const ordersCount = userOrders.filter(o => o.parsedDate >= monthStart && o.parsedDate <= monthEnd).length;
+        data.push({ period: shortMonthNames[m], orders: ordersCount });
+      }
+    } else if (chartView === "yearly" && selectedYearRange[0] && selectedYearRange[1]) {
+      const startYear = selectedYearRange[0].year();
+      const endYear = Math.min(selectedYearRange[1].year(), currentDate.year());
+      for (let y = startYear; y <= endYear; y++) {
+        const yearStart = dayjs(new Date(y, 0, 1));
+        const yearEnd = yearStart.endOf('year');
+        const ordersCount = userOrders.filter(o => o.parsedDate >= yearStart && o.parsedDate <= yearEnd).length;
+        data.push({ period: y.toString(), orders: ordersCount });
+      }
+    }
+
+    return data;
+  };
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -159,38 +355,148 @@ const Profile = () => {
     }
   };
 
-  const getOrderHistory = useMemo(() => {
-    const userOrders = getUserOrders();
-    const grouped: Record<string, { orders: number; spent: number }> = {};
+  const datePickerStyles = {
+    '& .MuiInputBase-root': {
+      color: 'hsl(var(--foreground)) !important',
+      backgroundColor: 'hsl(var(--background))',
+      borderColor: 'hsl(var(--border))',
+    },
+    '& .MuiInputLabel-root': {
+      color: 'hsl(var(--muted-foreground)) !important',
+    },
+    '& .MuiInputBase-input': {
+      color: 'hsl(var(--foreground)) !important',
+      fontSize: '0.875rem',
+    },
+    '& .MuiSvgIcon-root': {
+      color: 'hsl(var(--muted-foreground)) !important',
+    },
+    '& .MuiPaper-root': {
+      backgroundColor: 'hsl(var(--background))',
+      color: 'hsl(var(--foreground))',
+    },
+    '& .MuiPickersDay-root': {
+      color: 'hsl(var(--foreground))',
+      backgroundColor: 'hsl(var(--background))',
+      '&:hover': {
+        backgroundColor: 'hsl(var(--muted))',
+      },
+    },
+    '& .MuiPickersYear-yearButton': {
+      color: 'hsl(var(--foreground)) !important',
+      backgroundColor: 'hsl(var(--background))',
+      '&:hover': {
+        backgroundColor: 'hsl(var(--muted))',
+      },
+      '&.Mui-selected': {
+        backgroundColor: 'hsl(var(--primary)) !important',
+        color: 'hsl(var(--primary-foreground)) !important',
+      },
+      '&.Mui-disabled': {
+        color: 'hsl(var(--muted-foreground)) !important',
+        opacity: 0.5,
+      },
+    },
+    '& .MuiYearCalendar-root': {
+      color: 'hsl(var(--foreground))',
+    },
+    '& .MuiTypography-root': {
+      color: 'hsl(var(--foreground))',
+    },
+    '& .MuiOutlinedInput-root': {
+      '& fieldset': {
+        borderColor: 'hsl(var(--border))',
+      },
+      '&:hover fieldset': {
+        borderColor: 'hsl(var(--primary))',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: 'hsl(var(--primary))',
+      },
+    },
+    '& .MuiPickersArrowSwitcher-button': {
+      color: 'hsl(var(--foreground)) !important',
+    },
+  };
 
-    userOrders.forEach(order => {
-      const product = getProduct(order.productId);
-      if (!product || !order.date) return;
-
-      const date = new Date(order.date);
-      let key = "";
-
-      if (chartView === "daily") {
-        key = date.toISOString().split("T")[0]; // YYYY-MM-DD
-      } else if (chartView === "monthly") {
-        key = `${date.getFullYear()}-${date.getMonth() + 1}`; // YYYY-M
-      } else if (chartView === "yearly") {
-        key = `${date.getFullYear()}`;
-      }
-
-      if (!grouped[key]) {
-        grouped[key] = { orders: 0, spent: 0 };
-      }
-      grouped[key].orders += 1;
-      grouped[key].spent += product.price * order.quantity;
-    });
-
-    return Object.entries(grouped).map(([period, values]) => ({
-      period,
-      ...values
-    }));
-  }, [orders, products, chartView, user]);
-
+  const dateSelector = (
+    <>
+      {chartView === 'daily' || chartView === 'weekly' ? (
+        <DatePicker
+          value={selectedRefDate}
+          onChange={handleDateSelect}
+          maxDate={currentDate}
+          minDate={minDate}
+          views={['day', 'month', 'year']}
+          openTo="day"
+          format="DD/MM/YYYY"
+          slotProps={{
+            textField: {
+              size: 'small',
+              sx: { width: '180px', ...datePickerStyles },
+              InputProps: {
+                startAdornment: <Calendar className="h-5 w-5 text-muted-foreground mr-2" />
+              }
+            }
+          }}
+        />
+      ) : chartView === 'monthly' ? (
+        <DatePicker
+          value={selectedRefDate}
+          onChange={handleDateSelect}
+          maxDate={currentDate}
+          minDate={minDate}
+          views={['year']}
+          openTo="year"
+          format="YYYY"
+          slotProps={{
+            textField: {
+              size: 'small',
+              sx: { width: '180px', ...datePickerStyles },
+              InputProps: {
+                startAdornment: <Calendar className="h-5 w-5 text-muted-foreground mr-2" />
+              }
+            }
+          }}
+        />
+      ) : (
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-muted-foreground">From</span>
+          <DatePicker
+            value={selectedYearRange[0]}
+            onChange={(date) => handleYearRangeSelect(0, date)}
+            maxDate={currentDate}
+            minDate={minDate}
+            views={['year']}
+            openTo="year"
+            format="YYYY"
+            slotProps={{
+              textField: {
+                size: 'small',
+                sx: { width: '100px', ...datePickerStyles }
+              }
+            }}
+          />
+          <span className="text-sm text-muted-foreground">To</span>
+          <DatePicker
+            value={selectedYearRange[1]}
+            onChange={(date) => handleYearRangeSelect(1, date)}
+            maxDate={currentDate}
+            minDate={selectedYearRange[0] || minDate}
+            views={['year']}
+            openTo="year"
+            format="YYYY"
+            slotProps={{
+              textField: {
+                size: 'small',
+                sx: { width: '100px', ...datePickerStyles }
+              }
+            }}
+          />
+        </div>
+      )}
+    </>
+  );
 
   if (loading) {
     return (
@@ -363,29 +669,44 @@ const Profile = () => {
       </div>
 
       {/* Order History Chart */}
-      {/* Order History Chart */}
       <Card>
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
           <CardTitle>{t.orderHistory}</CardTitle>
-          <div className="flex space-x-2 mt-2 md:mt-0">
+          <div className="flex items-center space-x-2 mt-2 md:mt-0">
+            <Button variant="ghost" size="sm" onClick={goPrev}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              {dateSelector}
+            </LocalizationProvider>
+            <Button variant="ghost" size="sm" onClick={goNext} disabled={!canGoNext()}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
             <Button
               variant={chartView === "daily" ? "default" : "outline"}
               size="sm"
-              onClick={() => setChartView("daily")}
+              onClick={() => handleSetChartView("daily")}
             >
               {t.daily}
             </Button>
             <Button
+              variant={chartView === "weekly" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleSetChartView("weekly")}
+            >
+              {t.weekly}
+            </Button>
+            <Button
               variant={chartView === "monthly" ? "default" : "outline"}
               size="sm"
-              onClick={() => setChartView("monthly")}
+              onClick={() => handleSetChartView("monthly")}
             >
               {t.monthly}
             </Button>
             <Button
               variant={chartView === "yearly" ? "default" : "outline"}
               size="sm"
-              onClick={() => setChartView("yearly")}
+              onClick={() => handleSetChartView("yearly")}
             >
               {t.yearly}
             </Button>
@@ -393,29 +714,46 @@ const Profile = () => {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={getOrderHistory}>
-              <XAxis dataKey="period" />
-              <YAxis />
-              <Tooltip />
+            <LineChart data={getOrderHistory()}>
+              <XAxis
+                dataKey="period"
+                label={{
+                  value: chartView === 'daily' ? 'Hour' : chartView === 'weekly' ? 'Day' : chartView === 'monthly' ? 'Month' : 'Year',
+                  position: 'bottom',
+                  offset: 10,
+                  fill: 'hsl(var(--foreground))'
+                }}
+                stroke="hsl(var(--foreground))"
+              />
+              <YAxis
+                label={{
+                  value: 'Number of Orders',
+                  angle: -90,
+                  position: 'insideLeft',
+                  offset: 10,
+                  fill: 'hsl(var(--foreground))'
+                }}
+                stroke="hsl(var(--foreground))"
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--background))',
+                  color: 'hsl(var(--foreground))',
+                  borderColor: 'hsl(var(--border))'
+                }}
+              />
               <Line
                 type="monotone"
                 dataKey="orders"
                 stroke="hsl(var(--primary))"
                 strokeWidth={3}
                 name={t.orders}
-              />
-              <Line
-                type="monotone"
-                dataKey="spent"
-                stroke="hsl(var(--secondary))"
-                strokeWidth={3}
-                name={t.spent}
+                connectNulls={false}
               />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
-
 
       {/* Recent Orders */}
       <Card>
@@ -430,6 +768,7 @@ const Profile = () => {
                 <TableHead>{t.product}</TableHead>
                 <TableHead>{t.quantity}</TableHead>
                 <TableHead>{t.status}</TableHead>
+                <TableHead>Date</TableHead>
                 <TableHead>{t.total}</TableHead>
                 <TableHead>{t.actions}</TableHead>
               </TableRow>
@@ -456,6 +795,7 @@ const Profile = () => {
                         {order.status}
                       </Badge>
                     </TableCell>
+                    <TableCell>{dayjs(order.date).format('MMM D, YYYY')}</TableCell>
                     <TableCell>${getOrderValue(order).toLocaleString()}</TableCell>
                     <TableCell>
                       <Button

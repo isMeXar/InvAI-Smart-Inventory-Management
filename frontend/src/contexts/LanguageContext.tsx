@@ -335,8 +335,12 @@ interface TranslationValues {
   noOrdersForUser: string;
   yearly: string;
   monthly: string;
+  weekly: string;
   daily: string;
   spent: string;
+  selectYear: string;
+  selectStartYear: string;
+  selectEndYear: string;
 
   // Settings
   accountSecurity: string;
@@ -714,6 +718,7 @@ const translations: Record<Language, TranslationValues> = {
     editOrder: 'Edit Order',
     noOrdersForUser: 'No orders found for this user.',
     daily: "Daily",
+    weekly: "Weekly",
     monthly: "Monthly",
     yearly: "Yearly",
     spent: "Spent",
@@ -730,7 +735,10 @@ const translations: Record<Language, TranslationValues> = {
     totalGenerated: 'Total Generated',
     noUserData: 'No user data available',
     unableToLoadProfile: 'Unable to load user profile information.',
-
+    selectYear: 'Select Year',
+    selectStartYear: 'Start Year',
+    selectEndYear: 'End Year',
+    
     // Settings
     accountSecurity: 'Account Security',
     appearance: 'Appearance',
@@ -1117,10 +1125,14 @@ const translations: Record<Language, TranslationValues> = {
     noUserData: 'Keine Benutzerdaten verfügbar',
     unableToLoadProfile: 'Benutzerprofilinformationen konnten nicht geladen werden.',
     noOrdersForUser: 'Keine Bestellungen für diesen Benutzer gefunden.',
-    daily: "Daily",
-    monthly: "Monthly",
-    yearly: "Yearly",
+    daily: "Täglich",
+    weekly: "Wöchentlich",
+    monthly: "Monatlich",
+    yearly: "Jährlich",
     spent: "Spent",
+    selectYear: 'Jahr auswählen',
+    selectStartYear: 'Startjahr',
+    selectEndYear: 'Endjahr',
 
     // Settings
     accountSecurity: 'Kontosicherheit',
@@ -1506,11 +1518,15 @@ const translations: Record<Language, TranslationValues> = {
     noUserData: 'Aucune donnée d\'utilisateur disponible',
     unableToLoadProfile: 'Impossible de charger les informations de profil utilisateur.',
     noOrdersForUser: 'Aucune commande trouvée pour cet utilisateur.',
-    daily: "Daily",
-    monthly: "Monthly",
-    yearly: "Yearly",
+    daily: "Quotidien",
+    weekly: "Hebdomadaire",
+    monthly: "Mensuel",
+    yearly: "Annuel",
     spent: "Spent",
-
+    selectYear: 'Sélectionner l\'année',
+    selectStartYear: 'Année de début',
+    selectEndYear: 'Année de fin',
+    
     // Settings
     accountSecurity: 'Sécurité du compte',
     appearance: 'Apparence',
