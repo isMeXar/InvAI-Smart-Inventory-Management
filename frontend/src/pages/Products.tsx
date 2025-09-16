@@ -838,6 +838,19 @@ const Products = () => {
                   <p className="text-muted-foreground">{selectedProduct.description}</p>
                 </div>
               )}
+              {selectedProduct.created_at && (
+                <div className="border-t pt-4">
+                  <Label>Added On</Label>
+                  <p className="text-muted-foreground">
+                    {new Date(selectedProduct.created_at).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

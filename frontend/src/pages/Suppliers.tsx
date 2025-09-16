@@ -13,6 +13,7 @@ import {
   Eye,
   Copy,
   CopyCheck,
+  Calendar,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,8 @@ interface Supplier {
   name: string;
   contact: string;
   phone: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface Product {
@@ -173,6 +176,18 @@ const Suppliers = () => {
     } catch (err) {
       console.error("Copy failed: ", err);
     }
+  };
+
+  const formatJoinDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    };
+    return date.toLocaleDateString('en-US', options);
   };
 
   const canEditSuppliers = user?.role === 'Admin' || user?.role === 'Manager';
@@ -644,6 +659,19 @@ const Suppliers = () => {
                 </Button>
               </div>
 
+
+              {/* Join Date */}
+              <div className="bg-muted rounded-lg p-3">
+                <div className="flex items-center space-x-3">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Joined On</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatJoinDate(selectedSupplier.created_at)}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4">

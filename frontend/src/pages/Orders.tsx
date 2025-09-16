@@ -59,9 +59,10 @@ interface Order {
   user: number;
   user_name?: string;
   quantity: number;
-  status: 'Shipped' | 'Processing' | 'Delivered' | 'Pending';
-  total_price?: number;
+  status: 'Shipped' | 'Processing' | 'Delivered' | 'Pending' | 'Cancelled';
+  total_price?: string;
   date?: string;
+  updated_at?: string;
 }
 
 interface Product {
@@ -75,11 +76,15 @@ interface Product {
 
 interface User {
   id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
   name: string;
   role: 'Admin' | 'Manager' | 'Employee';
   email: string;
-  phone: string;
-  profilePic: string;
+  phone: string | null;
+  profile_pic: string | null;
+  profilePic?: string;
 }
 
 const Orders = () => {
@@ -132,9 +137,9 @@ const Orders = () => {
   };
 
   const getOrderValue = (order: Order) => {
-    if (order.total_price) return order.total_price;
+    if (order.total_price) return parseFloat(order.total_price.toString());
     const product = getProduct(order.product);
-    return product ? product.price * order.quantity : 0;
+    return product ? parseFloat(product.price.toString()) * order.quantity : 0;
   };
 
   const filteredOrders = orders.filter(order => {
@@ -207,12 +212,29 @@ const Orders = () => {
 
 
   const getMonthlyRevenueData = () => {
-    // Simulate monthly data
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
-    return months.map((month, index) => ({
+    // Group orders by month from actual data
+    const monthlyData = {};
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // Initialize all months with 0
+    months.forEach(month => {
+      monthlyData[month] = { orders: 0, revenue: 0 };
+    });
+
+    // Process actual orders
+    orders.forEach(order => {
+      if (order.date) {
+        const orderDate = new Date(order.date);
+        const monthName = months[orderDate.getMonth()];
+        monthlyData[monthName].orders += 1;
+        monthlyData[monthName].revenue += getOrderValue(order);
+      }
+    });
+
+    return months.map(month => ({
       month,
-      orders: Math.floor(Math.random() * 20) + 10,
-      revenue: Math.floor(Math.random() * 50000) + 30000,
+      orders: monthlyData[month].orders,
+      revenue: monthlyData[month].revenue,
     }));
   };
 
@@ -232,6 +254,20 @@ const Orders = () => {
       setCopiedField(field);
       setTimeout(() => setCopiedField(null), 2000);
     });
+  };
+
+  const formatFullDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    };
+    return date.toLocaleDateString('en-US', options);
   };
 
   if (loading) {
@@ -271,7 +307,7 @@ const Orders = () => {
               <div className="grid gap-4 py-4">
                 <div>
                   <Label htmlFor="product">{t.product}</Label>
-                  <Select value={newOrder.product} onValueChange={(value) => setNewOrder({ ...newOrder, productId: value })}>
+                  <Select value={newOrder.product} onValueChange={(value) => setNewOrder({ ...newOrder, product: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder={t.selectProduct} />
                     </SelectTrigger>
@@ -286,14 +322,14 @@ const Orders = () => {
                 </div>
                 <div>
                   <Label htmlFor="employee">Employee</Label>
-                  <Select value={newOrder.user} onValueChange={(value) => setNewOrder({ ...newOrder, userId: value })}>
+                  <Select value={newOrder.user} onValueChange={(value) => setNewOrder({ ...newOrder, user: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder={t.selectEmployee} />
                     </SelectTrigger>
                     <SelectContent>
                       {users.map(user => (
                         <SelectItem key={user.id} value={user.id.toString()}>
-                          {user.name}
+                          {user.name || user.username}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -326,15 +362,33 @@ const Orders = () => {
               </div>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>{t.cancel}</Button>
-                <Button onClick={() => {
-                  console.log('Adding order:', newOrder);
-                  setIsAddModalOpen(false);
-                  setNewOrder({
-                    productId: '',
-                    userId: '',
-                    quantity: '',
-                    status: 'Pending'
-                  });
+                <Button onClick={async () => {
+                  try {
+                    if (!newOrder.product || !newOrder.user || !newOrder.quantity) {
+                      alert('Please fill in all required fields');
+                      return;
+                    }
+
+                    const orderData = {
+                      product: parseInt(newOrder.product),
+                      user: parseInt(newOrder.user),
+                      quantity: parseInt(newOrder.quantity),
+                      status: newOrder.status
+                    };
+
+                    await ordersAPI.create(orderData);
+                    await fetchData(); // Refresh data
+                    setIsAddModalOpen(false);
+                    setNewOrder({
+                      product: '',
+                      user: '',
+                      quantity: '',
+                      status: 'Pending'
+                    });
+                  } catch (error) {
+                    console.error('Error adding order:', error);
+                    alert('Error adding order. Please try again.');
+                  }
                 }}>{t.add}</Button>
               </div>
             </DialogContent>
@@ -664,6 +718,7 @@ const Orders = () => {
                 <TableHead>{t.product}</TableHead>
                 <TableHead className='hidden lg:table-cell'>{t.employee}</TableHead>
                 <TableHead className='hidden md:table-cell'>{t.quantity}</TableHead>
+                <TableHead className='hidden sm:table-cell'>Date</TableHead>
                 <TableHead>{t.status}</TableHead>
                 {canViewRevenue && <TableHead className='hidden md:table-cell'>{t.total}</TableHead>}
                 {canEditOrders && <TableHead className="text-right">{t.actions}</TableHead>}
@@ -699,6 +754,11 @@ const Orders = () => {
                       </div>
                     </TableCell>
                     <TableCell className='hidden md:table-cell'>{order.quantity}</TableCell>
+                    <TableCell className='hidden sm:table-cell'>
+                      <div className="text-sm">
+                        {order.date ? new Date(order.date).toLocaleDateString('en-GB') : 'N/A'}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <Badge className={`${getStatusColor(order.status)} flex items-center gap-1 w-fit`}>
                         {getStatusIcon(order.status)}
@@ -731,8 +791,8 @@ const Orders = () => {
                             onClick={() => {
                               setSelectedOrder(order);
                               setNewOrder({
-                                productId: order.product.toString(),
-                                userId: order.user.toString(),
+                                product: order.product.toString(),
+                                user: order.user.toString(),
                                 quantity: order.quantity.toString(),
                                 status: order.status
                               });
@@ -741,7 +801,22 @@ const Orders = () => {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={async () => {
+                              if (confirm('Are you sure you want to delete this order?')) {
+                                try {
+                                  await ordersAPI.delete(order.id);
+                                  setOrders(prevOrders => prevOrders.filter(o => o.id !== order.id));
+                                } catch (error) {
+                                  console.error('Error deleting order:', error);
+                                  alert('Error deleting order. Please try again.');
+                                }
+                              }
+                            }}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -793,10 +868,10 @@ const Orders = () => {
                 <div>
                   <Label>{t.product}</Label>
                   <p className="text-foreground font-medium">
-                    {getProduct(selectedOrder.productId)?.name || "Unknown Product"}
+                    {getProduct(selectedOrder.product)?.name || selectedOrder.product_name || "Unknown Product"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {getProduct(selectedOrder.productId)?.category || "Unavailable"}
+                    {getProduct(selectedOrder.product)?.category || "Unavailable"}
                   </p>
                 </div>
                 <div>
@@ -809,6 +884,12 @@ const Orders = () => {
                   <Label>{t.totalValue}</Label>
                   <p className="text-foreground font-medium">
                     ${getOrderValue(selectedOrder).toLocaleString()}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <Label>Order Date</Label>
+                  <p className="text-foreground font-medium">
+                    {formatFullDate(selectedOrder.date)}
                   </p>
                 </div>
               </div>
@@ -831,19 +912,23 @@ const Orders = () => {
                 </div>
 
                 {(() => {
-                  const employee = getUser(selectedOrder.userId);
+                  const employee = getUser(selectedOrder.user);
                   return (
                     <div className="space-y-4">
                       {/* Top row: Avatar + Name + Role */}
                       <div className="flex items-center gap-4">
                         <img
-                          src={employee?.profilePic || "/placeholder-user.png"}
-                          alt={employee?.name || "Employee"}
+                          src={employee?.profile_pic || employee?.profilePic || `https://randomuser.me/api/portraits/${employee?.first_name === 'Alice' || employee?.first_name === 'Diana' ? 'women' : 'men'}/1.jpg`}
+                          alt={employee?.name || employee?.username || "Employee"}
                           className="w-14 h-14 rounded-full object-cover border"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = 'https://randomuser.me/api/portraits/men/1.jpg';
+                          }}
                         />
                         <div>
                           <p className="text-foreground font-medium">
-                            {employee?.name || "Unavailable"}
+                            {employee?.name || employee?.username || selectedOrder.user_name || "Unavailable"}
                           </p>
                           <p className="text-sm text-muted-foreground">
                             {employee?.role || "Unavailable"}
@@ -880,7 +965,7 @@ const Orders = () => {
                           <div className="flex flex-col">
                             <Label className="text-sm">{t.phoneNumber}</Label>
                             <span className="text-sm text-foreground truncate">
-                              {employee?.phone || "Unavailable"}
+                              {employee?.phone || "No phone number"}
                             </span>
                           </div>
                           {employee?.phone && (
@@ -924,7 +1009,7 @@ const Orders = () => {
               <Select
                 value={newOrder.product}
                 onValueChange={(value) =>
-                  setNewOrder({ ...newOrder, productId: value })
+                  setNewOrder({ ...newOrder, product: value })
                 }
               >
                 <SelectTrigger>
@@ -954,7 +1039,7 @@ const Orders = () => {
               </div>
               <Select
                 value={newOrder.user}
-                onValueChange={(value) => setNewOrder({ ...newOrder, userId: value })}
+                onValueChange={(value) => setNewOrder({ ...newOrder, user: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={t.selectEmployee} />
@@ -1007,9 +1092,27 @@ const Orders = () => {
               {t.cancel}
             </Button>
             <Button
-              onClick={() => {
-                console.log("Updating order:", newOrder);
-                setIsEditModalOpen(false);
+              onClick={async () => {
+                try {
+                  if (!selectedOrder || !newOrder.product || !newOrder.user || !newOrder.quantity) {
+                    alert('Please fill in all required fields');
+                    return;
+                  }
+
+                  const orderData = {
+                    product: parseInt(newOrder.product),
+                    user: parseInt(newOrder.user),
+                    quantity: parseInt(newOrder.quantity),
+                    status: newOrder.status
+                  };
+
+                  await ordersAPI.update(selectedOrder.id, orderData);
+                  await fetchData(); // Refresh data
+                  setIsEditModalOpen(false);
+                } catch (error) {
+                  console.error('Error updating order:', error);
+                  alert('Error updating order. Please try again.');
+                }
               }}
             >
               {t.edit}
