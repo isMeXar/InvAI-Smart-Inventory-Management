@@ -43,6 +43,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import AIInsights from '@/components/shared/AIInsights';
+import { productsAPI, suppliersAPI, ordersAPI } from '@/lib/api';
 
 interface Product {
   id: number;

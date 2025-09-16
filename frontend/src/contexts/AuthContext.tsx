@@ -1,18 +1,23 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { authAPI } from '@/lib/api';
 
 export interface User {
   id: number;
-  name: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  name?: string;
   role: 'Admin' | 'Manager' | 'Employee';
   email: string;
   phone: string;
-  profilePic: string;
+  profile_pic: string;
+  profilePic?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -36,38 +41,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in (from localStorage)
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
+    // Check if user is already logged in by checking backend session
+    const checkAuthStatus = async () => {
+      try {
+        const userData = await authAPI.getCurrentUser();
+        // Transform backend user data to frontend format
+        const user: User = {
+          ...userData,
+          name: `${userData.first_name} ${userData.last_name}`.trim() || userData.username,
+          profilePic: userData.profile_pic || `https://randomuser.me/api/portraits/${userData.first_name === 'Alice' || userData.first_name === 'Diana' ? 'women' : 'men'}/1.jpg`
+        };
+        setUser(user);
+      } catch (error) {
+        // User is not authenticated
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthStatus();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Simulate API call
-      const response = await fetch('/data/users.json');
-      const users: User[] = await response.json();
-      
-      // Find user by email (simple demo authentication)
-      const foundUser = users.find(u => u.email === email);
-      
-      if (foundUser && password === 'demo123') { // Demo password
-        setUser(foundUser);
-        localStorage.setItem('currentUser', JSON.stringify(foundUser));
-        return true;
-      }
-      return false;
+      const response = await authAPI.login(email, password);
+      // Transform backend user data to frontend format
+      const user: User = {
+        ...response.user,
+        name: `${response.user.first_name} ${response.user.last_name}`.trim() || response.user.username,
+        profilePic: response.user.profile_pic || `https://randomuser.me/api/portraits/${response.user.first_name === 'Alice' || response.user.first_name === 'Diana' ? 'women' : 'men'}/1.jpg`
+      };
+      setUser(user);
+      return true;
     } catch (error) {
       console.error('Login error:', error);
       return false;
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('currentUser');
+  const logout = async () => {
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setUser(null);
+    }
   };
 
   const value = {
