@@ -6,7 +6,15 @@ const handleResponse = async (response: Response) => {
     const error = await response.json().catch(() => ({ error: 'Network error' }));
     throw new Error(error.error || `HTTP error! status: ${response.status}`);
   }
-  return response.json();
+
+  // Handle empty response (like DELETE requests returning 204 No Content)
+  const contentType = response.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    return null; // Return null for non-JSON responses
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 };
 
 // Helper function to make authenticated requests

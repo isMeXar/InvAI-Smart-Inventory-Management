@@ -546,10 +546,14 @@ const Suppliers = () => {
                           onClick={async () => {
                             if (confirm('Are you sure you want to delete this supplier?')) {
                               try {
+                                // First delete from backend
                                 await suppliersAPI.delete(supplier.id);
-                                fetchData(); // Refresh the data
+                                // Only update state if backend deletion succeeds
+                                setSuppliers(prevSuppliers => prevSuppliers.filter(s => s.id !== supplier.id));
                               } catch (error) {
                                 console.error('Error deleting supplier:', error);
+                                // Only show error if backend actually fails
+                                alert('Error deleting supplier. Please try again.');
                               }
                             }
                           }}
