@@ -17,7 +17,7 @@ interface Insight {
 
 interface AIInsightsProps {
   data: any[];
-  pageType: 'dashboard' | 'users' | 'products' | 'suppliers' | 'orders' | 'forecasts' | 'profile';
+  pageType: 'dashboard' | 'users' | 'products' | 'suppliers' | 'orders' | 'profile';
 }
 
 const AIInsights: React.FC<AIInsightsProps> = ({ data, pageType }) => {
@@ -130,25 +130,6 @@ const AIInsights: React.FC<AIInsightsProps> = ({ data, pageType }) => {
             description: 'Delivered orders maintain 95% customer satisfaction rate.',
             metric: '95%',
             impact: 'high'
-          }
-        ];
-      
-      case 'forecasts':
-        return [
-          {
-            id: '1',
-            type: 'positive',
-            title: 'Demand Prediction',
-            description: 'Predicted demand for laptops will double next quarter. Increase inventory.',
-            metric: '+100%',
-            impact: 'high'
-          },
-          {
-            id: '2',
-            type: 'info',
-            title: 'Seasonal Trends',
-            description: 'Electronics demand peaks in October. Plan procurement accordingly.',
-            impact: 'medium'
           }
         ];
       

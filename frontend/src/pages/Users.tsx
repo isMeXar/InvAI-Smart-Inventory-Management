@@ -44,6 +44,7 @@ import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGri
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import AIInsights from '@/components/shared/AIInsights';
+import { usersAPI, ordersAPI, productsAPI } from '@/lib/api';
 
 interface User {
   id: number;
@@ -315,29 +316,29 @@ const Users = () => {
 
   const fetchUsers = async () => {
     try {
-      // Fetch users
-      const userResponse = await fetch('/data/users.json');
-      const userData: User[] = await userResponse.json();
+      // Fetch data from APIs
+      const [userData, orders, products] = await Promise.all([
+        usersAPI.getAll(),
+        ordersAPI.getAll(),
+        productsAPI.getAll()
+      ]);
 
-      // Fetch orders
-      const orderResponse = await fetch('/data/orders.json');
-      const orders: Order[] = await orderResponse.json();
-
-      // Fetch products
-      const productResponse = await fetch('/data/products.json');
-      const products: Product[] = await productResponse.json();
+      const userList = userData.results || userData;
+      const orderList = orders.results || orders;
+      const productList = products.results || products;
 
       // Calculate orders and revenue for each user
-      const enrichedUsers = userData.map(user => {
+      const enrichedUsers = userList.map(user => {
         // Get all orders for this user
-        const userOrders = orders.filter(order => order.userId === user.id);
+        const userOrders = orderList.filter(order => order.user === user.id);
         
         // Calculate total orders
         const totalOrders = userOrders.length;
 
         // Calculate total revenue
         const totalRevenue = userOrders.reduce((sum, order) => {
-          const product = products.find(p => p.id === order.productId);
+          if (order.total_price) return sum + order.total_price;
+          const product = productList.find(p => p.id === order.product);
           const price = product ? product.price : 0;
           return sum + (price * order.quantity);
         }, 0);

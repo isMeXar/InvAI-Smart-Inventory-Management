@@ -16,8 +16,24 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
+
+def api_root(request):
+    return JsonResponse({
+        'message': 'InvAI Backend API',
+        'version': '1.0',
+        'endpoints': {
+            'admin': '/admin/',
+            'auth': '/api/auth/',
+            'products': '/api/products/',
+            'suppliers': '/api/suppliers/',
+            'orders': '/api/orders/',
+            'users': '/api/auth/users/',
+        }
+    })
 
 urlpatterns = [
+    path('', api_root, name='api_root'),
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path('api/', include('inventory.urls')),

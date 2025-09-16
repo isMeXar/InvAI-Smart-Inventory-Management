@@ -15,6 +15,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import AIInsightsModal from '@/components/AIInsightsModal';
+import { productsAPI, ordersAPI, usersAPI, suppliersAPI } from '@/lib/api';
 
 interface DashboardData {
   products: any[];
@@ -56,21 +57,19 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const [productsRes, ordersRes, usersRes, suppliersRes] = await Promise.all([
-        fetch('/data/products.json'),
-        fetch('/data/orders.json'),
-        fetch('/data/users.json'),
-        fetch('/data/suppliers.json')
-      ]);
-
       const [products, orders, users, suppliers] = await Promise.all([
-        productsRes.json(),
-        ordersRes.json(),
-        usersRes.json(),
-        suppliersRes.json()
+        productsAPI.getAll(),
+        ordersAPI.getAll(),
+        usersAPI.getAll(),
+        suppliersAPI.getAll()
       ]);
 
-      setData({ products, orders, users, suppliers });
+      setData({
+        products: products.results || products,
+        orders: orders.results || orders,
+        users: users.results || users,
+        suppliers: suppliers.results || suppliers
+      });
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {

@@ -1,9 +1,0 @@
-[
-  { "id": 101, "name": "Laptop Pro", "category": "Electronics", "quantity": 6, "price": 1200, "supplierId": 201 },
-  { "id": 102, "name": "Office Chair", "category": "Furniture", "quantity": 150, "price": 200, "supplierId": 202 },
-  { "id": 103, "name": "Smartphone X", "category": "Electronics", "quantity": 80, "price": 900, "supplierId": 201 },
-  { "id": 104, "name": "Standing Desk", "category": "Furniture", "quantity": 17, "price": 450, "supplierId": 202 },
-  { "id": 105, "name": "Wireless Headphones", "category": "Electronics", "quantity": 120, "price": 150, "supplierId": 201 },
-  { "id": 106, "name": "LED Monitor 27\"", "category": "Electronics", "quantity": 39, "price": 300, "supplierId": 201 },
-  { "id": 107, "name": "Printer Ink", "category": "Office Supplies", "quantity": 96, "price": 35, "supplierId": 203 }
-]

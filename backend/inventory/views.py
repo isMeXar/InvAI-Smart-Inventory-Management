@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db.models import Sum, Count
 from .models import Supplier, Product, Order
 from .serializers import SupplierSerializer, ProductSerializer, OrderSerializer
@@ -9,12 +9,12 @@ from .serializers import SupplierSerializer, ProductSerializer, OrderSerializer
 class SupplierViewSet(viewsets.ModelViewSet):
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # Temporarily allow all
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all().select_related('supplier')
     serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # Temporarily allow all
 
     @action(detail=False, methods=['get'])
     def low_stock(self, request):
@@ -37,7 +37,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().select_related('product', 'user')
     serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # Temporarily allow all
 
     def get_queryset(self):
         queryset = super().get_queryset()

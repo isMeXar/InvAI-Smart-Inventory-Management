@@ -37,6 +37,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import AIInsights from '@/components/shared/AIInsights';
+import { suppliersAPI, productsAPI } from '@/lib/api';
 
 interface Supplier {
   id: number;
@@ -75,14 +76,12 @@ const Suppliers = () => {
 
   const fetchData = async () => {
     try {
-      const [suppliersRes, productsRes] = await Promise.all([
-        fetch('/data/suppliers.json'),
-        fetch('/data/products.json')
+      const [suppliersData, productsData] = await Promise.all([
+        suppliersAPI.getAll(),
+        productsAPI.getAll()
       ]);
-      const suppliersData = await suppliersRes.json();
-      const productsData = await productsRes.json();
-      setSuppliers(suppliersData);
-      setProducts(productsData);
+      setSuppliers(suppliersData.results || suppliersData);
+      setProducts(productsData.results || productsData);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -227,14 +226,20 @@ const Suppliers = () => {
               </div>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>{t.cancel}</Button>
-                <Button onClick={() => {
-                  console.log('Adding supplier:', newSupplier);
-                  setIsAddModalOpen(false);
-                  setNewSupplier({
-                    name: '',
-                    contact: '',
-                    phone: ''
-                  });
+                <Button onClick={async () => {
+                  try {
+                    await suppliersAPI.create(newSupplier);
+                    setIsAddModalOpen(false);
+                    setNewSupplier({
+                      name: '',
+                      contact: '',
+                      phone: ''
+                    });
+                    // Refresh the data
+                    fetchData();
+                  } catch (error) {
+                    console.error('Error adding supplier:', error);
+                  }
                 }}>{t.add}</Button>
               </div>
             </DialogContent>
@@ -490,7 +495,21 @@ const Suppliers = () => {
                           <Edit className="h-4 w-4" />
                         </Button>
 
-                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={async () => {
+                            if (confirm('Are you sure you want to delete this supplier?')) {
+                              try {
+                                await suppliersAPI.delete(supplier.id);
+                                fetchData(); // Refresh the data
+                              } catch (error) {
+                                console.error('Error deleting supplier:', error);
+                              }
+                            }
+                          }}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -638,10 +657,17 @@ const Suppliers = () => {
           </div>
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>{t.cancel}</Button>
-            <Button onClick={() => {
-              console.log('Updating supplier:', editSupplier);
-              setSuppliers(prev => prev.map(s => s.id === selectedSupplier?.id ? { ...s, ...editSupplier } : s));
-              setIsEditModalOpen(false);
+            <Button onClick={async () => {
+              try {
+                if (selectedSupplier) {
+                  await suppliersAPI.update(selectedSupplier.id, editSupplier);
+                  setIsEditModalOpen(false);
+                  // Refresh the data
+                  fetchData();
+                }
+              } catch (error) {
+                console.error('Error updating supplier:', error);
+              }
             }}>{t.edit}</Button>
           </div>
         </DialogContent>

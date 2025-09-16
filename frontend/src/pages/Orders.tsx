@@ -50,13 +50,18 @@ import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, LineChart, L
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import AIInsights from '@/components/shared/AIInsights';
+import { ordersAPI, productsAPI, usersAPI } from '@/lib/api';
 
 interface Order {
   id: number;
-  productId: number;
-  userId: number;
+  product: number;
+  product_name?: string;
+  user: number;
+  user_name?: string;
   quantity: number;
   status: 'Shipped' | 'Processing' | 'Delivered' | 'Pending';
+  total_price?: number;
+  date?: string;
 }
 
 interface Product {
@@ -91,8 +96,8 @@ const Orders = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [newOrder, setNewOrder] = useState({
-    productId: '',
-    userId: '',
+    product: '',
+    user: '',
     quantity: '',
     status: 'Pending'
   });
@@ -103,17 +108,14 @@ const Orders = () => {
 
   const fetchData = async () => {
     try {
-      const [ordersRes, productsRes, usersRes] = await Promise.all([
-        fetch('/data/orders.json'),
-        fetch('/data/products.json'),
-        fetch('/data/users.json')
+      const [ordersData, productsData, usersData] = await Promise.all([
+        ordersAPI.getAll(),
+        productsAPI.getAll(),
+        usersAPI.getAll()
       ]);
-      const ordersData = await ordersRes.json();
-      const productsData = await productsRes.json();
-      const usersData = await usersRes.json();
-      setOrders(ordersData);
-      setProducts(productsData);
-      setUsers(usersData);
+      setOrders(ordersData.results || ordersData);
+      setProducts(productsData.results || productsData);
+      setUsers(usersData.results || usersData);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -130,13 +132,14 @@ const Orders = () => {
   };
 
   const getOrderValue = (order: Order) => {
-    const product = getProduct(order.productId);
+    if (order.total_price) return order.total_price;
+    const product = getProduct(order.product);
     return product ? product.price * order.quantity : 0;
   };
 
   const filteredOrders = orders.filter(order => {
-    const product = getProduct(order.productId);
-    const user = getUser(order.userId);
+    const product = getProduct(order.product);
+    const user = getUser(order.user);
     const matchesSearch = product?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.id.toString().includes(searchTerm);
@@ -190,7 +193,7 @@ const Orders = () => {
 
   const getOrdersByProductData = () => {
     const productOrders = products.map(product => {
-      const orderCount = orders.filter(order => order.productId === product.id).length;
+      const orderCount = orders.filter(order => order.product === product.id).length;
       return {
         name: product.name.length > 10 ? product.name.substring(0, 10) + '...' : product.name, // for X-axis
         fullName: product.name, // full name for tooltip
@@ -268,7 +271,7 @@ const Orders = () => {
               <div className="grid gap-4 py-4">
                 <div>
                   <Label htmlFor="product">{t.product}</Label>
-                  <Select value={newOrder.productId} onValueChange={(value) => setNewOrder({ ...newOrder, productId: value })}>
+                  <Select value={newOrder.product} onValueChange={(value) => setNewOrder({ ...newOrder, productId: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder={t.selectProduct} />
                     </SelectTrigger>
@@ -283,7 +286,7 @@ const Orders = () => {
                 </div>
                 <div>
                   <Label htmlFor="employee">Employee</Label>
-                  <Select value={newOrder.userId} onValueChange={(value) => setNewOrder({ ...newOrder, userId: value })}>
+                  <Select value={newOrder.user} onValueChange={(value) => setNewOrder({ ...newOrder, userId: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder={t.selectEmployee} />
                     </SelectTrigger>
@@ -668,8 +671,8 @@ const Orders = () => {
             </TableHeader>
             <TableBody>
               {filteredOrders.map((order) => {
-                const product = getProduct(order.productId);
-                const user = getUser(order.userId);
+                const product = getProduct(order.product);
+                const user = getUser(order.user);
                 return (
                   <TableRow key={order.id}>
                     <TableCell>
@@ -728,8 +731,8 @@ const Orders = () => {
                             onClick={() => {
                               setSelectedOrder(order);
                               setNewOrder({
-                                productId: order.productId.toString(),
-                                userId: order.userId.toString(),
+                                productId: order.product.toString(),
+                                userId: order.user.toString(),
                                 quantity: order.quantity.toString(),
                                 status: order.status
                               });
@@ -919,7 +922,7 @@ const Orders = () => {
             <div>
               <Label htmlFor="edit-product">{t.product}</Label>
               <Select
-                value={newOrder.productId}
+                value={newOrder.product}
                 onValueChange={(value) =>
                   setNewOrder({ ...newOrder, productId: value })
                 }
@@ -950,7 +953,7 @@ const Orders = () => {
                 </div>
               </div>
               <Select
-                value={newOrder.userId}
+                value={newOrder.user}
                 onValueChange={(value) => setNewOrder({ ...newOrder, userId: value })}
               >
                 <SelectTrigger>

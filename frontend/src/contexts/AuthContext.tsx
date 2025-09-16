@@ -41,26 +41,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in by checking backend session
-    const checkAuthStatus = async () => {
-      try {
-        const userData = await authAPI.getCurrentUser();
-        // Transform backend user data to frontend format
-        const user: User = {
-          ...userData,
-          name: `${userData.first_name} ${userData.last_name}`.trim() || userData.username,
-          profilePic: userData.profile_pic || `https://randomuser.me/api/portraits/${userData.first_name === 'Alice' || userData.first_name === 'Diana' ? 'women' : 'men'}/1.jpg`
-        };
-        setUser(user);
-      } catch (error) {
-        // User is not authenticated
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuthStatus();
+    // Don't automatically check auth status on page load
+    // This prevents auto-login behavior
+    setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {

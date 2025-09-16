@@ -51,22 +51,32 @@ interface Product {
   category: string;
   quantity: number;
   price: number;
-  supplierId: number;
-  minStock?: number;
+  supplier: number;
+  supplier_name?: string;
+  min_stock?: number;
   description?: string;
+  stock_level?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface Supplier {
   id: number;
   name: string;
+  contact?: string;
+  phone?: string;
 }
 
 interface Order {
   id: number;
-  productId: number;
-  userId: number;
+  product: number;
+  product_name?: string;
+  user: number;
+  user_name?: string;
   quantity: number;
   status: string;
+  total_price?: number;
+  date?: string;
 }
 
 const Products = () => {
@@ -109,21 +119,15 @@ const Products = () => {
 
   const fetchData = async () => {
     try {
-      const [productsRes, suppliersRes, ordersRes] = await Promise.all([
-        fetch('/data/products.json'),
-        fetch('/data/suppliers.json'),
-        fetch('/data/orders.json')
-      ]);
-
       const [productsData, suppliersData, ordersData] = await Promise.all([
-        productsRes.json(),
-        suppliersRes.json(),
-        ordersRes.json()
+        productsAPI.getAll(),
+        suppliersAPI.getAll(),
+        ordersAPI.getAll()
       ]);
 
-      setProducts(productsData);
-      setSuppliers(suppliersData);
-      setOrders(ordersData);
+      setProducts(productsData.results || productsData);
+      setSuppliers(suppliersData.results || suppliersData);
+      setOrders(ordersData.results || ordersData);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -139,7 +143,7 @@ const Products = () => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
-    const matchesSupplier = supplierFilter === 'all' || product.supplierId.toString() === supplierFilter;
+    const matchesSupplier = supplierFilter === 'all' || product.supplier.toString() === supplierFilter;
     const matchesStock = stockFilter === 'all' ||
       (stockFilter === 'low' && product.quantity < 50) ||
       (stockFilter === 'sufficient' && product.quantity >= 50);
@@ -154,7 +158,7 @@ const Products = () => {
 
   const getItemsSold = (productId: number) => {
     return orders
-      .filter(order => order.productId === productId && (order.status === 'Delivered'))
+      .filter(order => order.product === productId && (order.status === 'Delivered'))
       .reduce((total, order) => total + order.quantity, 0);
   };
 
@@ -213,10 +217,10 @@ const Products = () => {
     setEditProduct({
       name: product.name,
       category: product.category,
-      supplier: product.supplierId.toString(),
+      supplier: product.supplier.toString(),
       price: product.price.toString(),
       quantity: product.quantity.toString(),
-      minStock: product.minStock?.toString() || '',
+      minStock: product.min_stock?.toString() || '',
       description: product.description || ''
     });
     setIsEditModalOpen(true);
@@ -664,7 +668,7 @@ const Products = () => {
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell className='hidden md:table-cell'>{product.category}</TableCell>
-                      <TableCell className='hidden lg:table-cell'>{getSupplierName(product.supplierId)}</TableCell>
+                      <TableCell className='hidden lg:table-cell'>{product.supplier_name || getSupplierName(product.supplier)}</TableCell>
                       <TableCell className='hidden md:table-cell'>{product.quantity.toLocaleString()}</TableCell>
                       <TableCell className='hidden lg:table-cell'>${product.price.toLocaleString()}</TableCell>
                       <TableCell className='hidden sm:table-cell'>
@@ -748,7 +752,7 @@ const Products = () => {
                 </div>
                 <div>
                   <Label>{t.supplier}</Label>
-                  <p className="text-foreground font-medium">{getSupplierName(selectedProduct.supplierId)}</p>
+                  <p className="text-foreground font-medium">{selectedProduct.supplier_name || getSupplierName(selectedProduct.supplier)}</p>
                 </div>
                 <div>
                   <Label>{t.price}</Label>

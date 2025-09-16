@@ -15,6 +15,7 @@ const makeRequest = async (url: string, options: RequestInit = {}) => {
     credentials: 'include', // Include cookies for session authentication
     headers: {
       'Content-Type': 'application/json',
+      'X-CSRFToken': '', // Disable CSRF for now
       ...options.headers,
     },
     ...options,

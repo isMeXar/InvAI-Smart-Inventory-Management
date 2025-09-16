@@ -99,7 +99,7 @@ const App = () => (
                 <Route path="/products" element={<Navigate to="/dashboard/products" />} />
                 <Route path="/suppliers" element={<Navigate to="/dashboard/suppliers" />} />
                 <Route path="/orders" element={<Navigate to="/dashboard/orders" />} />
-                <Route path="/forecasts" element={<Navigate to="/dashboard/forecasts" />} />
+{/* <Route path="/forecasts" element={<Navigate to="/dashboard/forecasts" />} /> */}
                 <Route path="/users" element={<Navigate to="/dashboard/users" />} />
                 <Route path="/profile" element={<Navigate to="/dashboard/profile" />} />
                 <Route path="/settings" element={<Navigate to="/dashboard/settings" />} />
