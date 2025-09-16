@@ -37,7 +37,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import AIInsights from '@/components/shared/AIInsights';
-import { suppliersAPI, productsAPI } from '@/lib/api';
+import { suppliersAPI, productsAPI, ordersAPI } from '@/lib/api';
 
 interface Supplier {
   id: number;
@@ -52,7 +52,20 @@ interface Product {
   category: string;
   quantity: number;
   price: number;
-  supplierId: number;
+  supplier: number;
+  supplier_name: string;
+}
+
+interface Order {
+  id: number;
+  product: number;
+  product_name: string;
+  user: number;
+  user_name: string;
+  quantity: number;
+  status: string;
+  total_price: string;
+  date: string;
 }
 
 const Suppliers = () => {
@@ -60,6 +73,7 @@ const Suppliers = () => {
   const { t } = useLanguage();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -76,12 +90,14 @@ const Suppliers = () => {
 
   const fetchData = async () => {
     try {
-      const [suppliersData, productsData] = await Promise.all([
+      const [suppliersData, productsData, ordersData] = await Promise.all([
         suppliersAPI.getAll(),
-        productsAPI.getAll()
+        productsAPI.getAll(),
+        ordersAPI.getAll()
       ]);
       setSuppliers(suppliersData.results || suppliersData);
       setProducts(productsData.results || productsData);
+      setOrders(ordersData.results || ordersData);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -95,12 +111,35 @@ const Suppliers = () => {
   );
 
   const getProductsBySupplier = (supplierId: number) => {
-    return products.filter(product => product.supplierId === supplierId);
+    return products.filter(product => product.supplier === supplierId);
   };
 
   const getSupplierRevenue = (supplierId: number) => {
+    // Get all products for this supplier
     const supplierProducts = getProductsBySupplier(supplierId);
-    return supplierProducts.reduce((total, product) => total + (product.price * Math.floor(product.quantity * 0.1)), 0);
+    const supplierProductIds = supplierProducts.map(p => p.id);
+
+    // Get all orders for products from this supplier
+    const supplierOrders = orders.filter(order =>
+      supplierProductIds.includes(order.product)
+    );
+
+    // Calculate total revenue from actual orders
+    return supplierOrders.reduce((total, order) => {
+      if (order.total_price) {
+        return total + parseFloat(order.total_price);
+      }
+      // Fallback calculation if total_price is missing
+      const product = supplierProducts.find(p => p.id === order.product);
+      const price = product ? parseFloat(product.price.toString()) : 0;
+      return total + (price * order.quantity);
+    }, 0);
+  };
+
+  const getSupplierOrderCount = (supplierId: number) => {
+    const supplierProducts = getProductsBySupplier(supplierId);
+    const supplierProductIds = supplierProducts.map(p => p.id);
+    return orders.filter(order => supplierProductIds.includes(order.product)).length;
   };
 
   const getSupplierDistributionData = () => {
@@ -427,7 +466,8 @@ const Suppliers = () => {
                 <TableHead>{t.supplier}</TableHead>
                 <TableHead className='hidden sm:table-cell'>{t.contactInformation}</TableHead>
                 <TableHead className='hidden md:table-cell'>{t.products}</TableHead>
-                {canViewRevenue && <TableHead className='hidden lg:table-cell'>{t.revenue}</TableHead>}
+                <TableHead className='hidden lg:table-cell'>Orders</TableHead>
+                {canViewRevenue && <TableHead className='hidden xl:table-cell'>{t.revenue}</TableHead>}
                 {canEditSuppliers && <TableHead className="text-right">{t.actions}</TableHead>}
               </TableRow>
             </TableHeader>
@@ -455,11 +495,15 @@ const Suppliers = () => {
                   <TableCell className='hidden md:table-cell'>
                     <div className="text-sm">
                       <span className="font-medium">{getProductsBySupplier(supplier.id).length}</span>
-                      {/* <span className="text-muted-foreground"> {t.products}</span> */}
+                    </div>
+                  </TableCell>
+                  <TableCell className='hidden lg:table-cell'>
+                    <div className="text-sm">
+                      <span className="font-medium">{getSupplierOrderCount(supplier.id)}</span>
                     </div>
                   </TableCell>
                   {canViewRevenue && (
-                    <TableCell className='hidden lg:table-cell'>
+                    <TableCell className='hidden xl:table-cell'>
                       <div className="font-medium">
                         ${getSupplierRevenue(supplier.id).toLocaleString()}
                       </div>
@@ -598,16 +642,22 @@ const Suppliers = () => {
 
 
               {/* Stats */}
-              <div className="flex gap-4">
-                <div className="flex-1 p-3 bg-muted rounded-lg flex flex-col items-center">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-muted rounded-lg flex flex-col items-center">
                   <p className="text-sm text-muted-foreground">{t.products}</p>
                   <p className="text-lg font-bold text-foreground">
                     {getProductsBySupplier(selectedSupplier.id).length}
                   </p>
                 </div>
-                <div className="flex-1 p-3 bg-muted rounded-lg flex flex-col items-center">
-                  <p className="text-sm text-muted-foreground">{t.revenue}</p>
+                <div className="p-3 bg-muted rounded-lg flex flex-col items-center">
+                  <p className="text-sm text-muted-foreground">Orders</p>
                   <p className="text-lg font-bold text-foreground">
+                    {getSupplierOrderCount(selectedSupplier.id)}
+                  </p>
+                </div>
+                <div className="col-span-2 p-3 bg-muted rounded-lg flex flex-col items-center">
+                  <p className="text-sm text-muted-foreground">{t.revenue}</p>
+                  <p className="text-xl font-bold text-foreground">
                     ${getSupplierRevenue(selectedSupplier.id).toLocaleString()}
                   </p>
                 </div>

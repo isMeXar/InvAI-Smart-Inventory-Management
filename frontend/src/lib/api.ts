@@ -28,14 +28,14 @@ const makeRequest = async (url: string, options: RequestInit = {}) => {
 // Auth API
 export const authAPI = {
   login: async (email: string, password: string) => {
-    return makeRequest('/auth/users/login/', {
+    return makeRequest('/auth/login/', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
   },
 
   logout: async () => {
-    return makeRequest('/auth/users/logout/', { method: 'POST' });
+    return makeRequest('/auth/logout/', { method: 'POST' });
   },
 
   getCurrentUser: async () => {

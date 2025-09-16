@@ -193,18 +193,40 @@ const Products = () => {
     fill: 'hsl(142 76% 46% / 0.8)'
   }));
 
-  const handleAddProduct = () => {
-    console.log('Adding product:', addProduct);
-    setIsAddModalOpen(false);
-    setAddProduct({
-      name: '',
-      category: '',
-      supplier: '',
-      price: '',
-      quantity: '',
-      minStock: '',
-      description: ''
-    });
+  const handleAddProduct = async () => {
+    // Validate required fields
+    if (!addProduct.name || !addProduct.category || !addProduct.supplier || !addProduct.price || !addProduct.quantity) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      const productData = {
+        name: addProduct.name,
+        category: addProduct.category,
+        supplier: parseInt(addProduct.supplier),
+        price: parseFloat(addProduct.price),
+        quantity: parseInt(addProduct.quantity),
+        min_stock: addProduct.minStock ? parseInt(addProduct.minStock) : 10,
+        description: addProduct.description
+      };
+
+      await productsAPI.create(productData);
+      await fetchData(); // Refresh the product list
+      setIsAddModalOpen(false);
+      setAddProduct({
+        name: '',
+        category: '',
+        supplier: '',
+        price: '',
+        quantity: '',
+        minStock: '',
+        description: ''
+      });
+    } catch (error) {
+      console.error('Error adding product:', error);
+      alert('Error adding product. Please try again.');
+    }
   };
 
   const handleViewProduct = (product: Product) => {
@@ -224,6 +246,17 @@ const Products = () => {
       description: product.description || ''
     });
     setIsEditModalOpen(true);
+  };
+
+  const handleDeleteProduct = async (productId: number) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      try {
+        await productsAPI.delete(productId);
+        await fetchData(); // Refresh the product list
+      } catch (error) {
+        console.error('Error deleting product:', error);
+      }
+    }
   };
 
   const canEdit = user?.role === 'Admin' || user?.role === 'Manager';
@@ -286,7 +319,10 @@ const Products = () => {
                       <SelectValue placeholder={t.selectCategory} />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map(cat => (
+                      <SelectItem value="Electronics">Electronics</SelectItem>
+                      <SelectItem value="Furniture">Furniture</SelectItem>
+                      <SelectItem value="Office Supplies">Office Supplies</SelectItem>
+                      {categories.filter(cat => !['Electronics', 'Furniture', 'Office Supplies'].includes(cat)).map(cat => (
                         <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                       ))}
                     </SelectContent>
@@ -717,6 +753,7 @@ const Products = () => {
                                 variant="outline"
                                 size="sm"
                                 className="text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteProduct(product.id)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -828,7 +865,10 @@ const Products = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map(cat => (
+                  <SelectItem value="Electronics">Electronics</SelectItem>
+                  <SelectItem value="Furniture">Furniture</SelectItem>
+                  <SelectItem value="Office Supplies">Office Supplies</SelectItem>
+                  {categories.filter(cat => !['Electronics', 'Furniture', 'Office Supplies'].includes(cat)).map(cat => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
                 </SelectContent>
@@ -887,9 +927,26 @@ const Products = () => {
           </div>
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>{t.cancel}</Button>
-            <Button onClick={() => {
-              console.log('Updating product:', editProduct);
-              setIsEditModalOpen(false);
+            <Button onClick={async () => {
+              try {
+                if (!selectedProduct) return;
+
+                const productData = {
+                  name: editProduct.name,
+                  category: editProduct.category,
+                  supplier: parseInt(editProduct.supplier),
+                  price: parseFloat(editProduct.price),
+                  quantity: parseInt(editProduct.quantity),
+                  min_stock: editProduct.minStock ? parseInt(editProduct.minStock) : 10,
+                  description: editProduct.description
+                };
+
+                await productsAPI.update(selectedProduct.id, productData);
+                await fetchData(); // Refresh the product list
+                setIsEditModalOpen(false);
+              } catch (error) {
+                console.error('Error updating product:', error);
+              }
             }}>{t.edit}</Button>
           </div>
         </DialogContent>

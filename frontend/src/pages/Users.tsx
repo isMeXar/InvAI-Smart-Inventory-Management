@@ -48,11 +48,15 @@ import { usersAPI, ordersAPI, productsAPI } from '@/lib/api';
 
 interface User {
   id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
   name: string;
   role: 'Admin' | 'Manager' | 'Employee';
   email: string;
-  phone: string;
-  profilePic: string;
+  phone: string | null;
+  profile_pic: string | null;
+  profilePic?: string;
   orders: number;
   revenue: number;
 }
@@ -200,6 +204,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onAddUser, isOpen, onOpenCh
         status: 'Active'
       });
       onOpenChange(false);
+    } else {
+      alert('Please fill in all required fields');
     }
   };
 
@@ -331,20 +337,21 @@ const Users = () => {
       const enrichedUsers = userList.map(user => {
         // Get all orders for this user
         const userOrders = orderList.filter(order => order.user === user.id);
-        
+
         // Calculate total orders
         const totalOrders = userOrders.length;
 
         // Calculate total revenue
         const totalRevenue = userOrders.reduce((sum, order) => {
-          if (order.total_price) return sum + order.total_price;
+          if (order.total_price) return sum + parseFloat(order.total_price);
           const product = productList.find(p => p.id === order.product);
-          const price = product ? product.price : 0;
+          const price = product ? parseFloat(product.price) : 0;
           return sum + (price * order.quantity);
         }, 0);
 
         return {
           ...user,
+          profilePic: user.profile_pic || `https://randomuser.me/api/portraits/${user.first_name === 'Alice' || user.first_name === 'Diana' ? 'women' : 'men'}/1.jpg`,
           orders: totalOrders,
           revenue: totalRevenue
         };
@@ -405,17 +412,30 @@ const Users = () => {
 
   const canEditUsers = user?.role === 'Admin' || user?.role === 'Manager';
 
-  const handleAddUser = (userData: any) => {
-    const newUser = {
-      ...userData,
-      id: users.length + 1,
-      profilePic: '/placeholder.svg',
-      orders: 0,
-      revenue: 0
-    };
-    setUsers([...users, newUser].sort((a, b) => 
-      b.orders - a.orders || b.revenue - a.revenue
-    ));
+  const handleAddUser = async (userData: any) => {
+    try {
+      // Parse the name to first_name and last_name
+      const nameParts = userData.name.split(' ');
+      const first_name = nameParts[0] || '';
+      const last_name = nameParts.slice(1).join(' ') || '';
+
+      const userPayload = {
+        username: userData.email.split('@')[0], // Use email prefix as username
+        first_name,
+        last_name,
+        email: userData.email,
+        password: userData.password,
+        role: userData.role,
+        phone: userData.phone || null,
+        profile_pic: null
+      };
+
+      await usersAPI.create(userPayload);
+      await fetchUsers(); // Refresh the user list
+    } catch (error) {
+      console.error('Error adding user:', error);
+      alert('Error adding user. Please try again.');
+    }
   };
 
   const handleEditUser = (user: User) => {
@@ -428,10 +448,44 @@ const Users = () => {
     setIsViewModalOpen(true);
   };
 
-  const handleUpdateUser = (updatedUser: any) => {
-    setUsers(users.map(user => user.id === updatedUser.id ? { ...user, ...updatedUser } : user)
-      .sort((a, b) => b.orders - a.orders || b.revenue - a.revenue));
-    setIsEditModalOpen(false);
+  const handleUpdateUser = async (updatedUser: any) => {
+    try {
+      if (!selectedUser) return;
+
+      // Parse the name to first_name and last_name
+      const nameParts = updatedUser.name.split(' ');
+      const first_name = nameParts[0] || '';
+      const last_name = nameParts.slice(1).join(' ') || '';
+
+      const userPayload = {
+        username: selectedUser.username, // Keep existing username
+        first_name,
+        last_name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        phone: updatedUser.phone || null,
+        profile_pic: selectedUser.profile_pic
+      };
+
+      await usersAPI.update(selectedUser.id, userPayload);
+      await fetchUsers(); // Refresh the user list
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      alert('Error updating user. Please try again.');
+    }
+  };
+
+  const handleDeleteUser = async (userId: number) => {
+    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      try {
+        await usersAPI.delete(userId);
+        await fetchUsers(); // Refresh the user list
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        alert('Error deleting user. Please try again.');
+      }
+    }
   };
 
   const getMedal = (rank: number) => {
@@ -638,12 +692,16 @@ const Users = () => {
                   <TableCell>{getMedal(index + 1)}</TableCell>
                   <TableCell className="flex items-center space-x-3">
                     <img
-                      src={user.profilePic}
-                      alt={user.name}
+                      src={user.profilePic || `https://randomuser.me/api/portraits/${user.first_name === 'Alice' || user.first_name === 'Diana' ? 'women' : 'men'}/1.jpg`}
+                      alt={user.name || user.username}
                       className="w-10 h-10 rounded-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://randomuser.me/api/portraits/men/1.jpg';
+                      }}
                     />
                     <div>
-                      <div className="font-medium text-foreground">{user.name}</div>
+                      <div className="font-medium text-foreground">{user.name || user.username}</div>
                       <div className="text-sm text-muted-foreground">ID: {user.id}</div>
                     </div>
                   </TableCell>
@@ -658,7 +716,7 @@ const Users = () => {
                       </div>
                       <div className="flex items-center text-sm">
                         <Phone className="h-3 w-3 mr-2 text-muted-foreground" />
-                        {user.phone}
+                        {user.phone || 'No phone'}
                       </div>
                     </div>
                   </TableCell>
@@ -673,7 +731,12 @@ const Users = () => {
                         <Button variant="outline" size="sm" onClick={() => handleEditUser(user)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteUser(user.id)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -716,13 +779,17 @@ const Users = () => {
             <div className="py-4 space-y-6">
               <div className="flex items-center space-x-4">
                 <img
-                  src={selectedUser.profilePic}
-                  alt={selectedUser.name}
+                  src={selectedUser.profilePic || `https://randomuser.me/api/portraits/${selectedUser.first_name === 'Alice' || selectedUser.first_name === 'Diana' ? 'women' : 'men'}/1.jpg`}
+                  alt={selectedUser.name || selectedUser.username}
                   className="w-16 h-16 rounded-full object-cover border-4 border-border"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'https://randomuser.me/api/portraits/men/1.jpg';
+                  }}
                 />
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-lg font-bold text-foreground">{selectedUser.name}</h3>
+                    <h3 className="text-lg font-bold text-foreground">{selectedUser.name || selectedUser.username}</h3>
                     <Badge className={getRoleColor(selectedUser.role)}>{selectedUser.role}</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">ID: {selectedUser.id}</p>
@@ -751,7 +818,7 @@ const Users = () => {
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="text-sm font-medium text-foreground">{t.phone}</p>
-                      <p className="text-sm text-muted-foreground">{selectedUser.phone}</p>
+                      <p className="text-sm text-muted-foreground">{selectedUser.phone || 'No phone number'}</p>
                     </div>
                   </div>
                   <Button
