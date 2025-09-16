@@ -2,15 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Package, 
-  Users, 
-  ShoppingCart, 
-  TrendingUp, 
-  Brain, 
+import {
+  Package,
+  Users,
+  ShoppingCart,
+  TrendingUp,
+  Brain,
   AlertCircle,
   CheckCircle,
-  Clock
+  Clock,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -35,6 +37,9 @@ const Dashboard = () => {
   });
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [alertsPage, setAlertsPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     fetchDashboardData();
@@ -89,7 +94,7 @@ const Dashboard = () => {
       icon: Package,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
-      change: '+12%',
+      change: '+8 from last month',
       changeType: 'positive'
     },
     {
@@ -98,7 +103,7 @@ const Dashboard = () => {
       icon: ShoppingCart,
       color: 'text-warning',
       bgColor: 'bg-warning/10',
-      change: '+8%',
+      change: '+12 from last month',
       changeType: 'positive'
     },
     {
@@ -107,21 +112,36 @@ const Dashboard = () => {
       icon: Users,
       color: 'text-success',
       bgColor: 'bg-success/10',
-      change: '+15%',
+      change: '+3 from last month',
       changeType: 'positive'
     },
     {
       title: t.totalSuppliers,
       value: data.suppliers.length,
       icon: TrendingUp,
-      color: 'text-info',
-      bgColor: 'bg-info/10',
-      change: '+5%',
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100',
+      change: '+2 from last month',
       changeType: 'positive'
     }
   ];
 
-  const recentOrders = data.orders.slice(0, 5);
+  // Pagination for Recent Orders
+  const totalOrdersPages = Math.ceil(data.orders.length / itemsPerPage);
+  const startOrderIndex = (ordersPage - 1) * itemsPerPage;
+  const endOrderIndex = startOrderIndex + itemsPerPage;
+  const paginatedOrders = data.orders.slice(startOrderIndex, endOrderIndex);
+
+  // Pagination for Low Stock Alerts
+  const allAlerts = [
+    ...data.products.filter(p => p.quantity <= 20),
+    ...data.products.filter(p => p.quantity > 20 && p.quantity <= 50)
+  ];
+  const totalAlertsPages = Math.ceil(allAlerts.length / itemsPerPage);
+  const startAlertIndex = (alertsPage - 1) * itemsPerPage;
+  const endAlertIndex = startAlertIndex + itemsPerPage;
+  const paginatedAlerts = allAlerts.slice(startAlertIndex, endAlertIndex);
+
   const lowStockProducts = data.products.filter(p => p.quantity <= 20);
   const warningStockProducts = data.products.filter(p => p.quantity > 20 && p.quantity <= 50);
 
@@ -187,7 +207,7 @@ const Dashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <Card className="hover:shadow-lg transition-shadow duration-300 border-0">
+            <Card className="bg-card/95 backdrop-blur-sm border-0 shadow-lg dark:shadow-none dark:border dark:border-border/40 hover:shadow-xl dark:hover:shadow-none transition-all duration-300">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -200,7 +220,7 @@ const Dashboard = () => {
                     <p className={`text-xs ${
                       stat.changeType === 'positive' ? 'text-success' : 'text-destructive'
                     }`}>
-                      {stat.change} {t.fromLastMonth}
+                      {stat.change}
                     </p>
                   </div>
                   <div className={`p-3 rounded-full ${stat.bgColor}`}>
@@ -221,19 +241,16 @@ const Dashboard = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Card className="border-0">
+          <Card className="h-[550px] flex flex-col bg-card/95 backdrop-blur-sm border-0 shadow-lg dark:shadow-none dark:border dark:border-border/40">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <ShoppingCart className="h-5 w-5 text-primary" />
                 <span>{t.recentOrders}</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentOrders.map((order, index) => {
-                  const product = data.products.find(p => p.id === order.productId);
-                  const user = data.users.find(u => u.id === order.userId);
-                  
+            <CardContent className="flex-1 flex flex-col">
+              <div className="space-y-4 flex-1 overflow-y-auto">
+                {paginatedOrders.map((order, index) => {
                   return (
                     <motion.div
                       key={order.id}
@@ -246,25 +263,62 @@ const Dashboard = () => {
                         {getStatusIcon(order.status)}
                         <div>
                           <p className="text-sm font-medium text-foreground">
-                            {product?.name || 'Unknown Product'}
+                            {order.product?.name || order.product_name || 'Product Not Found'}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {t.orderedBy.replace('{name}', user?.name || t.unknownUser)}
+                            Ordered by {order.user_name || order.user?.name || order.user?.username || 'Employee Not Found'}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium text-foreground">
-                          {t.qty}: {order.quantity}
+                          Qty: {order.quantity}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {t[order.status.toLowerCase()]}
+                          {order.status}
                         </p>
                       </div>
                     </motion.div>
                   );
                 })}
               </div>
+
+              {/* Pagination for Recent Orders */}
+              {totalOrdersPages > 1 && (
+                <div className="flex items-center justify-center space-x-2 mt-4 pt-4 border-t border-border/30">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setOrdersPage(prev => Math.max(prev - 1, 1))}
+                    disabled={ordersPage === 1}
+                    className="p-2 h-8 w-8"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+
+                  {[...Array(totalOrdersPages)].map((_, i) => (
+                    <Button
+                      key={i + 1}
+                      variant={ordersPage === i + 1 ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setOrdersPage(i + 1)}
+                      className="h-8 w-8 p-0 text-xs"
+                    >
+                      {i + 1}
+                    </Button>
+                  ))}
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setOrdersPage(prev => Math.min(prev + 1, totalOrdersPages))}
+                    disabled={ordersPage === totalOrdersPages}
+                    className="p-2 h-8 w-8"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
@@ -275,78 +329,51 @@ const Dashboard = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5 }}
         >
-          <Card className="border-0">
+          <Card className="h-[550px] flex flex-col bg-card/95 backdrop-blur-sm border-0 shadow-lg dark:shadow-none dark:border dark:border-border/40">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <AlertCircle className="h-5 w-5 text-destructive" />
                 <span>{t.lowStockAlerts}</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {lowStockProducts.length > 0 ? (
-                  lowStockProducts.map((product, index) => (
-                    <motion.div
-                      key={product.id}
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 * index }}
-                      className="flex items-center justify-between p-3 bg-destructive/5 border border-destructive/20 rounded-lg"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          {product.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {product.category}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-destructive">
-                          {product.quantity} {t.left}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {t.reorderNeeded}
-                        </p>
-                      </div>
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <CheckCircle className="h-12 w-12 text-success mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground">
-                      {t.allProductsStocked}
-                    </p>
-                  </div>
-                )}
-
-                {warningStockProducts.length > 0 ? (
-                  warningStockProducts.map((product, index) => (
-                    <motion.div
-                      key={product.id}
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 * index }}
-                      className="flex items-center justify-between p-3 bg-warning/5 border border-warning/20 rounded-lg"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          {product.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {product.category}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-warning">
-                          {product.quantity} {t.left}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {t.reorderNeeded}
-                        </p>
-                      </div>
-                    </motion.div>
-                  ))
+            <CardContent className="flex-1 flex flex-col">
+              <div className="space-y-4 flex-1 overflow-y-auto">
+                {paginatedAlerts.length > 0 ? (
+                  paginatedAlerts.map((product, index) => {
+                    const isLowStock = product.quantity <= 20;
+                    return (
+                      <motion.div
+                        key={product.id}
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 * index }}
+                        className={`flex items-center justify-between p-3 border rounded-lg ${
+                          isLowStock
+                            ? 'bg-destructive/5 border-destructive/20'
+                            : 'bg-warning/5 border-warning/20'
+                        }`}
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-foreground">
+                            {product.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {product.category}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-sm font-bold ${
+                            isLowStock ? 'text-destructive' : 'text-warning'
+                          }`}>
+                            {product.quantity} {t.left}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {t.reorderNeeded}
+                          </p>
+                        </div>
+                      </motion.div>
+                    );
+                  })
                 ) : (
                   <div className="text-center py-8">
                     <CheckCircle className="h-12 w-12 text-success mx-auto mb-3" />
@@ -356,6 +383,43 @@ const Dashboard = () => {
                   </div>
                 )}
               </div>
+
+              {/* Pagination for Low Stock Alerts */}
+              {totalAlertsPages > 1 && (
+                <div className="flex items-center justify-center space-x-2 mt-4 pt-4 border-t border-border/30">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setAlertsPage(prev => Math.max(prev - 1, 1))}
+                    disabled={alertsPage === 1}
+                    className="p-2 h-8 w-8"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+
+                  {[...Array(totalAlertsPages)].map((_, i) => (
+                    <Button
+                      key={i + 1}
+                      variant={alertsPage === i + 1 ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setAlertsPage(i + 1)}
+                      className="h-8 w-8 p-0 text-xs"
+                    >
+                      {i + 1}
+                    </Button>
+                  ))}
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setAlertsPage(prev => Math.min(prev + 1, totalAlertsPages))}
+                    disabled={alertsPage === totalAlertsPages}
+                    className="p-2 h-8 w-8"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>

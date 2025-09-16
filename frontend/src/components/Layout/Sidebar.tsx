@@ -28,18 +28,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
   const { t } = useLanguage();
   const location = useLocation();
 
-  const navigation = [
+  const mainNavigation = [
     { name: t.dashboard, href: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Employee'] },
     { name: t.users, href: '/dashboard/users', icon: Users, roles: ['Admin'] },
     { name: t.products, href: '/dashboard/products', icon: Package, roles: ['Admin', 'Manager', 'Employee'] },
     { name: t.suppliers, href: '/dashboard/suppliers', icon: Package2, roles: ['Admin', 'Manager', 'Employee'] },
     { name: t.orders, href: '/dashboard/orders', icon: ShoppingCart, roles: ['Admin', 'Manager', 'Employee'] },
     // { name: t.forecasts, href: '/dashboard/forecasts', icon: TrendingUp, roles: ['Admin', 'Manager'] },
+  ];
+
+  const bottomNavigation = [
     { name: t.profile, href: '/dashboard/profile', icon: UserCog, roles: ['Admin', 'Manager', 'Employee'] },
     { name: t.settings, href: '/dashboard/settings', icon: Settings, roles: ['Admin', 'Manager', 'Employee'] },
   ];
 
-  const filteredNavigation = navigation.filter(item => 
+  const filteredMainNavigation = mainNavigation.filter(item =>
+    item.roles.includes(user?.role || 'Employee')
+  );
+
+  const filteredBottomNavigation = bottomNavigation.filter(item =>
     item.roles.includes(user?.role || 'Employee')
   );
 
@@ -109,9 +116,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
         </motion.div>
       </div>
 
-      {/* Navigation */}
+      {/* Main Navigation */}
       <nav className="relative flex-1 p-4 space-y-3">
-        {filteredNavigation.map((item, index) => {
+        {filteredMainNavigation.map((item, index) => {
           const isActiveRoute = isActive(item.href);
           return (
             <motion.div
@@ -204,6 +211,56 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
             </motion.div>
           </motion.div>
         )}
+
+        {/* Bottom Navigation (Profile & Settings) */}
+        <div className="space-y-3 mb-6 -mx-6 px-4">
+          {filteredBottomNavigation.map((item, index) => {
+            const isActiveRoute = isActive(item.href);
+            return (
+              <motion.div
+                key={item.name}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: (filteredMainNavigation.length + index) * 0.1, duration: 0.4 }}
+              >
+                <NavLink
+                  to={item.href}
+                  className={cn(
+                    "group relative flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
+                    "hover:bg-muted/50",
+                    isActiveRoute
+                      ? "bg-primary/10 text-primary border-l-4 border-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {/* Icon */}
+                  <motion.div
+                    className={cn(
+                      "flex items-center justify-center transition-colors duration-200",
+                      isCollapsed ? "w-full" : "w-6 mr-3"
+                    )}
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <item.icon
+                      className={cn(
+                        "h-5 w-5 flex-shrink-0 transition-colors duration-200",
+                        isActiveRoute ? "text-primary" : "group-hover:text-primary"
+                      )}
+                    />
+                  </motion.div>
+
+                  {/* Text */}
+                  {!isCollapsed && (
+                    <span className="font-medium">
+                      {item.name}
+                    </span>
+                  )}
+                </NavLink>
+              </motion.div>
+            );
+          })}
+        </div>
 
         <motion.div
           whileHover={{ scale: 1.02 }}
