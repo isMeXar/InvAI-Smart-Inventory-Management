@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Users as UsersIcon, 
-  Search, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Shield, 
-  Eye, 
-  Mail, 
+import {
+  Users as UsersIcon,
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  Shield,
+  Eye,
+  Mail,
   Phone,
   Filter,
-  Copy
+  Copy,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -311,14 +315,40 @@ const Users = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortField, setSortField] = useState<string>('id');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  useEffect(() => {
-    filterUsers();
-  }, [users, searchTerm, roleFilter]);
+  // Sort function
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Sort icon helper
+  const getSortIcon = (field: string) => {
+    const isActive = sortField === field;
+    const iconClass = isActive ? "h-4 w-4 text-primary" : "h-4 w-4 text-muted-foreground opacity-50";
+
+    if (isActive) {
+      return sortDirection === 'asc' ? (
+        <ArrowDown className={iconClass} />
+      ) : (
+        <ArrowUp className={iconClass} />
+      );
+    }
+
+    return <ArrowDown className={iconClass} />;
+  };
 
   const fetchUsers = async () => {
     try {
@@ -368,21 +398,58 @@ const Users = () => {
     }
   };
 
-  const filterUsers = () => {
-    let filtered = users.filter(user =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  // Filter, sort and paginate users
+  const filteredAndSortedUsers = users
+    .filter(user => {
+      const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+      return matchesSearch && matchesRole;
+    })
+    .sort((a, b) => {
+      let aValue: any, bValue: any;
 
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter(user => user.role === roleFilter);
-    }
+      switch (sortField) {
+        case 'id':
+          aValue = a.id;
+          bValue = b.id;
+          break;
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'orders':
+          aValue = a.orders;
+          bValue = b.orders;
+          break;
+        case 'revenue':
+          aValue = a.revenue;
+          bValue = b.revenue;
+          break;
+        default:
+          return 0;
+      }
 
-    // Maintain sorting for filtered users (top 10)
-    setFilteredUsers(filtered.sort((a, b) => 
-      b.orders - a.orders || b.revenue - a.revenue
-    ).slice(0, 10));
-  };
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAndSortedUsers.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedUsers = filteredAndSortedUsers.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter, pageSize]);
+
+  // Update filteredUsers for backward compatibility
+  useEffect(() => {
+    setFilteredUsers(filteredAndSortedUsers);
+  }, [users, searchTerm, roleFilter, sortField, sortDirection]);
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -673,23 +740,47 @@ const Users = () => {
             </Select>
           </div>
 
-          {/* User Directory Table (Leaderboard) */}
+          {/* User Directory Table */}
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-16">Rank</TableHead>
-                <TableHead>{t.name}</TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => handleSort('name')}
+                    className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                  >
+                    <span>{t.name}</span>
+                    {getSortIcon('name')}
+                  </button>
+                </TableHead>
                 <TableHead>{t.role}</TableHead>
                 <TableHead className="hidden lg:table-cell">{t.contact}</TableHead>
-                <TableHead className="hidden md:table-cell">Orders</TableHead>
-                <TableHead className="hidden md:table-cell">Revenue</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  <button
+                    onClick={() => handleSort('orders')}
+                    className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                  >
+                    <span>Orders</span>
+                    {getSortIcon('orders')}
+                  </button>
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  <button
+                    onClick={() => handleSort('revenue')}
+                    className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                  >
+                    <span>Revenue</span>
+                    {getSortIcon('revenue')}
+                  </button>
+                </TableHead>
                 {canEditUsers && <TableHead className="text-right">{t.actions}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.slice(0, 10).map((user, index) => (
+              {paginatedUsers.map((user, index) => (
                 <TableRow key={user.id}>
-                  <TableCell>{getMedal(index + 1)}</TableCell>
+                  <TableCell>{getMedal(startIndex + index + 1)}</TableCell>
                   <TableCell className="flex items-center space-x-3">
                     <img
                       src={user.profilePic || `https://randomuser.me/api/portraits/${user.first_name === 'Alice' || user.first_name === 'Diana' ? 'women' : 'men'}/1.jpg`}
@@ -747,7 +838,83 @@ const Users = () => {
             </TableBody>
           </Table>
 
-          {filteredUsers.length === 0 && (
+          {/* Pagination Controls */}
+          {filteredAndSortedUsers.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 pt-4">
+              {/* Page Size Selector */}
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Show</span>
+                <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(parseInt(value))}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground">per page</span>
+              </div>
+
+              {/* Pagination Info */}
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(endIndex, filteredAndSortedUsers.length)} of {filteredAndSortedUsers.length} results
+              </div>
+
+              {/* Pagination Buttons */}
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                {/* Page Numbers */}
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        className="w-8 h-8 p-0 rounded-full"
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {filteredAndSortedUsers.length === 0 && (
             <div className="text-center py-8">
               <UsersIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">{t.userNotFound}</p>

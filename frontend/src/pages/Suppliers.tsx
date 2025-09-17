@@ -14,11 +14,22 @@ import {
   Copy,
   CopyCheck,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -79,6 +90,10 @@ const Suppliers = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortField, setSortField] = useState<string>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -113,6 +128,34 @@ const Suppliers = () => {
     supplier.contact.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Sort function
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Sort icon helper - always show arrow, highlight when active
+  const getSortIcon = (field: string) => {
+    const isActive = sortField === field;
+    const iconClass = isActive ? "h-4 w-4 text-primary" : "h-4 w-4 text-muted-foreground opacity-50";
+
+    if (isActive) {
+      return sortDirection === 'asc' ? (
+        <ArrowDown className={iconClass} />
+      ) : (
+        <ArrowUp className={iconClass} />
+      );
+    }
+
+    // Show neutral arrow when not active
+    return <ArrowDown className={iconClass} />;
+  };
+
+  // Helper functions (must be defined before sorting logic)
   const getProductsBySupplier = (supplierId: number) => {
     return products.filter(product => product.supplier === supplierId);
   };
@@ -144,6 +187,51 @@ const Suppliers = () => {
     const supplierProductIds = supplierProducts.map(p => p.id);
     return orders.filter(order => supplierProductIds.includes(order.product)).length;
   };
+
+  const filteredAndSortedSuppliers = filteredSuppliers
+    .sort((a, b) => {
+      let aValue: any, bValue: any;
+
+      switch (sortField) {
+        case 'id':
+          aValue = a.id;
+          bValue = b.id;
+          break;
+        case 'name':
+          aValue = a.name;
+          bValue = b.name;
+          break;
+        case 'products':
+          aValue = getProductsBySupplier(a.id).length;
+          bValue = getProductsBySupplier(b.id).length;
+          break;
+        case 'orders':
+          aValue = getSupplierOrderCount(a.id);
+          bValue = getSupplierOrderCount(b.id);
+          break;
+        case 'revenue':
+          aValue = getSupplierRevenue(a.id);
+          bValue = getSupplierRevenue(b.id);
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAndSortedSuppliers.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedSuppliers = filteredAndSortedSuppliers.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, pageSize]);
 
   const getSupplierDistributionData = () => {
     const colors = ['hsl(var(--primary))', 'hsl(var(--warning))', 'hsl(var(--success))', 'hsl(var(--accent))'];
@@ -478,16 +566,50 @@ const Suppliers = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t.supplier}</TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => handleSort('name')}
+                    className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                  >
+                    <span>{t.supplier}</span>
+                    {getSortIcon('name')}
+                  </button>
+                </TableHead>
                 <TableHead className='hidden sm:table-cell'>{t.contactInformation}</TableHead>
-                <TableHead className='hidden md:table-cell'>{t.products}</TableHead>
-                <TableHead className='hidden lg:table-cell'>Orders</TableHead>
-                {canViewRevenue && <TableHead className='hidden xl:table-cell'>{t.revenue}</TableHead>}
+                <TableHead className='hidden md:table-cell'>
+                  <button
+                    onClick={() => handleSort('products')}
+                    className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                  >
+                    <span>{t.products}</span>
+                    {getSortIcon('products')}
+                  </button>
+                </TableHead>
+                <TableHead className='hidden lg:table-cell'>
+                  <button
+                    onClick={() => handleSort('orders')}
+                    className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                  >
+                    <span>Orders</span>
+                    {getSortIcon('orders')}
+                  </button>
+                </TableHead>
+                {canViewRevenue && (
+                  <TableHead className='hidden xl:table-cell'>
+                    <button
+                      onClick={() => handleSort('revenue')}
+                      className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                    >
+                      <span>{t.revenue}</span>
+                      {getSortIcon('revenue')}
+                    </button>
+                  </TableHead>
+                )}
                 {canEditSuppliers && <TableHead className="text-right">{t.actions}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSuppliers.map((supplier) => (
+              {paginatedSuppliers.map((supplier) => (
                 <TableRow key={supplier.id}>
                   <TableCell>
                     <div>
@@ -583,17 +705,88 @@ const Suppliers = () => {
             </TableBody>
           </Table>
 
-          {filteredSuppliers.length === 0 && (
+          {filteredAndSortedSuppliers.length === 0 && (
             <div className="text-center py-8">
               <Package2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">{t.supplierNotFound}</p>
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {filteredAndSortedSuppliers.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 pt-4">
+              {/* Page Size Selector */}
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Show</span>
+                <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number(value))}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground">entries</span>
+              </div>
+              {/* Pagination Info */}
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(endIndex, filteredAndSortedSuppliers.length)} of {filteredAndSortedSuppliers.length} results
+              </div>
+              {/* Pagination Buttons */}
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                {/* Page Numbers */}
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        className="w-8 h-8 p-0 rounded-full"
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* AI Insights */}
-      <AIInsights data={suppliers} pageType="suppliers" />
+      <AIInsights data={filteredAndSortedSuppliers} pageType="suppliers" />
 
       {/* View Supplier Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>

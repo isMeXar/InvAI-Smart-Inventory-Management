@@ -39,6 +39,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastActivity, setLastActivity] = useState<number>(Date.now());
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -61,6 +62,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     checkAuthStatus();
   }, []);
+
+  // Track user activity
+  useEffect(() => {
+    const updateActivity = () => {
+      setLastActivity(Date.now());
+    };
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+
+    // Add event listeners for user activity
+    events.forEach(event => {
+      document.addEventListener(event, updateActivity, true);
+    });
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, updateActivity, true);
+      });
+    };
+  }, []);
+
+  // Check for inactivity and auto-logout
+  useEffect(() => {
+    if (!user) return;
+
+    const checkInactivity = () => {
+      const now = Date.now();
+      const inactiveTime = now - lastActivity;
+      const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+
+      if (inactiveTime >= oneHour) {
+        logout();
+      }
+    };
+
+    // Check every minute
+    const intervalId = setInterval(checkInactivity, 60 * 1000);
+
+    return () => clearInterval(intervalId);
+  }, [user, lastActivity]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {

@@ -17,7 +17,11 @@ import {
   CopyCheck,
   ClipboardList,
   Calendar,
-  Package2
+  Package2,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -96,13 +100,18 @@ const Orders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortField, setSortField] = useState<string>('id');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isOwnershipModalOpen, setIsOwnershipModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [newOrder, setNewOrder] = useState({
     product: '',
-    user: '',
+    user: user?.id?.toString() || '',
     quantity: '',
     status: 'Pending'
   });
@@ -110,6 +119,13 @@ const Orders = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Update default user when user context changes
+  useEffect(() => {
+    if (user?.id) {
+      setNewOrder(prev => ({ ...prev, user: user.id.toString() }));
+    }
+  }, [user]);
 
   const fetchData = async () => {
     try {
@@ -142,15 +158,94 @@ const Orders = () => {
     return product ? parseFloat(product.price.toString()) * order.quantity : 0;
   };
 
-  const filteredOrders = orders.filter(order => {
-    const product = getProduct(order.product);
-    const user = getUser(order.user);
-    const matchesSearch = product?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.id.toString().includes(searchTerm);
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Sort function
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const filteredAndSortedOrders = orders
+    .filter(order => {
+      const product = getProduct(order.product);
+      const user = getUser(order.user);
+      const matchesSearch = product?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.id.toString().includes(searchTerm);
+      const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      let aValue: any, bValue: any;
+
+      switch (sortField) {
+        case 'id':
+          aValue = a.id;
+          bValue = b.id;
+          break;
+        case 'product':
+          aValue = getProduct(a.product)?.name || '';
+          bValue = getProduct(b.product)?.name || '';
+          break;
+        case 'user':
+          aValue = getUser(a.user)?.name || '';
+          bValue = getUser(b.user)?.name || '';
+          break;
+        case 'quantity':
+          aValue = a.quantity;
+          bValue = b.quantity;
+          break;
+        case 'status':
+          aValue = a.status;
+          bValue = b.status;
+          break;
+        case 'date':
+          aValue = new Date(a.date || 0);
+          bValue = new Date(b.date || 0);
+          break;
+        case 'total':
+          aValue = getOrderValue(a);
+          bValue = getOrderValue(b);
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAndSortedOrders.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedOrders = filteredAndSortedOrders.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, pageSize]);
+
+  // Sort icon helper - always show arrow, highlight when active
+  const getSortIcon = (field: string) => {
+    const isActive = sortField === field;
+    const iconClass = isActive ? "h-4 w-4 text-primary" : "h-4 w-4 text-muted-foreground opacity-50";
+
+    if (isActive) {
+      return sortDirection === 'asc' ? (
+        <ArrowDown className={iconClass} />
+      ) : (
+        <ArrowUp className={iconClass} />
+      );
+    }
+
+    // Show neutral arrow when not active
+    return <ArrowDown className={iconClass} />;
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -243,7 +338,17 @@ const Orders = () => {
   };
 
   const canEditOrders = user?.role === 'Admin' || user?.role === 'Manager';
+  const canCreateOrders = user?.role === 'Admin' || user?.role === 'Manager' || user?.role === 'Employee';
   const canViewRevenue = user?.role === 'Admin' || user?.role === 'Manager';
+  const canViewOrderDetails = user?.role === 'Admin' || user?.role === 'Manager' || user?.role === 'Employee';
+  const canViewOrderPrices = user?.role === 'Admin' || user?.role === 'Manager' || user?.role === 'Employee';
+
+  // Check if user can edit a specific order
+  const canEditSpecificOrder = (order: Order) => {
+    if (user?.role === 'Admin' || user?.role === 'Manager') return true;
+    if (user?.role === 'Employee' && order.user === user.id) return true;
+    return false;
+  };
   // const [activeFilter, setActiveFilter] = useState<'search' | 'status' | null>(null);
   const [activeFilter, setActiveFilter] = useState<'search' | 'status'>('status');
 
@@ -292,7 +397,7 @@ const Orders = () => {
             {t.trackCustomerOrders}
           </p>
         </div>
-        {canEditOrders && (
+        {canCreateOrders && (
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
               <Button className="bg-gradient-primary hover:opacity-90">
@@ -327,9 +432,9 @@ const Orders = () => {
                       <SelectValue placeholder={t.selectEmployee} />
                     </SelectTrigger>
                     <SelectContent>
-                      {users.map(user => (
-                        <SelectItem key={user.id} value={user.id.toString()}>
-                          {user.name || user.username}
+                      {users.map(userOption => (
+                        <SelectItem key={userOption.id} value={userOption.id.toString()}>
+                          {userOption.name || userOption.username} {userOption.id === user?.id && "(Me)"}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -381,7 +486,7 @@ const Orders = () => {
                     setIsAddModalOpen(false);
                     setNewOrder({
                       product: '',
-                      user: '',
+                      user: user?.id?.toString() || '',
                       quantity: '',
                       status: 'Pending'
                     });
@@ -714,18 +819,76 @@ const Orders = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>{t.product}</TableHead>
-                <TableHead className='hidden lg:table-cell'>{t.employee}</TableHead>
-                <TableHead className='hidden md:table-cell'>{t.quantity}</TableHead>
-                <TableHead className='hidden sm:table-cell'>Date</TableHead>
-                <TableHead>{t.status}</TableHead>
-                {canViewRevenue && <TableHead className='hidden md:table-cell'>{t.total}</TableHead>}
-                {canEditOrders && <TableHead className="text-right">{t.actions}</TableHead>}
+                <TableHead>
+                  <button
+                    onClick={() => handleSort('id')}
+                    className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                  >
+                    <span>ID</span>
+                    {getSortIcon('id')}
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => handleSort('product')}
+                    className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                  >
+                    <span>{t.product}</span>
+                    {getSortIcon('product')}
+                  </button>
+                </TableHead>
+                <TableHead className='hidden lg:table-cell'>
+                  <button
+                    onClick={() => handleSort('user')}
+                    className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                  >
+                    <span>{t.employee}</span>
+                    {getSortIcon('user')}
+                  </button>
+                </TableHead>
+                <TableHead className='hidden md:table-cell'>
+                  <button
+                    onClick={() => handleSort('quantity')}
+                    className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                  >
+                    <span>{t.quantity}</span>
+                    {getSortIcon('quantity')}
+                  </button>
+                </TableHead>
+                <TableHead className='hidden sm:table-cell'>
+                  <button
+                    onClick={() => handleSort('date')}
+                    className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                  >
+                    <span>Date</span>
+                    {getSortIcon('date')}
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => handleSort('status')}
+                    className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                  >
+                    <span>{t.status}</span>
+                    {getSortIcon('status')}
+                  </button>
+                </TableHead>
+                {canViewOrderPrices && (
+                  <TableHead className='hidden md:table-cell'>
+                    <button
+                      onClick={() => handleSort('total')}
+                      className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                    >
+                      <span>{t.total}</span>
+                      {getSortIcon('total')}
+                    </button>
+                  </TableHead>
+                )}
+                <TableHead className="text-right">{t.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredOrders.map((order) => {
+              {paginatedOrders.map((order) => {
                 const product = getProduct(order.product);
                 const user = getUser(order.user);
                 return (
@@ -765,30 +928,30 @@ const Orders = () => {
                         {order.status}
                       </Badge>
                     </TableCell>
-                    {canViewRevenue && (
+                    {canViewOrderPrices && (
                       <TableCell className='hidden md:table-cell'>
                         <div className="font-medium">
                           ${getOrderValue(order).toLocaleString()}
                         </div>
                       </TableCell>
                     )}
-                    {canEditOrders && (
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setIsViewModalOpen(true);
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
+                    <TableCell className="text-right">
+                      <div className="flex justify-end space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setIsViewModalOpen(true);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (canEditSpecificOrder(order)) {
                               setSelectedOrder(order);
                               setNewOrder({
                                 product: order.product.toString(),
@@ -797,41 +960,126 @@ const Orders = () => {
                                 status: order.status
                               });
                               setIsEditModalOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={async () => {
-                              if (confirm('Are you sure you want to delete this order?')) {
-                                try {
-                                  await ordersAPI.delete(order.id);
-                                  setOrders(prevOrders => prevOrders.filter(o => o.id !== order.id));
-                                } catch (error) {
-                                  console.error('Error deleting order:', error);
-                                  alert('Error deleting order. Please try again.');
-                                }
+                            } else {
+                              setSelectedOrder(order);
+                              setIsOwnershipModalOpen(true);
+                            }
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={async () => {
+                            if (!canEditSpecificOrder(order)) {
+                              setSelectedOrder(order);
+                              setIsOwnershipModalOpen(true);
+                              return;
+                            }
+
+                            if (confirm('Are you sure you want to delete this order?')) {
+                              try {
+                                await ordersAPI.delete(order.id);
+                                setOrders(prevOrders => prevOrders.filter(o => o.id !== order.id));
+                              } catch (error) {
+                                console.error('Error deleting order:', error);
+                                alert('Error deleting order. Please try again.');
                               }
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    )}
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
 
-          {filteredOrders.length === 0 && (
+          {filteredAndSortedOrders.length === 0 && (
             <div className="text-center py-8">
               <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">{t.orderNotFound}</p>
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {filteredAndSortedOrders.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 pt-4">
+              {/* Page Size Selector */}
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Show</span>
+                <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(parseInt(value))}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground">per page</span>
+              </div>
+
+              {/* Pagination Info */}
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(endIndex, filteredAndSortedOrders.length)} of {filteredAndSortedOrders.length} results
+              </div>
+
+              {/* Pagination Buttons */}
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                {/* Page Numbers */}
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        className="w-8 h-8 p-0 rounded-full"
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
@@ -1003,57 +1251,81 @@ const Orders = () => {
             <DialogTitle>{t.editOrder}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            {/* Product */}
-            <div>
-              <Label htmlFor="edit-product">{t.product}</Label>
-              <Select
-                value={newOrder.product}
-                onValueChange={(value) =>
-                  setNewOrder({ ...newOrder, product: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {products.map((product) => (
-                    <SelectItem key={product.id} value={product.id.toString()}>
-                      {product.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {/* Employee */}
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Label htmlFor="edit-employee">{t.employee}</Label>
-                {/* Exclamation mark like in ViewModal */}
-                <div className="w-5 h-5 flex items-center justify-center rounded-full border-2 bg-muted text-muted-foreground cursor-pointer relative group">
-                  <span className="text-xs font-bold">!</span> {/* Tooltip */}
-                  <div className="absolute left-1/2 top-full mt-1 -translate-x-1/2 min-w-[200px] max-w-[90vw] p-2 rounded-md bg-gray-800 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity z-50 text-left break-words">
-                    {t.userTooltip}
-                  </div>
-
-                </div>
+            {/* Product - Only show if user can edit all orders */}
+            {canEditOrders && (
+              <div>
+                <Label htmlFor="edit-product">{t.product}</Label>
+                <Select
+                  value={newOrder.product}
+                  onValueChange={(value) =>
+                    setNewOrder({ ...newOrder, product: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.map((product) => (
+                      <SelectItem key={product.id} value={product.id.toString()}>
+                        {product.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Select
-                value={newOrder.user}
-                onValueChange={(value) => setNewOrder({ ...newOrder, user: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t.selectEmployee} />
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id.toString()}>
+            )}
 
-                      {user.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Show product as read-only for employees */}
+            {!canEditOrders && selectedOrder && (
+              <div>
+                <Label>{t.product}</Label>
+                <div className="p-2 bg-muted rounded-md text-sm text-foreground">
+                  {getProduct(selectedOrder.product)?.name || 'Unknown Product'}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Product cannot be changed</p>
+              </div>
+            )}
+
+            {/* Employee - Only show if user can edit all orders */}
+            {canEditOrders && (
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Label htmlFor="edit-employee">{t.employee}</Label>
+                  <div className="w-5 h-5 flex items-center justify-center rounded-full border-2 bg-muted text-muted-foreground cursor-pointer relative group">
+                    <span className="text-xs font-bold">!</span>
+                    <div className="absolute left-1/2 top-full mt-1 -translate-x-1/2 min-w-[200px] max-w-[90vw] p-2 rounded-md bg-gray-800 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity z-50 text-left break-words">
+                      {t.userTooltip}
+                    </div>
+                  </div>
+                </div>
+                <Select
+                  value={newOrder.user}
+                  onValueChange={(value) => setNewOrder({ ...newOrder, user: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t.selectEmployee} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map((userOption) => (
+                      <SelectItem key={userOption.id} value={userOption.id.toString()}>
+                        {userOption.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Show employee as read-only for employees */}
+            {!canEditOrders && selectedOrder && (
+              <div>
+                <Label>{t.employee}</Label>
+                <div className="p-2 bg-muted rounded-md text-sm text-foreground">
+                  {getUser(selectedOrder.user)?.name || 'Unknown Employee'}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Employee assignment cannot be changed</p>
+              </div>
+            )}
             {/* Quantity */}
             <div>
               <Label htmlFor="edit-quantity">{t.quantity}</Label>
@@ -1119,7 +1391,51 @@ const Orders = () => {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>;
+      </Dialog>
+
+      {/* Ownership Restriction Modal */}
+      <Dialog open={isOwnershipModalOpen} onOpenChange={setIsOwnershipModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-warning/20 flex items-center justify-center">
+                <span className="text-warning text-lg">⚠️</span>
+              </div>
+              Access Restricted
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <p className="text-foreground">
+              You can only edit or delete orders that you created yourself.
+            </p>
+            <div className="bg-muted p-4 rounded-lg space-y-2">
+              <p className="text-sm text-muted-foreground">
+                <strong>Reason:</strong> This policy ensures order integrity and prevents accidental modifications or deletions to orders handled by other employees.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                <strong>What you can do:</strong>
+              </p>
+              <ul className="text-sm text-muted-foreground ml-4 space-y-1">
+                <li>• View order details (click the eye icon)</li>
+                <li>• Edit/delete orders you created</li>
+                <li>• Contact a Manager or Admin for help with other orders</li>
+              </ul>
+            </div>
+            {selectedOrder && (
+              <div className="border-t pt-4">
+                <p className="text-sm text-muted-foreground">
+                  <strong>This order was created by:</strong> {getUser(selectedOrder.user)?.name || 'Unknown Employee'}
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => setIsOwnershipModalOpen(false)}>
+              Got it
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
     </motion.div>
   );

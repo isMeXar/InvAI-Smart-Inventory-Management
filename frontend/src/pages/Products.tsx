@@ -38,7 +38,13 @@ import {
   TrendingUp,
   AlertTriangle,
   DollarSign,
-  Filter, AlertCircle, CheckCircle
+  Filter,
+  AlertCircle,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -90,6 +96,10 @@ const Products = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [supplierFilter, setSupplierFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortField, setSortField] = useState<string>('id');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -139,18 +149,33 @@ const Products = () => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
-    const matchesSupplier = supplierFilter === 'all' || product.supplier.toString() === supplierFilter;
-    const matchesStock = stockFilter === 'all' ||
-      (stockFilter === 'low' && product.quantity < 50) ||
-      (stockFilter === 'sufficient' && product.quantity >= 50);
+  // Sort function
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
-    return matchesSearch && matchesCategory && matchesSupplier && matchesStock;
-  });
+  // Sort icon helper
+  const getSortIcon = (field: string) => {
+    const isActive = sortField === field;
+    const iconClass = isActive ? "h-4 w-4 text-primary" : "h-4 w-4 text-muted-foreground opacity-50";
 
+    if (isActive) {
+      return sortDirection === 'asc' ? (
+        <ArrowDown className={iconClass} />
+      ) : (
+        <ArrowUp className={iconClass} />
+      );
+    }
+
+    return <ArrowDown className={iconClass} />;
+  };
+
+  // Helper functions (must be defined before sorting logic)
   const getSupplierName = (supplierId: number) => {
     const supplier = suppliers.find(s => s.id === supplierId);
     return supplier?.name || 'Unknown';
@@ -168,6 +193,74 @@ const Products = () => {
     const itemsSold = getItemsSold(productId);
     return itemsSold * product.price;
   };
+
+  const filteredAndSortedProducts = products
+    .filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+      const matchesSupplier = supplierFilter === 'all' || product.supplier.toString() === supplierFilter;
+      const matchesStock = stockFilter === 'all' ||
+        (stockFilter === 'low' && product.quantity < 50) ||
+        (stockFilter === 'sufficient' && product.quantity >= 50);
+
+      return matchesSearch && matchesCategory && matchesSupplier && matchesStock;
+    })
+    .sort((a, b) => {
+      let aValue: any, bValue: any;
+
+      switch (sortField) {
+        case 'id':
+          aValue = a.id;
+          bValue = b.id;
+          break;
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'category':
+          aValue = a.category.toLowerCase();
+          bValue = b.category.toLowerCase();
+          break;
+        case 'supplier':
+          aValue = getSupplierName(a.supplier).toLowerCase();
+          bValue = getSupplierName(b.supplier).toLowerCase();
+          break;
+        case 'quantity':
+          aValue = a.quantity;
+          bValue = b.quantity;
+          break;
+        case 'price':
+          aValue = a.price;
+          bValue = b.price;
+          break;
+        case 'sold':
+          aValue = getItemsSold(a.id);
+          bValue = getItemsSold(b.id);
+          break;
+        case 'revenue':
+          aValue = getProductRevenue(a.id);
+          bValue = getProductRevenue(b.id);
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAndSortedProducts.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedProducts = filteredAndSortedProducts.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, categoryFilter, supplierFilter, stockFilter, pageSize]);
 
 
   const getStockLevel = (quantity: number) => {
@@ -609,7 +702,7 @@ const Products = () => {
       {/* Products Table */}
       <Card className="border-0 dark:border shadow-lg">
         <CardHeader>
-          <CardTitle>{t.productInventory} ({filteredProducts.length} {t.products})</CardTitle>
+          <CardTitle>{t.productInventory} ({filteredAndSortedProducts.length} {t.products})</CardTitle>
         </CardHeader>
         {/* Filters */}
         <Card className="border-0 shadow-sm">
@@ -686,19 +779,79 @@ const Products = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead className='hidden md:table-cell'>{t.category}</TableHead>
-                  <TableHead className='hidden lg:table-cell'>{t.supplier}</TableHead>
-                  <TableHead className='hidden md:table-cell'>{t.quantity}</TableHead>
-                  <TableHead className='hidden lg:table-cell'>{t.price}</TableHead>
+                  <TableHead>
+                    <button
+                      onClick={() => handleSort('name')}
+                      className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                    >
+                      <span>Product</span>
+                      {getSortIcon('name')}
+                    </button>
+                  </TableHead>
+                  <TableHead className='hidden md:table-cell'>
+                    <button
+                      onClick={() => handleSort('category')}
+                      className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                    >
+                      <span>{t.category}</span>
+                      {getSortIcon('category')}
+                    </button>
+                  </TableHead>
+                  <TableHead className='hidden lg:table-cell'>
+                    <button
+                      onClick={() => handleSort('supplier')}
+                      className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                    >
+                      <span>{t.supplier}</span>
+                      {getSortIcon('supplier')}
+                    </button>
+                  </TableHead>
+                  <TableHead className='hidden md:table-cell'>
+                    <button
+                      onClick={() => handleSort('quantity')}
+                      className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                    >
+                      <span>{t.quantity}</span>
+                      {getSortIcon('quantity')}
+                    </button>
+                  </TableHead>
+                  <TableHead className='hidden lg:table-cell'>
+                    <button
+                      onClick={() => handleSort('price')}
+                      className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                    >
+                      <span>{t.price}</span>
+                      {getSortIcon('price')}
+                    </button>
+                  </TableHead>
                   <TableHead className='hidden sm:table-cell'>{t.stockLevel}</TableHead>
-                  {canViewRevenue && <TableHead className='hidden lg:table-cell'>{t.sold}</TableHead>}
-                  {canViewRevenue && <TableHead className='hidden lg:table-cell'>{t.revenue}</TableHead>}
+                  {canViewRevenue && (
+                    <TableHead className='hidden lg:table-cell'>
+                      <button
+                        onClick={() => handleSort('sold')}
+                        className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                      >
+                        <span>{t.sold}</span>
+                        {getSortIcon('sold')}
+                      </button>
+                    </TableHead>
+                  )}
+                  {canViewRevenue && (
+                    <TableHead className='hidden lg:table-cell'>
+                      <button
+                        onClick={() => handleSort('revenue')}
+                        className="flex items-center justify-between w-full hover:text-primary transition-colors"
+                      >
+                        <span>{t.revenue}</span>
+                        {getSortIcon('revenue')}
+                      </button>
+                    </TableHead>
+                  )}
                   <TableHead>{t.actions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.map((product) => {
+                {paginatedProducts.map((product) => {
                   const stockLevel = getStockLevel(product.quantity);
                   return (
                     <TableRow key={product.id}>
@@ -766,6 +919,82 @@ const Products = () => {
                 })}
               </TableBody>
             </Table>
+
+            {/* Pagination Controls */}
+            {filteredAndSortedProducts.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 pt-4">
+                {/* Page Size Selector */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-muted-foreground">Show</span>
+                  <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(parseInt(value))}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm text-muted-foreground">per page</span>
+                </div>
+
+                {/* Pagination Info */}
+                <div className="text-sm text-muted-foreground">
+                  Showing {startIndex + 1} to {Math.min(endIndex, filteredAndSortedProducts.length)} of {filteredAndSortedProducts.length} results
+                </div>
+
+                {/* Pagination Buttons */}
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+
+                  {/* Page Numbers */}
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          className="w-8 h-8 p-0 rounded-full"
+                          onClick={() => setCurrentPage(pageNum)}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -966,7 +1195,7 @@ const Products = () => {
       </Dialog>
 
       {/* AI Insights */}
-      <AIInsights data={filteredProducts} pageType="products" />
+      <AIInsights data={filteredAndSortedProducts} pageType="products" />
     </motion.div>
   );
 };
