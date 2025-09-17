@@ -18,6 +18,7 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  updateUser: (userData: any) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -130,10 +131,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateUser = (userData: any) => {
+    // Transform backend user data to frontend format
+    const updatedUser: User = {
+      ...userData,
+      name: `${userData.first_name} ${userData.last_name}`.trim() || userData.username,
+      profilePic: userData.profile_pic || user?.profilePic || `https://randomuser.me/api/portraits/${userData.first_name === 'Alice' || userData.first_name === 'Diana' ? 'women' : 'men'}/1.jpg`
+    };
+    setUser(updatedUser);
+  };
+
   const value = {
     user,
     login,
     logout,
+    updateUser,
     isAuthenticated: !!user,
     isLoading
   };

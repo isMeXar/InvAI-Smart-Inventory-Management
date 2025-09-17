@@ -48,11 +48,15 @@ dayjs.extend(minMax);
 
 interface Order {
   id: number;
-  productId: number;
-  userId: number;
+  product: number;
+  productId?: number;
+  user: number;
+  userId?: number;
+  user_id?: number;
   quantity: number;
-  status: 'Shipped' | 'Processing' | 'Delivered' | 'Pending';
+  status: 'Shipped' | 'Processing' | 'Delivered' | 'Pending' | 'Cancelled';
   date: string;
+  updated_at?: string;
 }
 
 interface Product {
@@ -71,51 +75,166 @@ const shortMonthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug",
 const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 const Profile: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [userStats, setUserStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [chartView, setChartView] = useState<ChartView>("monthly");
-  const currentDate = dayjs('2025-09-07');
+  const currentDate = dayjs(); // Use actual current date
   const [selectedRefDate, setSelectedRefDate] = useState<Dayjs | null>(getPeriodStart("monthly", currentDate));
   const [selectedYearRange, setSelectedYearRange] = useState<[Dayjs | null, Dayjs | null]>([currentDate.startOf('year'), currentDate.endOf('year')]);
+
+  // Form states
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    profile_pic: ''
+  });
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        profile_pic: user.profile_pic || ''
+      });
+    }
+  }, [user]);
+
   const fetchData = async () => {
     try {
-      const [ordersRes, productsRes] = await Promise.all([
-        fetch('/data/orders.json'),
-        fetch('/data/products.json')
+      const [ordersRes, productsRes, statsRes] = await Promise.all([
+        fetch('http://localhost:8000/api/orders/', {
+          credentials: 'include'
+        }),
+        fetch('http://localhost:8000/api/products/', {
+          credentials: 'include'
+        }),
+        fetch('http://localhost:8000/api/auth/users/stats/', {
+          credentials: 'include'
+        })
       ]);
-      const ordersData = await ordersRes.json();
-      const productsData = await productsRes.json();
-      setOrders(ordersData);
-      setProducts(productsData);
+
+      if (ordersRes.ok && productsRes.ok) {
+        const ordersData = await ordersRes.json();
+        const productsData = await productsRes.json();
+        setOrders(ordersData.results || ordersData);
+        setProducts(productsData.results || productsData);
+
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setUserStats(statsData);
+        }
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
+      // Fallback to mock data if API is not available
+      try {
+        const [ordersRes, productsRes] = await Promise.all([
+          fetch('/data/orders.json'),
+          fetch('/data/products.json')
+        ]);
+        const ordersData = await ordersRes.json();
+        const productsData = await productsRes.json();
+        setOrders(ordersData);
+        setProducts(productsData);
+      } catch (fallbackError) {
+        console.error('Error fetching fallback data:', fallbackError);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const getUserOrders = () => {
-    if (!user?.id) return [];
-    return orders.filter(order => order.userId === user.id);
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      const response = await fetch('http://localhost:8000/api/auth/users/update_profile/', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+        updateUser(updatedUser);
+        setIsEditing(false);
+      } else {
+        console.error('Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const getProduct = (productId: number) => {
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setFormData(prev => ({
+          ...prev,
+          profile_pic: base64String
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const getUserOrders = () => {
+    if (!user?.id) return [];
+
+    // Debug logging
+    console.log('Current user:', user);
+    console.log('All orders:', orders);
+
+    // Try different user ID matching approaches
+    const userOrders = orders.filter(order => {
+      // Check various possible user ID formats
+      return order.userId === user.id ||
+             order.user_id === user.id ||
+             order.user === user.id ||
+             (typeof order.user === 'object' && order.user?.id === user.id);
+    });
+
+    console.log('Filtered user orders:', userOrders);
+    return userOrders;
+  };
+
+  const getProduct = (order: Order) => {
+    const productId = order.product || order.productId;
     return products.find(p => p.id === productId);
   };
 
   const getOrderValue = (order: Order) => {
-    const product = getProduct(order.productId);
+    const product = getProduct(order);
     return product ? product.price * order.quantity : 0;
   };
 
@@ -126,7 +245,7 @@ const Profile: React.FC = () => {
   const getOrdersByCategory = () => {
     const userOrders = getUserOrders();
     const categoryData = userOrders.reduce((acc, order) => {
-      const product = getProduct(order.productId);
+      const product = getProduct(order);
       if (product) {
         acc[product.category] = (acc[product.category] || 0) + 1;
       }
@@ -284,6 +403,12 @@ const Profile: React.FC = () => {
   const minDate = useMemo(() => dayjs('2000-01-01'), []);
 
   const getOrderHistory = () => {
+    // Use API data if available and matches current view
+    if (userStats?.monthly_orders && chartView === "monthly" && selectedRefDate?.year() === currentDate.year()) {
+      return userStats.monthly_orders;
+    }
+
+    // Fallback to calculated data from orders
     const userOrders = getUserOrders().map(order => ({
       ...order,
       parsedDate: dayjs(order.date)
@@ -556,14 +681,26 @@ const Profile: React.FC = () => {
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <img
-                  src={user.profilePic}
+                  src={formData.profile_pic || user.profilePic}
                   alt={user.name}
                   className="w-20 h-20 rounded-full object-cover border-4 border-border"
                 />
                 {isEditing && (
-                  <button className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground rounded-full p-2 hover:bg-primary-hover transition-colors">
-                    <Camera className="h-4 w-4" />
-                  </button>
+                  <>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="profile-pic-upload"
+                    />
+                    <label
+                      htmlFor="profile-pic-upload"
+                      className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground rounded-full p-2 hover:bg-primary-hover transition-colors cursor-pointer"
+                    >
+                      <Camera className="h-4 w-4" />
+                    </label>
+                  </>
                 )}
               </div>
               <div className="flex-1">
@@ -577,21 +714,23 @@ const Profile: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">{t.fullName}</Label>
+                <Label htmlFor="first_name">First Name</Label>
                 <Input
-                  id="name"
-                  value={user.name}
+                  id="first_name"
+                  value={formData.first_name}
+                  onChange={(e) => handleInputChange('first_name', e.target.value)}
                   disabled={!isEditing}
                   className={!isEditing ? "bg-muted" : ""}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role">{t.role}</Label>
+                <Label htmlFor="last_name">Last Name</Label>
                 <Input
-                  id="role"
-                  value={user.role}
-                  disabled
-                  className="bg-muted"
+                  id="last_name"
+                  value={formData.last_name}
+                  onChange={(e) => handleInputChange('last_name', e.target.value)}
+                  disabled={!isEditing}
+                  className={!isEditing ? "bg-muted" : ""}
                 />
               </div>
               <div className="space-y-2">
@@ -600,7 +739,8 @@ const Profile: React.FC = () => {
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="email"
-                    value={user.email}
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
                     disabled={!isEditing}
                     className={`pl-10 ${!isEditing ? "bg-muted" : ""}`}
                   />
@@ -612,11 +752,21 @@ const Profile: React.FC = () => {
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="phone"
-                    value={user.phone}
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
                     disabled={!isEditing}
                     className={`pl-10 ${!isEditing ? "bg-muted" : ""}`}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="role">{t.role}</Label>
+                <Input
+                  id="role"
+                  value={user.role}
+                  disabled
+                  className="bg-muted"
+                />
               </div>
             </div>
 
@@ -625,8 +775,12 @@ const Profile: React.FC = () => {
                 <Button variant="outline" onClick={() => setIsEditing(false)}>
                   {t.cancel}
                 </Button>
-                <Button className="bg-gradient-primary hover:opacity-90">
-                  {t.save}
+                <Button
+                  onClick={handleSaveProfile}
+                  disabled={saving}
+                  className="bg-gradient-primary hover:opacity-90"
+                >
+                  {saving ? 'Saving...' : t.save}
                 </Button>
               </div>
             )}
@@ -644,7 +798,9 @@ const Profile: React.FC = () => {
                 <ShoppingCart className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">{t.totalOrders}</span>
               </div>
-              <span className="text-lg font-bold">{getUserOrders().length}</span>
+              <span className="text-lg font-bold">
+                {userStats?.total_orders || getUserOrders().length}
+              </span>
             </div>
 
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
@@ -652,15 +808,22 @@ const Profile: React.FC = () => {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">{t.totalGenerated}</span>
               </div>
-              <span className="text-lg font-bold">${getTotalSpent().toLocaleString()}</span>
+              <span className="text-lg font-bold">
+                ${userStats?.total_revenue?.toLocaleString() || getTotalSpent().toLocaleString()}
+              </span>
             </div>
 
             <div className="space-y-2">
               <h4 className="text-sm font-medium text-foreground">{t.favoriteCategories}</h4>
-              {getOrdersByCategory().slice(0, 3).map((item, index) => (
+              {(userStats?.favorite_categories || getOrdersByCategory()).slice(0, 3).map((item, index) => (
                 <div key={index} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{item.category}</span>
-                  <span className="font-medium">{item.percentage}%</span>
+                  <span className="text-muted-foreground">
+                    {item.product__category || item.category}
+                  </span>
+                  <span className="font-medium">
+                    {item.count || item.percentage}
+                    {item.percentage ? '%' : ' orders'}
+                  </span>
                 </div>
               ))}
             </div>
@@ -670,57 +833,84 @@ const Profile: React.FC = () => {
 
       {/* Order History Chart */}
       <Card>
-        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
-          <CardTitle>{t.orderHistory}</CardTitle>
-          <div className="flex items-center space-x-2 mt-2 md:mt-0">
-            <Button variant="ghost" size="sm" onClick={goPrev}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              {dateSelector}
-            </LocalizationProvider>
-            <Button variant="ghost" size="sm" onClick={goNext} disabled={!canGoNext()}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={chartView === "daily" ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleSetChartView("daily")}
-            >
-              {t.daily}
-            </Button>
-            <Button
-              variant={chartView === "weekly" ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleSetChartView("weekly")}
-            >
-              {t.weekly}
-            </Button>
-            <Button
-              variant={chartView === "monthly" ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleSetChartView("monthly")}
-            >
-              {t.monthly}
-            </Button>
-            <Button
-              variant={chartView === "yearly" ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleSetChartView("yearly")}
-            >
-              {t.yearly}
-            </Button>
+        <CardHeader className="flex flex-col space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <CardTitle>{t.orderHistory}</CardTitle>
+            <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
+              <Button
+                variant={chartView === "daily" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleSetChartView("daily")}
+              >
+                {t.daily}
+              </Button>
+              <Button
+                variant={chartView === "weekly" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleSetChartView("weekly")}
+              >
+                {t.weekly}
+              </Button>
+              <Button
+                variant={chartView === "monthly" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleSetChartView("monthly")}
+              >
+                {t.monthly}
+              </Button>
+              <Button
+                variant={chartView === "yearly" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleSetChartView("yearly")}
+              >
+                {t.yearly}
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-muted-foreground">Period:</span>
+              <span className="text-sm font-medium">
+                {selectedRefDate && selectedYearRange[0] && selectedYearRange[1] ?
+                  getPeriodLabel(chartView, selectedRefDate, selectedYearRange[1]) :
+                  'Select period'
+                }
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Button variant="ghost" size="sm" onClick={goPrev}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                {dateSelector}
+              </LocalizationProvider>
+              <Button variant="ghost" size="sm" onClick={goNext} disabled={!canGoNext()}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={chartView === 'monthly' ? 350 : 300}>
             <LineChart data={getOrderHistory()}>
               <XAxis
                 dataKey="period"
+                axisLine={{ stroke: 'hsl(var(--foreground))' }}
+                tickLine={{ stroke: 'hsl(var(--foreground))' }}
+                tick={{
+                  fill: 'hsl(var(--foreground))',
+                  fontSize: 12,
+                  angle: chartView === 'monthly' ? -45 : 0,
+                  textAnchor: chartView === 'monthly' ? 'end' : 'middle'
+                }}
+                height={chartView === 'monthly' ? 80 : 60}
+                interval={0}
                 label={{
                   value: chartView === 'daily' ? 'Hour' : chartView === 'weekly' ? 'Day' : chartView === 'monthly' ? 'Month' : 'Year',
-                  position: 'bottom',
-                  offset: 10,
+                  position: 'insideBottomLeft',
+                  offset: chartView === 'monthly' ? -40 : -5,
                   fill: 'hsl(var(--foreground))'
                 }}
                 stroke="hsl(var(--foreground))"
@@ -757,8 +947,11 @@ const Profile: React.FC = () => {
 
       {/* Recent Orders */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{t.recentOrders}</CardTitle>
+          <Badge variant="outline" className="ml-2">
+            View Only
+          </Badge>
         </CardHeader>
         <CardContent>
           <Table>
@@ -775,7 +968,7 @@ const Profile: React.FC = () => {
             </TableHeader>
             <TableBody>
               {getUserOrders().slice(0, 5).map((order) => {
-                const product = getProduct(order.productId);
+                const product = getProduct(order);
                 return (
                   <TableRow key={order.id}>
                     <TableCell>#{order.id}</TableCell>
@@ -805,6 +998,7 @@ const Profile: React.FC = () => {
                           setSelectedOrder(order);
                           setIsViewModalOpen(true);
                         }}
+                        title="View order details"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -819,6 +1013,14 @@ const Profile: React.FC = () => {
             <div className="text-center py-8">
               <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">{t.noOrdersForUser}</p>
+            </div>
+          )}
+
+          {getUserOrders().length > 5 && (
+            <div className="mt-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                Showing 5 of {getUserOrders().length} orders
+              </p>
             </div>
           )}
         </CardContent>
@@ -849,13 +1051,13 @@ const Profile: React.FC = () => {
                 <div>
                   <Label>{t.product}</Label>
                   <p className="text-foreground font-medium">
-                    {getProduct(selectedOrder.productId)?.name || 'Unknown Product'}
+                    {getProduct(selectedOrder)?.name || 'Unknown Product'}
                   </p>
                 </div>
                 <div>
                   <Label>{t.category}</Label>
                   <p className="text-foreground font-medium">
-                    {getProduct(selectedOrder.productId)?.category || 'Unknown'}
+                    {getProduct(selectedOrder)?.category || 'Unknown'}
                   </p>
                 </div>
                 <div>
