@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import {
   Dialog,
   DialogContent,
@@ -41,6 +42,7 @@ import AIInsights from '@/components/shared/AIInsights';
 import { DatePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import dayjs, { Dayjs } from 'dayjs';
 import minMax from 'dayjs/plugin/minMax';
 
@@ -50,7 +52,7 @@ interface Order {
   id: number;
   product: number;
   productId?: number;
-  user: number;
+  user: number | { id: number };
   userId?: number;
   user_id?: number;
   quantity: number;
@@ -88,7 +90,11 @@ const Profile: React.FC = () => {
   const [chartView, setChartView] = useState<ChartView>("monthly");
   const currentDate = dayjs(); // Use actual current date
   const [selectedRefDate, setSelectedRefDate] = useState<Dayjs | null>(getPeriodStart("monthly", currentDate));
-  const [selectedYearRange, setSelectedYearRange] = useState<[Dayjs | null, Dayjs | null]>([currentDate.startOf('year'), currentDate.endOf('year')]);
+  const [selectedYearRange, setSelectedYearRange] = useState<[Dayjs | null, Dayjs | null]>([dayjs('2020-01-01').startOf('year'), currentDate.endOf('year')]);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [recordsPerPage, setRecordsPerPage] = useState(5);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -221,7 +227,7 @@ const Profile: React.FC = () => {
       return order.userId === user.id ||
              order.user_id === user.id ||
              order.user === user.id ||
-             (typeof order.user === 'object' && order.user?.id === user.id);
+             (typeof order.user === 'object' && order.user && order.user.id === user.id);
     });
 
     console.log('Filtered user orders:', userOrders);
@@ -240,6 +246,28 @@ const Profile: React.FC = () => {
 
   const getTotalSpent = () => {
     return getUserOrders().reduce((total, order) => total + getOrderValue(order), 0);
+  };
+
+  // Pagination functions
+  const getPaginatedOrders = () => {
+    const userOrders = getUserOrders();
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    const endIndex = startIndex + recordsPerPage;
+    return userOrders.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = () => {
+    const userOrders = getUserOrders();
+    return Math.ceil(userOrders.length / recordsPerPage);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleRecordsPerPageChange = (value: number) => {
+    setRecordsPerPage(value);
+    setCurrentPage(1); // Reset to first page when changing records per page
   };
 
   const getOrdersByCategory = () => {
@@ -300,7 +328,7 @@ const Profile: React.FC = () => {
 
   const handleSetChartView = (view: ChartView) => {
     if (view === "yearly") {
-      setSelectedYearRange([currentDate.startOf('year'), currentDate.endOf('year')]);
+      setSelectedYearRange([dayjs('2020-01-01').startOf('year'), currentDate.endOf('year')]);
     } else {
       setSelectedRefDate(getPeriodStart(view, currentDate));
     }
@@ -402,6 +430,90 @@ const Profile: React.FC = () => {
 
   const minDate = useMemo(() => dayjs('2000-01-01'), []);
 
+  // Detect if we're in dark mode by checking the document class or data attribute
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const checkTheme = () => {
+      // Check for common dark mode indicators
+      const html = document.documentElement;
+      const body = document.body;
+
+      const isDark =
+        html.classList.contains('dark') ||
+        body.classList.contains('dark') ||
+        html.getAttribute('data-theme') === 'dark' ||
+        body.getAttribute('data-theme') === 'dark' ||
+        getComputedStyle(html).getPropertyValue('--background').includes('0 0% 3.9%') || // common dark bg
+        getComputedStyle(body).backgroundColor === 'rgb(3, 7, 18)'; // check computed dark bg
+
+      setIsDarkMode(isDark);
+    };
+
+    checkTheme();
+
+    // Listen for theme changes
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme']
+    });
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme']
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Create a custom theme for Material-UI DatePicker based on detected theme
+  const datePickerTheme = useMemo(() => createTheme({
+    palette: {
+      mode: isDarkMode ? 'dark' : 'light',
+      primary: {
+        main: '#3b82f6',
+      },
+    },
+    components: {
+      MuiOutlinedInput: {
+        styleOverrides: {
+          root: {
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: isDarkMode ? '#6b7280' : '#d1d5db',
+              borderWidth: '1px',
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: isDarkMode ? '#9ca3af' : '#9ca3af',
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: '#3b82f6',
+              borderWidth: '2px',
+            },
+          },
+          input: {
+            color: isDarkMode ? '#ffffff !important' : '#000000 !important',
+          },
+        },
+      },
+      MuiInputBase: {
+        styleOverrides: {
+          input: {
+            color: isDarkMode ? '#ffffff !important' : '#000000 !important',
+          },
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+            color: isDarkMode ? '#ffffff' : '#000000',
+            border: `1px solid ${isDarkMode ? '#6b7280' : '#d1d5db'}`,
+          },
+        },
+      },
+    },
+  }), [isDarkMode]);
+
   const getOrderHistory = () => {
     // Use API data if available and matches current view
     if (userStats?.monthly_orders && chartView === "monthly" && selectedRefDate?.year() === currentDate.year()) {
@@ -438,7 +550,7 @@ const Profile: React.FC = () => {
         const monthStart = dayjs(new Date(year, m, 1));
         const monthEnd = monthStart.endOf('month');
         const ordersCount = userOrders.filter(o => o.parsedDate >= monthStart && o.parsedDate <= monthEnd).length;
-        data.push({ period: shortMonthNames[m], orders: ordersCount });
+        data.push({ period: monthNames[m], orders: ordersCount });
       }
     } else if (chartView === "yearly" && selectedYearRange[0] && selectedYearRange[1]) {
       const startYear = selectedYearRange[0].year();
@@ -481,37 +593,73 @@ const Profile: React.FC = () => {
   };
 
   const datePickerStyles = {
+    // Input field styles
     '& .MuiInputBase-root': {
       color: 'hsl(var(--foreground)) !important',
-      backgroundColor: 'hsl(var(--background))',
-      borderColor: 'hsl(var(--border))',
-    },
-    '& .MuiInputLabel-root': {
-      color: 'hsl(var(--muted-foreground)) !important',
+      backgroundColor: 'hsl(var(--background)) !important',
     },
     '& .MuiInputBase-input': {
       color: 'hsl(var(--foreground)) !important',
-      fontSize: '0.875rem',
+      fontSize: '0.875rem !important',
+      backgroundColor: 'transparent !important',
+      WebkitTextFillColor: 'hsl(var(--foreground)) !important',
+    },
+    '& .MuiOutlinedInput-root': {
+      color: 'hsl(var(--foreground)) !important',
+      backgroundColor: 'hsl(var(--background)) !important',
+      '& input': {
+        color: 'hsl(var(--foreground)) !important',
+        WebkitTextFillColor: 'hsl(var(--foreground)) !important',
+      },
+      '& fieldset': {
+        borderColor: 'hsl(var(--border)) !important',
+        border: '1px solid hsl(var(--border)) !important',
+      },
+      '&:hover fieldset': {
+        borderColor: 'hsl(var(--border)) !important',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: 'hsl(var(--primary)) !important',
+        borderWidth: '2px !important',
+      },
+    },
+    '& .MuiOutlinedInput-input': {
+      color: 'hsl(var(--foreground)) !important',
+      WebkitTextFillColor: 'hsl(var(--foreground)) !important',
+    },
+    // Labels and icons
+    '& .MuiInputLabel-root': {
+      color: 'hsl(var(--muted-foreground)) !important',
     },
     '& .MuiSvgIcon-root': {
       color: 'hsl(var(--muted-foreground)) !important',
     },
+    '& .MuiInputAdornment-root': {
+      color: 'hsl(var(--muted-foreground)) !important',
+    },
+    // Dropdown/Calendar styles
     '& .MuiPaper-root': {
-      backgroundColor: 'hsl(var(--background))',
-      color: 'hsl(var(--foreground))',
+      backgroundColor: 'hsl(var(--background)) !important',
+      color: 'hsl(var(--foreground)) !important',
+      border: '1px solid hsl(var(--border)) !important',
+      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important',
     },
     '& .MuiPickersDay-root': {
-      color: 'hsl(var(--foreground))',
+      color: 'hsl(var(--foreground)) !important',
       backgroundColor: 'hsl(var(--background))',
       '&:hover': {
-        backgroundColor: 'hsl(var(--muted))',
+        backgroundColor: 'hsl(var(--muted)) !important',
+      },
+      '&.Mui-selected': {
+        backgroundColor: 'hsl(var(--primary)) !important',
+        color: 'hsl(var(--primary-foreground)) !important',
       },
     },
     '& .MuiPickersYear-yearButton': {
       color: 'hsl(var(--foreground)) !important',
-      backgroundColor: 'hsl(var(--background))',
+      backgroundColor: 'transparent !important',
       '&:hover': {
-        backgroundColor: 'hsl(var(--muted))',
+        backgroundColor: 'hsl(var(--muted)) !important',
       },
       '&.Mui-selected': {
         backgroundColor: 'hsl(var(--primary)) !important',
@@ -523,29 +671,32 @@ const Profile: React.FC = () => {
       },
     },
     '& .MuiYearCalendar-root': {
-      color: 'hsl(var(--foreground))',
+      color: 'hsl(var(--foreground)) !important',
     },
     '& .MuiTypography-root': {
-      color: 'hsl(var(--foreground))',
-    },
-    '& .MuiOutlinedInput-root': {
-      '& fieldset': {
-        borderColor: 'hsl(var(--border))',
-      },
-      '&:hover fieldset': {
-        borderColor: 'hsl(var(--primary))',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: 'hsl(var(--primary))',
-      },
+      color: 'hsl(var(--foreground)) !important',
     },
     '& .MuiPickersArrowSwitcher-button': {
+      color: 'hsl(var(--foreground)) !important',
+    },
+    '& .MuiPickersCalendarHeader-root': {
+      color: 'hsl(var(--foreground)) !important',
+    },
+    '& .MuiPickersCalendarHeader-label': {
+      color: 'hsl(var(--foreground)) !important',
+    },
+    // Additional specific selectors to override Material-UI defaults
+    '& input[type="text"]': {
+      color: 'hsl(var(--foreground)) !important',
+      WebkitTextFillColor: 'hsl(var(--foreground)) !important',
+    },
+    '& .MuiInputBase-formControl': {
       color: 'hsl(var(--foreground)) !important',
     },
   };
 
   const dateSelector = (
-    <>
+    <ThemeProvider theme={datePickerTheme}>
       {chartView === 'daily' || chartView === 'weekly' ? (
         <DatePicker
           value={selectedRefDate}
@@ -558,9 +709,11 @@ const Profile: React.FC = () => {
           slotProps={{
             textField: {
               size: 'small',
-              sx: { width: '180px', ...datePickerStyles },
+              sx: {
+                width: { xs: '120px', sm: '140px', md: '160px' },
+              },
               InputProps: {
-                startAdornment: <Calendar className="h-5 w-5 text-muted-foreground mr-2" />
+                startAdornment: <Calendar className="h-4 w-4 text-muted-foreground mr-1" />
               }
             }
           }}
@@ -577,16 +730,18 @@ const Profile: React.FC = () => {
           slotProps={{
             textField: {
               size: 'small',
-              sx: { width: '180px', ...datePickerStyles },
+              sx: {
+                width: { xs: '100px', sm: '120px', md: '140px' },
+              },
               InputProps: {
-                startAdornment: <Calendar className="h-5 w-5 text-muted-foreground mr-2" />
+                startAdornment: <Calendar className="h-4 w-4 text-muted-foreground mr-1" />
               }
             }
           }}
         />
       ) : (
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-muted-foreground">From</span>
+        <div className="flex items-center space-x-1 sm:space-x-2">
+          <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">From</span>
           <DatePicker
             value={selectedYearRange[0]}
             onChange={(date) => handleYearRangeSelect(0, date)}
@@ -598,11 +753,13 @@ const Profile: React.FC = () => {
             slotProps={{
               textField: {
                 size: 'small',
-                sx: { width: '100px', ...datePickerStyles }
+                sx: {
+                  width: { xs: '80px', sm: '90px', md: '100px' },
+                }
               }
             }}
           />
-          <span className="text-sm text-muted-foreground">To</span>
+          <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">To</span>
           <DatePicker
             value={selectedYearRange[1]}
             onChange={(date) => handleYearRangeSelect(1, date)}
@@ -614,13 +771,15 @@ const Profile: React.FC = () => {
             slotProps={{
               textField: {
                 size: 'small',
-                sx: { width: '100px', ...datePickerStyles }
+                sx: {
+                  width: { xs: '80px', sm: '90px', md: '100px' },
+                }
               }
             }}
           />
         </div>
       )}
-    </>
+    </ThemeProvider>
   );
 
   if (loading) {
@@ -654,36 +813,38 @@ const Profile: React.FC = () => {
       className="p-6 space-y-6"
     >
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center space-y-4 md:space-y-0">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">{t.profile}</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t.profile}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             {t.manageAccount}
           </p>
         </div>
         <Button
           onClick={() => setIsEditing(!isEditing)}
           variant={isEditing ? "outline" : "default"}
-          className={!isEditing ? "bg-gradient-primary hover:opacity-90" : ""}
+          size="sm"
+          className={!isEditing ? "bg-primary hover:bg-primary/90" : ""}
         >
           <Edit className="h-4 w-4 mr-2" />
-          {isEditing ? t.cancel : t.editProfile}
+          <span className="hidden sm:inline">{isEditing ? t.cancel : t.editProfile}</span>
+          <span className="sm:hidden">{isEditing ? t.cancel : "Edit"}</span>
         </Button>
       </div>
 
       {/* Profile Info */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>{t.personalInformation}</CardTitle>
+        <Card className="lg:col-span-2 border-0 shadow-sm">
+          <CardHeader className="pb-6">
+            <CardTitle className="text-xl font-semibold text-foreground">{t.personalInformation}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center space-x-4">
-              <div className="relative">
+          <CardContent className="space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+              <div className="relative flex-shrink-0 mx-auto sm:mx-0">
                 <img
                   src={formData.profile_pic || user.profilePic}
                   alt={user.name}
-                  className="w-20 h-20 rounded-full object-cover border-4 border-border"
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover ring-1 ring-border shadow-sm"
                 />
                 {isEditing && (
                   <>
@@ -696,45 +857,51 @@ const Profile: React.FC = () => {
                     />
                     <label
                       htmlFor="profile-pic-upload"
-                      className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground rounded-full p-2 hover:bg-primary-hover transition-colors cursor-pointer"
+                      className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-2 hover:bg-primary/90 transition-all duration-200 cursor-pointer shadow-md"
                     >
-                      <Camera className="h-4 w-4" />
+                      <Camera className="h-3 w-3" />
                     </label>
                   </>
                 )}
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+              <div className="flex-1 text-center sm:text-left space-y-3">
+                <div className="space-y-2">
                   <h2 className="text-2xl font-bold text-foreground">{user.name}</h2>
-                  <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <Badge className={`${getRoleColor(user.role)} text-xs font-medium px-3 py-1`} variant="secondary">
+                      {user.role}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      ID: <span className="font-mono font-medium">{user.id}</span>
+                    </span>
+                  </div>
                 </div>
-                <p className="text-muted-foreground">ID: {user.id}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="first_name">First Name</Label>
+                <Label htmlFor="first_name" className="text-sm font-medium text-foreground">First Name</Label>
                 <Input
                   id="first_name"
                   value={formData.first_name}
                   onChange={(e) => handleInputChange('first_name', e.target.value)}
                   disabled={!isEditing}
-                  className={!isEditing ? "bg-muted" : ""}
+                  className={`h-10 transition-colors ${!isEditing ? "bg-muted/30 border-muted" : "focus:border-primary"}`}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="last_name">Last Name</Label>
+                <Label htmlFor="last_name" className="text-sm font-medium text-foreground">Last Name</Label>
                 <Input
                   id="last_name"
                   value={formData.last_name}
                   onChange={(e) => handleInputChange('last_name', e.target.value)}
                   disabled={!isEditing}
-                  className={!isEditing ? "bg-muted" : ""}
+                  className={`h-10 transition-colors ${!isEditing ? "bg-muted/30 border-muted" : "focus:border-primary"}`}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">{t.emailAddress}</Label>
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">{t.emailAddress}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -742,12 +909,12 @@ const Profile: React.FC = () => {
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     disabled={!isEditing}
-                    className={`pl-10 ${!isEditing ? "bg-muted" : ""}`}
+                    className={`pl-10 h-10 transition-colors ${!isEditing ? "bg-muted/30 border-muted" : "focus:border-primary"}`}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">{t.phoneNumber}</Label>
+                <Label htmlFor="phone" className="text-sm font-medium text-foreground">{t.phoneNumber}</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -755,30 +922,34 @@ const Profile: React.FC = () => {
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     disabled={!isEditing}
-                    className={`pl-10 ${!isEditing ? "bg-muted" : ""}`}
+                    className={`pl-10 h-10 transition-colors ${!isEditing ? "bg-muted/30 border-muted" : "focus:border-primary"}`}
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="role">{t.role}</Label>
-                <Input
-                  id="role"
-                  value={user.role}
-                  disabled
-                  className="bg-muted"
-                />
-              </div>
+              {/* <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="role" className="text-sm font-medium text-foreground">{t.role}</Label>
+                <div className="flex items-center space-x-2">
+                  <Shield className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="role"
+                    value={user.role}
+                    disabled
+                    className="bg-muted/30 border-muted h-10 max-w-xs"
+                  />
+                </div>
+              </div> */}
             </div>
 
             {isEditing && (
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsEditing(false)}>
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-2">
+                <Button variant="outline" onClick={() => setIsEditing(false)} size="sm" className="order-2 sm:order-1">
                   {t.cancel}
                 </Button>
                 <Button
                   onClick={handleSaveProfile}
                   disabled={saving}
-                  className="bg-gradient-primary hover:opacity-90"
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 order-1 sm:order-2"
                 >
                   {saving ? 'Saving...' : t.save}
                 </Button>
@@ -788,44 +959,59 @@ const Profile: React.FC = () => {
         </Card>
 
         {/* Stats Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t.activitySummary}</CardTitle>
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-6">
+            <CardTitle className="text-xl font-semibold text-foreground">{t.activitySummary}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div className="flex items-center space-x-2">
-                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">{t.totalOrders}</span>
-              </div>
-              <span className="text-lg font-bold">
-                {userStats?.total_orders || getUserOrders().length}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">{t.totalGenerated}</span>
-              </div>
-              <span className="text-lg font-bold">
-                ${userStats?.total_revenue?.toLocaleString() || getTotalSpent().toLocaleString()}
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-foreground">{t.favoriteCategories}</h4>
-              {(userStats?.favorite_categories || getOrdersByCategory()).slice(0, 3).map((item, index) => (
-                <div key={index} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    {item.product__category || item.category}
-                  </span>
-                  <span className="font-medium">
-                    {item.count || item.percentage}
-                    {item.percentage ? '%' : ' orders'}
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-50/30 dark:from-blue-950/20 dark:to-blue-950/10 rounded-lg border border-blue-100 dark:border-blue-900/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                      <ShoppingCart className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{t.totalOrders}</span>
+                  </div>
+                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    {userStats?.total_orders || getUserOrders().length}
                   </span>
                 </div>
-              ))}
+              </div>
+
+              <div className="p-4 bg-gradient-to-r from-green-50 to-green-50/30 dark:from-green-950/20 dark:to-green-950/10 rounded-lg border border-green-100 dark:border-green-900/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
+                      <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{t.totalGenerated}</span>
+                  </div>
+                  <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    ${userStats?.total_revenue?.toLocaleString() || getTotalSpent().toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Package className="h-4 w-4 text-muted-foreground" />
+                {t.favoriteCategories}
+              </h4>
+              <div className="space-y-3">
+                {(userStats?.favorite_categories || getOrdersByCategory()).slice(0, 3).map((item, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <span className="text-sm font-medium text-foreground truncate">
+                      {item.product__category || item.category}
+                    </span>
+                    <span className="text-sm font-bold text-primary bg-primary/10 px-2 py-1 rounded">
+                      {item.count || item.percentage}
+                      {item.percentage ? '%' : ' orders'}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -833,85 +1019,73 @@ const Profile: React.FC = () => {
 
       {/* Order History Chart */}
       <Card>
-        <CardHeader className="flex flex-col space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <CardTitle>{t.orderHistory}</CardTitle>
-            <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
-              <Button
-                variant={chartView === "daily" ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleSetChartView("daily")}
-              >
-                {t.daily}
-              </Button>
-              <Button
-                variant={chartView === "weekly" ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleSetChartView("weekly")}
-              >
-                {t.weekly}
-              </Button>
-              <Button
-                variant={chartView === "monthly" ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleSetChartView("monthly")}
-              >
-                {t.monthly}
-              </Button>
-              <Button
-                variant={chartView === "yearly" ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleSetChartView("yearly")}
-              >
-                {t.yearly}
-              </Button>
+        <CardHeader className="space-y-4">
+          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+            <CardTitle className="text-lg md:text-xl">{t.orderHistory}</CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <div className="w-full sm:w-auto">
+                <SegmentedControl
+                  options={[
+                    { value: "daily", label: t.daily },
+                    { value: "weekly", label: t.weekly },
+                    { value: "monthly", label: t.monthly },
+                    { value: "yearly", label: t.yearly }
+                  ]}
+                  value={chartView}
+                  onChange={(value) => handleSetChartView(value as ChartView)}
+                />
+              </div>
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <Button variant="ghost" size="sm" onClick={goPrev} className="h-8 w-8 p-0">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  {dateSelector}
+                </LocalizationProvider>
+                <Button variant="ghost" size="sm" onClick={goNext} disabled={!canGoNext()} className="h-8 w-8 p-0">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-muted-foreground">Period:</span>
-              <span className="text-sm font-medium">
-                {selectedRefDate && selectedYearRange[0] && selectedYearRange[1] ?
-                  getPeriodLabel(chartView, selectedRefDate, selectedYearRange[1]) :
-                  'Select period'
-                }
-              </span>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm" onClick={goPrev}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                {dateSelector}
-              </LocalizationProvider>
-              <Button variant="ghost" size="sm" onClick={goNext} disabled={!canGoNext()}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+          <div className="flex items-center space-x-2 text-xs sm:text-sm">
+            <span className="text-muted-foreground">Period:</span>
+            <span className="font-medium text-foreground">
+              {chartView === 'yearly' && selectedYearRange[0] && selectedYearRange[1] ?
+                getPeriodLabel(chartView, selectedYearRange[0], selectedYearRange[1]) :
+                selectedRefDate ?
+                getPeriodLabel(chartView, selectedRefDate) :
+                'Select period'
+              }
+            </span>
           </div>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={chartView === 'monthly' ? 350 : 300}>
+          <ResponsiveContainer width="100%" height={300}>
             <LineChart data={getOrderHistory()}>
               <XAxis
                 dataKey="period"
                 axisLine={{ stroke: 'hsl(var(--foreground))' }}
                 tickLine={{ stroke: 'hsl(var(--foreground))' }}
-                tick={{
+                tick={chartView === 'monthly' ? {
                   fill: 'hsl(var(--foreground))',
                   fontSize: 12,
-                  angle: chartView === 'monthly' ? -45 : 0,
-                  textAnchor: chartView === 'monthly' ? 'end' : 'middle'
+                  textAnchor: 'end'
+                } : {
+                  fill: 'hsl(var(--foreground))',
+                  fontSize: 12,
+                  textAnchor: 'middle'
                 }}
-                height={chartView === 'monthly' ? 80 : 60}
-                interval={0}
+                angle={0}
+                height={60}
+                interval={chartView === 'monthly' ? 0 : 'preserveStartEnd'}
                 label={{
-                  value: chartView === 'daily' ? 'Hour' : chartView === 'weekly' ? 'Day' : chartView === 'monthly' ? 'Month' : 'Year',
-                  position: 'insideBottomLeft',
-                  offset: chartView === 'monthly' ? -40 : -5,
-                  fill: 'hsl(var(--foreground))'
+                  value: chartView === 'daily' ? 'Hour' : chartView === 'weekly' ? 'Day' : chartView === 'monthly' ? 'Months' : 'Year',
+                  position: 'insideBottom',
+                  offset: chartView === 'monthly' ? 0 : 0,
+                  fill: 'hsl(var(--foreground))',
+                  textAnchor: 'middle'
                 }}
                 stroke="hsl(var(--foreground))"
               />
@@ -920,8 +1094,9 @@ const Profile: React.FC = () => {
                   value: 'Number of Orders',
                   angle: -90,
                   position: 'insideLeft',
-                  offset: 10,
-                  fill: 'hsl(var(--foreground))'
+                  offset: 0,
+                  fill: 'hsl(var(--foreground))',
+                  style: { textAnchor: 'middle' }
                 }}
                 stroke="hsl(var(--foreground))"
               />
@@ -946,82 +1121,177 @@ const Profile: React.FC = () => {
       </Card>
 
       {/* Recent Orders */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t.recentOrders}</CardTitle>
-          <Badge variant="outline" className="ml-2">
-            View Only
-          </Badge>
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="text-xl font-semibold text-foreground">{t.recentOrders}</CardTitle>
+            <Badge variant="outline" className="px-2 py-1 text-xs">
+              <Eye className="h-3 w-3 mr-1" />
+              View Only
+            </Badge>
+          </div>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>{t.product}</TableHead>
-                <TableHead>{t.quantity}</TableHead>
-                <TableHead>{t.status}</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>{t.total}</TableHead>
-                <TableHead>{t.actions}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {getUserOrders().slice(0, 5).map((order) => {
-                const product = getProduct(order);
-                return (
-                  <TableRow key={order.id}>
-                    <TableCell>#{order.id}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium text-foreground">
-                          {product?.name || t.unknownProduct}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {product?.category}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{order.quantity}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(order.status)}>
-                        {order.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{dayjs(order.date).format('MMM D, YYYY')}</TableCell>
-                    <TableCell>${getOrderValue(order).toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedOrder(order);
-                          setIsViewModalOpen(true);
-                        }}
-                        title="View order details"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-
-          {getUserOrders().length === 0 && (
-            <div className="text-center py-8">
-              <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <CardContent className="space-y-6">
+          {getUserOrders().length === 0 ? (
+            <div className="text-center py-12">
+              <div className="p-4 bg-muted/20 rounded-full w-fit mx-auto mb-4">
+                <ShoppingCart className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">No Orders Found</h3>
               <p className="text-muted-foreground">{t.noOrdersForUser}</p>
             </div>
-          )}
+          ) : (
+            <>
+              {/* Order Cards - Column Aligned Layout */}
+              <div className="space-y-0">
+                {/* Column Headers */}
+                <div className="grid grid-cols-[140px_2fr_80px_100px_120px_60px] gap-6 px-4 py-3 border-b border-border/50 bg-muted/20">
+                  <div className="text-sm font-semibold text-foreground">Order</div>
+                  <div className="text-sm font-semibold text-foreground">{t.product}</div>
+                  <div className="text-sm font-semibold text-foreground text-center hidden sm:block">Quantity</div>
+                  <div className="text-sm font-semibold text-foreground text-center hidden sm:block">{t.status}</div>
+                  <div className="text-sm font-semibold text-foreground text-right">{t.total}</div>
+                  <div className="text-sm font-semibold text-foreground text-center">{t.actions}</div>
+                </div>
 
-          {getUserOrders().length > 5 && (
-            <div className="mt-4 text-center">
-              <p className="text-sm text-muted-foreground">
-                Showing 5 of {getUserOrders().length} orders
-              </p>
-            </div>
+                {getPaginatedOrders().map((order, index) => {
+                  const product = getProduct(order);
+                  return (
+                    <div
+                      key={order.id}
+                      className={`group grid grid-cols-[140px_2fr_80px_100px_120px_60px] gap-6 px-4 py-3 border-b border-border/30 hover:bg-muted/10 transition-colors duration-150 ${
+                        index % 2 === 0 ? 'bg-background' : 'bg-muted/5'
+                      }`}
+                    >
+                      {/* Order Column */}
+                      <div className="flex items-center">
+                        <div className="min-w-0">
+                          <p className="font-mono text-sm font-semibold text-primary">#{order.id}</p>
+                          <p className="text-xs text-muted-foreground hidden sm:block">{dayjs(order.date).format('MMM D, YYYY')}</p>
+                        </div>
+                      </div>
+
+                      {/* Product Column */}
+                      <div className="min-w-0 flex flex-col justify-center">
+                        <h4 className="font-medium text-foreground text-sm truncate">
+                          {product?.name || t.unknownProduct}
+                        </h4>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {product?.category || 'Unknown Category'}
+                        </p>
+                      </div>
+
+                      {/* Quantity Column (hidden on mobile) */}
+                      <div className="hidden sm:flex items-center justify-center">
+                        <span className="font-semibold text-sm text-foreground">
+                          {order.quantity}
+                        </span>
+                      </div>
+
+                      {/* Status Column (hidden on mobile) */}
+                      <div className="hidden sm:flex items-center">
+                        <Badge className={`${getStatusColor(order.status)} text-xs px-2 py-1 w-full justify-center`} variant="secondary">
+                          {order.status}
+                        </Badge>
+                      </div>
+
+                      {/* Total Column */}
+                      <div className="flex flex-col justify-center">
+                        <p className="text-sm font-bold text-green-600 dark:text-green-400 text-right">
+                          ${getOrderValue(order).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-muted-foreground sm:hidden text-right">
+                          Qty: {order.quantity} • {order.status}
+                        </p>
+                      </div>
+
+                      {/* Actions Column */}
+                      <div className="flex items-center justify-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setIsViewModalOpen(true);
+                          }}
+                          className="h-8 w-8 p-0 opacity-60 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Pagination - Always show if there are records */}
+              {getUserOrders().length > 0 && (
+                <div className="pt-4 mt-4 border-t border-border/50">
+                  {/* Pagination section */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    {/* Left: Showing info */}
+                    <div className="text-sm text-muted-foreground">
+                      Showing {((currentPage - 1) * recordsPerPage) + 1} to {Math.min(currentPage * recordsPerPage, getUserOrders().length)} of {getUserOrders().length} orders
+                    </div>
+
+                    {/* Center: Pagination controls */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className={`p-2 transition-colors ${
+                          currentPage === 1
+                            ? 'text-muted-foreground/40 cursor-not-allowed'
+                            : 'text-foreground hover:text-primary cursor-pointer'
+                        }`}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+
+                      {Array.from({ length: Math.max(1, getTotalPages()) }, (_, i) => i + 1).map((page) => (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePageChange(page)}
+                          className={`h-9 w-9 p-0 rounded-full ${currentPage === page ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+                        >
+                          {page}
+                        </Button>
+                      ))}
+
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage >= getTotalPages()}
+                        className={`p-2 transition-colors ${
+                          currentPage >= getTotalPages()
+                            ? 'text-muted-foreground/40 cursor-not-allowed'
+                            : 'text-foreground hover:text-primary cursor-pointer'
+                        }`}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {/* Right: Records per page selector */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">Show:</span>
+                      <select
+                        value={recordsPerPage}
+                        onChange={(e) => handleRecordsPerPageChange(Number(e.target.value))}
+                        className="h-9 px-3 text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

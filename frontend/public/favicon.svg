@@ -1,0 +1,23 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Inventory/Warehouse icon -->
+  <rect x="4" y="12" width="24" height="16" rx="2" fill="#3B82F6" stroke="#1E40AF" stroke-width="1"/>
+  <rect x="6" y="14" width="20" height="12" fill="#EFF6FF"/>
+
+  <!-- Shelves -->
+  <rect x="7" y="17" width="18" height="1" fill="#3B82F6"/>
+  <rect x="7" y="21" width="18" height="1" fill="#3B82F6"/>
+
+  <!-- Boxes on shelves -->
+  <rect x="8" y="15" width="3" height="2" fill="#F59E0B"/>
+  <rect x="12" y="15" width="3" height="2" fill="#10B981"/>
+  <rect x="16" y="15" width="3" height="2" fill="#EF4444"/>
+  <rect x="20" y="15" width="3" height="2" fill="#8B5CF6"/>
+
+  <rect x="8" y="19" width="3" height="2" fill="#06B6D4"/>
+  <rect x="12" y="19" width="3" height="2" fill="#F59E0B"/>
+  <rect x="16" y="19" width="3" height="2" fill="#10B981"/>
+  <rect x="20" y="19" width="3" height="2" fill="#EF4444"/>
+
+  <!-- Building roof -->
+  <path d="M2 12 L16 4 L30 12 L28 12 L16 6 L4 12 Z" fill="#1F2937"/>
+</svg>

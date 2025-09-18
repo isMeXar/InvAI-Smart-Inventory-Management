@@ -391,7 +391,7 @@ const Suppliers = () => {
 
       {/* Stats Cards */}
       <div className="flex flex-col md:flex-row gap-6">
-        <Card className='flex-1'>
+        <Card className='border-0 dark:border shadow-lg flex-1'>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t.totalSuppliers}</CardTitle>
             <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -404,7 +404,7 @@ const Suppliers = () => {
           </CardContent>
         </Card>
 
-        <Card className="flex-1">
+        <Card className="border-0 dark:border shadow-lg flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t.totalProducts}</CardTitle>
             <Package2 className="h-4 w-4 text-muted-foreground" />
@@ -417,7 +417,7 @@ const Suppliers = () => {
           </CardContent>
         </Card>
         {canViewRevenue && (
-          <Card className="flex-1">
+          <Card className="border-0 dark:border shadow-lg flex-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{t.revenue}</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
