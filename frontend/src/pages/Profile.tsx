@@ -76,9 +76,24 @@ const monthNames = ["January", "February", "March", "April", "May", "June", "Jul
 const shortMonthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+// Function to get localized month names
+const getLocalizedMonthNames = (language: string) => {
+  const locale = language === 'en' ? 'en-US' : language === 'de' ? 'de-DE' : language === 'fr' ? 'fr-FR' : 'en-US';
+
+  const fullMonths = Array.from({ length: 12 }, (_, i) => {
+    return new Date(2024, i, 1).toLocaleDateString(locale, { month: 'long' });
+  });
+
+  const shortMonths = Array.from({ length: 12 }, (_, i) => {
+    return new Date(2024, i, 1).toLocaleDateString(locale, { month: 'short' });
+  });
+
+  return { fullMonths, shortMonths };
+};
+
 const Profile: React.FC = () => {
   const { user, updateUser } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -515,9 +530,17 @@ const Profile: React.FC = () => {
   }), [isDarkMode]);
 
   const getOrderHistory = () => {
+    // Get localized month names
+    const { fullMonths, shortMonths } = getLocalizedMonthNames(language);
+
     // Use API data if available and matches current view
     if (userStats?.monthly_orders && chartView === "monthly" && selectedRefDate?.year() === currentDate.year()) {
-      return userStats.monthly_orders;
+      // Transform API data to include localized month names
+      return userStats.monthly_orders.map((item: any, index: number) => ({
+        period: shortMonths[index] || item.period,
+        orders: item.orders,
+        fullMonth: fullMonths[index] || item.period
+      }));
     }
 
     // Fallback to calculated data from orders
@@ -525,7 +548,7 @@ const Profile: React.FC = () => {
       ...order,
       parsedDate: dayjs(order.date)
     })).filter(o => o.parsedDate.isValid());
-    const data: { period: string; orders: number }[] = [];
+    const data: { period: string; orders: number; fullMonth?: string }[] = [];
 
     if (chartView === "daily" && selectedRefDate) {
       for (let h = 0; h < 24; h++) {
@@ -550,7 +573,7 @@ const Profile: React.FC = () => {
         const monthStart = dayjs(new Date(year, m, 1));
         const monthEnd = monthStart.endOf('month');
         const ordersCount = userOrders.filter(o => o.parsedDate >= monthStart && o.parsedDate <= monthEnd).length;
-        data.push({ period: monthNames[m], orders: ordersCount });
+        data.push({ period: shortMonths[m], orders: ordersCount, fullMonth: fullMonths[m] });
       }
     } else if (chartView === "yearly" && selectedYearRange[0] && selectedYearRange[1]) {
       const startYear = selectedYearRange[0].year();
@@ -561,6 +584,11 @@ const Profile: React.FC = () => {
         const ordersCount = userOrders.filter(o => o.parsedDate >= yearStart && o.parsedDate <= yearEnd).length;
         data.push({ period: y.toString(), orders: ordersCount });
       }
+    }
+
+    // Debug: Log the data for monthly view
+    if (chartView === "monthly") {
+      console.log("Monthly chart data with localized names:", data);
     }
 
     return data;
@@ -1050,13 +1078,13 @@ const Profile: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-2 text-xs sm:text-sm">
-            <span className="text-muted-foreground">Period:</span>
+            <span className="text-muted-foreground">{t.period || 'Period'}:</span>
             <span className="font-medium text-foreground">
               {chartView === 'yearly' && selectedYearRange[0] && selectedYearRange[1] ?
                 getPeriodLabel(chartView, selectedYearRange[0], selectedYearRange[1]) :
                 selectedRefDate ?
                 getPeriodLabel(chartView, selectedRefDate) :
-                'Select period'
+                t.selectPeriod || 'Select period'
               }
             </span>
           </div>
@@ -1068,11 +1096,7 @@ const Profile: React.FC = () => {
                 dataKey="period"
                 axisLine={{ stroke: 'hsl(var(--foreground))' }}
                 tickLine={{ stroke: 'hsl(var(--foreground))' }}
-                tick={chartView === 'monthly' ? {
-                  fill: 'hsl(var(--foreground))',
-                  fontSize: 12,
-                  textAnchor: 'end'
-                } : {
+                tick={{
                   fill: 'hsl(var(--foreground))',
                   fontSize: 12,
                   textAnchor: 'middle'
@@ -1083,7 +1107,7 @@ const Profile: React.FC = () => {
                 label={{
                   value: chartView === 'daily' ? 'Hour' : chartView === 'weekly' ? 'Day' : chartView === 'monthly' ? 'Months' : 'Year',
                   position: 'insideBottom',
-                  offset: chartView === 'monthly' ? 0 : 0,
+                  offset: 0,
                   fill: 'hsl(var(--foreground))',
                   textAnchor: 'middle'
                 }}
@@ -1091,7 +1115,7 @@ const Profile: React.FC = () => {
               />
               <YAxis
                 label={{
-                  value: 'Number of Orders',
+                  value: `${t.numberOfOrders || 'Number of Orders'}`,
                   angle: -90,
                   position: 'insideLeft',
                   offset: 0,
@@ -1106,6 +1130,14 @@ const Profile: React.FC = () => {
                   color: 'hsl(var(--foreground))',
                   borderColor: 'hsl(var(--border))'
                 }}
+                labelFormatter={(label, payload) => {
+                  if (chartView === 'monthly' && payload && payload.length > 0) {
+                    const data = payload[0].payload;
+                    return data.fullMonth || label;
+                  }
+                  return label;
+                }}
+                formatter={(value, name) => [value, t.orders]}
               />
               <Line
                 type="monotone"
@@ -1146,9 +1178,9 @@ const Profile: React.FC = () => {
               <div className="space-y-0">
                 {/* Column Headers */}
                 <div className="grid grid-cols-[140px_2fr_80px_100px_120px_60px] gap-6 px-4 py-3 border-b border-border/50 bg-muted/20">
-                  <div className="text-sm font-semibold text-foreground">Order</div>
+                  <div className="text-sm font-semibold text-foreground">{t.orders}</div>
                   <div className="text-sm font-semibold text-foreground">{t.product}</div>
-                  <div className="text-sm font-semibold text-foreground text-center hidden sm:block">Quantity</div>
+                  <div className="text-sm font-semibold text-foreground text-center hidden sm:block">{t.quantity}</div>
                   <div className="text-sm font-semibold text-foreground text-center hidden sm:block">{t.status}</div>
                   <div className="text-sm font-semibold text-foreground text-right">{t.total}</div>
                   <div className="text-sm font-semibold text-foreground text-center">{t.actions}</div>

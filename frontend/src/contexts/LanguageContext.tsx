@@ -337,6 +337,9 @@ interface TranslationValues {
   monthly: string;
   weekly: string;
   daily: string;
+  period: string;
+  selectPeriod: string;
+  numberOfOrders: string;
   spent: string;
   selectYear: string;
   selectStartYear: string;
@@ -721,6 +724,9 @@ const translations: Record<Language, TranslationValues> = {
     weekly: "Weekly",
     monthly: "Monthly",
     yearly: "Yearly",
+    period: "Period",
+    selectPeriod: "Select period",
+    numberOfOrders: "Number of Orders",
     spent: "Spent",
 
 
@@ -1129,6 +1135,9 @@ const translations: Record<Language, TranslationValues> = {
     weekly: "Wöchentlich",
     monthly: "Monatlich",
     yearly: "Jährlich",
+    period: "Zeitraum",
+    selectPeriod: "Zeitraum auswählen",
+    numberOfOrders: "Anzahl der Bestellungen",
     spent: "Spent",
     selectYear: 'Jahr auswählen',
     selectStartYear: 'Startjahr',
@@ -1522,6 +1531,9 @@ const translations: Record<Language, TranslationValues> = {
     weekly: "Hebdomadaire",
     monthly: "Mensuel",
     yearly: "Annuel",
+    period: "Période",
+    selectPeriod: "Sélectionner la période",
+    numberOfOrders: "Nombre de commandes",
     spent: "Spent",
     selectYear: 'Sélectionner l\'année',
     selectStartYear: 'Année de début',
