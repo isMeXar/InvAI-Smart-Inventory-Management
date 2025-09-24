@@ -3,207 +3,88 @@ import { motion } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { Brain, TrendingUp, Package, AlertTriangle, Lightbulb } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Brain, Sparkles, TrendingUp, AlertCircle, CheckCircle, Lightbulb } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import aiService from '@/services/aiService';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
+interface Insight {
+  id: string;
+  type: 'positive' | 'warning' | 'info';
+  title: string;
+  description: string;
+  metric?: string;
+  impact: 'high' | 'medium' | 'low';
+}
 
 interface AIInsightsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  type: 'dashboard' | 'products' | 'orders' | 'forecasts';
+  pageType: 'dashboard' | 'products' | 'orders' | 'forecasts' | 'users' | 'suppliers' | 'profile';
+  pageData: any;
 }
 
-const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, type }) => {
+const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, pageType, pageData }) => {
   const { t } = useLanguage();
-  const [insights, setInsights] = useState<any>(null);
+  const [insights, setInsights] = useState<Insight[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && pageData) {
       generateInsights();
     }
-  }, [isOpen, type]);
+  }, [isOpen, pageType, pageData]);
 
   const generateInsights = async () => {
     setIsLoading(true);
-    
-    // Simulate AI processing
-    setTimeout(() => {
-      const mockInsights = getInsightsByType(type);
-      setInsights(mockInsights);
-      setIsLoading(false);
-    }, 1500);
+
+    try {
+      console.log(`🔄 Generating AI insights for ${pageType}...`);
+      const generatedInsights = await aiService.generateInsights(pageData, pageType);
+      setInsights(generatedInsights);
+    } catch (error) {
+      console.error('Error generating insights:', error);
+      setInsights([]);
+    }
+
+    setIsLoading(false);
   };
 
-  const getInsightsByType = (insightType: string) => {
-    const commonInsights = {
-      dashboard: {
-          title: t.smartInventoryAIInsights,
-          summary: t.basedOnInventoryData,
-          recommendations: [
-            t.laptopProLow,
-            t.electronicsGrowth,
-            t.officeSuppliesOptimal,
-            t.considerBundleDeals
-          ],
-        chartData: {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-          datasets: [{
-            label: 'Inventory Turnover',
-            data: [65, 59, 80, 81, 56, 75],
-            backgroundColor: 'hsl(217 91% 60% / 0.8)',
-            borderColor: 'hsl(217 91% 60%)',
-            borderWidth: 2
-          }]
-        },
-        chartType: 'bar'
-      },
-      products: {
-        title: t.productPerformanceAnalysis,
-        summary: t.aiAnalysisProducts,
-        recommendations: [
-          t.topPerformerHeadphones,
-          t.slowMoverDesk,
-          t.reorderAlertSmartphone,
-          t.priceOptimizationMonitor
-        ],
-        chartData: {
-          labels: ['Electronics', 'Furniture', 'Office Supplies'],
-          datasets: [{
-            data: [45, 35, 20],
-            backgroundColor: [
-              'hsl(217 91% 60%)',
-              'hsl(213 94% 68%)',
-              'hsl(215 28% 70%)'
-            ]
-          }]
-        },
-        chartType: 'doughnut'
-      },
-      orders: {
-        title: t.orderPatternIntelligence,
-        summary: t.machineLearningAnalysis,
-        recommendations: [
-          t.peakOrderingTime,
-          t.bulkOrderOpportunity,
-          t.seasonalTrendElectronics,
-          t.crossSellPotential
-        ],
-        chartData: {
-          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-          datasets: [{
-            label: 'Order Volume',
-            data: [12, 19, 8, 15, 10],
-            borderColor: 'hsl(217 91% 60%)',
-            backgroundColor: 'hsl(217 91% 60% / 0.1)',
-            tension: 0.4,
-            fill: true
-          }]
-        },
-        chartType: 'line'
-      },
-      forecasts: {
-        title: t.demandForecastingInsights,
-        summary: t.predictiveAnalytics,
-        recommendations: [
-          t.projectedSmartphoneIncrease,
-          t.seasonalDeclineOfficeSupplies,
-          t.recommendedSafetyStock,
-          t.considerPreordering
-        ],
-        chartData: {
-          labels: ['Sept', 'Oct', 'Nov', 'Dec'],
-          datasets: [{
-            label: 'Predicted Demand',
-            data: [85, 95, 120, 140],
-            backgroundColor: 'hsl(142 76% 46% / 0.8)',
-            borderColor: 'hsl(142 76% 46%)',
-            borderWidth: 2
-          }, {
-            label: 'Actual Demand',
-            data: [80, 90, 115, null],
-            backgroundColor: 'hsl(217 91% 60% / 0.8)',
-            borderColor: 'hsl(217 91% 60%)',
-            borderWidth: 2
-          }]
-        },
-        chartType: 'bar'
+  const getInsightIcon = (type: string, title?: string) => {
+    const titleLower = title?.toLowerCase() || '';
+
+    if (type === 'positive') {
+      if (titleLower.includes('revenue') || titleLower.includes('growth') || titleLower.includes('profit')) {
+        return <TrendingUp className="h-5 w-5 text-success" />;
       }
-    };
+      return <CheckCircle className="h-5 w-5 text-success" />;
+    }
 
-    return commonInsights[insightType] || commonInsights.dashboard;
+    if (type === 'warning') {
+      if (titleLower.includes('stock') || titleLower.includes('inventory')) {
+        return <AlertCircle className="h-5 w-5 text-warning" />;
+      }
+      if (titleLower.includes('dependency') || titleLower.includes('risk')) {
+        return <AlertCircle className="h-5 w-5 text-destructive" />;
+      }
+      return <AlertCircle className="h-5 w-5 text-warning" />;
+    }
+
+    if (titleLower.includes('pattern') || titleLower.includes('trend')) {
+      return <TrendingUp className="h-5 w-5 text-primary" />;
+    }
+
+    return <Sparkles className="h-5 w-5 text-primary" />;
   };
 
-  const renderChart = () => {
-    if (!insights) return null;
-
-    const options = {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'top' as const,
-        },
-        tooltip: {
-          backgroundColor: 'hsl(var(--popover))',
-          borderColor: 'hsl(var(--border))',
-          titleColor: 'hsl(var(--popover-foreground))',
-          bodyColor: 'hsl(var(--popover-foreground))',
-        }
-      },
-      scales: insights.chartType !== 'doughnut' ? {
-        y: {
-          beginAtZero: true,
-          // grid: {
-          //   color: 'hsl(var(--border))'
-          // },
-          ticks: {
-            color: 'hsl(var(--muted-foreground))'
-          }
-        },
-        x: {
-          // grid: {
-          //   color: 'hsl(var(--border))'
-          // },
-          ticks: {
-            color: 'hsl(var(--muted-foreground))'
-          }
-        }
-      } : undefined
-    };
-
-    switch (insights.chartType) {
-      case 'bar':
-        return <Bar data={insights.chartData} options={options} />;
-      case 'line':
-        return <Line data={insights.chartData} options={options} />;
-      case 'doughnut':
-        return <Doughnut data={insights.chartData} options={options} />;
+  const getImpactColor = (impact: string) => {
+    switch (impact) {
+      case 'high':
+        return 'bg-destructive text-destructive-foreground';
+      case 'medium':
+        return 'bg-warning text-warning-foreground';
       default:
-        return <Bar data={insights.chartData} options={options} />;
+        return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -213,7 +94,7 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, type
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2 text-xl">
             <Brain className="h-6 w-6 text-primary" />
-            <span>{insights?.title || t.aiInsights}</span>
+            <span>{t.aiInsights} - {pageType.charAt(0).toUpperCase() + pageType.slice(1)}</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -224,59 +105,49 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, type
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full"
             />
-            <span className="ml-3 text-muted-foreground">{t.analyzingData}</span>
+            <span className="ml-3 text-muted-foreground">{t.analyzingData}...</span>
           </div>
-        ) : insights ? (
+        ) : insights.length > 0 ? (
           <div className="space-y-6">
-            {/* Summary */}
-            <Card className="border-primary/20 bg-primary/5">
-              <CardContent className="p-4">
-                <p className="text-foreground">{insights.summary}</p>
-              </CardContent>
-            </Card>
-
-            {/* Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  <span>{t.dataVisualization}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64">
-                  {renderChart()}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recommendations */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Lightbulb className="h-5 w-5 text-warning" />
-                  <span>{t.aiRecommendations}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {insights.recommendations.map((rec: string, index: number) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-start space-x-3 p-3 bg-muted/30 rounded-lg"
-                    >
-                      <div className="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-xs font-medium text-primary">{index + 1}</span>
+            {/* AI Generated Insights */}
+            <div className="space-y-4">
+              {insights.map((insight, index) => (
+                <motion.div
+                  key={insight.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className="border-primary/20 bg-card">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start space-x-3">
+                          {getInsightIcon(insight.type, insight.title)}
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-medium text-foreground">
+                                {insight.title}
+                              </h4>
+                              {insight.metric && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {insight.metric}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {insight.description}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge className={`text-xs ${getImpactColor(insight.impact)}`}>
+                          {insight.impact} impact
+                        </Badge>
                       </div>
-                      <p className="text-sm text-foreground">{rec}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
 
             {/* Action Buttons */}
             <div className="flex justify-end space-x-4 pt-4">
@@ -284,11 +155,27 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, type
                 {t.close}
               </Button>
               <Button onClick={generateInsights} className="bg-gradient-primary hover:opacity-90">
+                <Sparkles className="h-4 w-4 mr-2" />
                 {t.regenerateInsights}
               </Button>
             </div>
           </div>
-        ) : null}
+        ) : (
+          <div className="text-center py-8">
+            <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-4">
+              No insights available. Click generate to create AI insights.
+            </p>
+            <Button
+              onClick={generateInsights}
+              disabled={isLoading}
+              className="bg-gradient-primary hover:opacity-90"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Generate AI Insights
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -31,6 +31,8 @@ def api_root(request):
             'suppliers': '/api/suppliers/',
             'orders': '/api/orders/',
             'users': '/api/auth/users/',
+            'ai_insights': '/api/ai-insights/',
+            'notifications': '/api/notifications/',
         }
     })
 
@@ -39,6 +41,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path('api/', include('inventory.urls')),
+    path('api/ai-insights/', include('ai_insights.urls')),
+    path('api/notifications/', include('notifications.urls')),
 ]
 
 # Serve media files in development

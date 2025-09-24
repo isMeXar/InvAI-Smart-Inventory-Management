@@ -17,6 +17,7 @@ import Orders from "./pages/Orders";
 import Forecasts from "./pages/Forecasts";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import Notifications from "./pages/Notifications";
 import DashboardLayout from "./components/Layout/DashboardLayout";
 import NotFound from "./pages/NotFound";
 
@@ -93,6 +94,7 @@ const App = () => (
                   {/* <Route path="forecasts" element={<Forecasts />} /> */}
                   <Route path="profile" element={<Profile />} />
                   <Route path="settings" element={<Settings />} />
+                  <Route path="notifications" element={<Notifications />} />
                 </Route>
                 
                 {/* Redirect /products, /orders etc to dashboard versions */}
@@ -103,6 +105,7 @@ const App = () => (
                 <Route path="/users" element={<Navigate to="/dashboard/users" />} />
                 <Route path="/profile" element={<Navigate to="/dashboard/profile" />} />
                 <Route path="/settings" element={<Navigate to="/dashboard/settings" />} />
+                <Route path="/notifications" element={<Navigate to="/dashboard/notifications" />} />
                 
                 {/* Catch-all route */}
                 <Route path="*" element={<NotFound />} />

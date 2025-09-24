@@ -33,6 +33,7 @@ InvAI combines powerful backend functionality with an intuitive frontend interfa
   - Supplier relationship management
   - Order processing and analytics
   - Real-time dashboard with insights
+  - Smart notification system with real-time alerts
 
 - **📊 Advanced Analytics & Visualizations**
   - Interactive charts and data visualization
@@ -115,6 +116,7 @@ InvAI combines powerful backend functionality with an intuitive frontend interfa
 6. **Populate database with sample data (optional)**
    ```bash
    python manage.py populate_data
+   python manage.py create_sample_notifications --count 15
    ```
 
 7. **Start the backend server**
@@ -149,14 +151,14 @@ The application will be available at:
 - ⚙️ Backend API: `http://localhost:8000`
 - 🔧 Django Admin: `http://localhost:8000/admin`
 
+
 ## 🔮 Future Enhancements
 
 ### Coming Soon (High Priority)
 
-- **🔔 Notification System**
-  - Real-time alerts for low stock levels
-  - Email notifications for important events
-  - In-app notification center
+- **🔔 Real-time Notification System** ✅
+  - Smart alerts for inventory changes and user actions
+  - In-app notification center with advanced management
 
 - **🤖 AI Insights**
   - Intelligent demand forecasting

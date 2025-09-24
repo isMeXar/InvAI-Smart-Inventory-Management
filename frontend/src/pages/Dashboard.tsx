@@ -429,7 +429,21 @@ const Dashboard = () => {
       <AIInsightsModal
         isOpen={isAIModalOpen}
         onClose={() => setIsAIModalOpen(false)}
-        type="dashboard"
+        pageType="dashboard"
+        pageData={{
+          totalCounts: {
+            products: data.products.length,
+            orders: data.orders.length,
+            users: data.users.length,
+            suppliers: data.suppliers.length
+          },
+          lowStockProductsCount: data.products.filter(p => p.quantity < 50).length,
+          recentOrders: data.orders.slice(0, 5),
+          products: data.products,
+          orders: data.orders,
+          users: data.users,
+          suppliers: data.suppliers
+        }}
       />
     </div>
   );

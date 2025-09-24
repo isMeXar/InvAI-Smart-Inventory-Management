@@ -3,3 +3,4 @@ djangorestframework==3.16.1
 psycopg2-binary==2.9.10
 django-cors-headers==4.8.0
 python-dotenv==1.1.1
+google-generativeai==0.8.3

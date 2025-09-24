@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
+import { Sparkles, TrendingUp, AlertCircle, CheckCircle, RotateCcw, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
+import aiService from '@/services/aiService';
 
 interface Insight {
   id: string;
@@ -17,7 +18,7 @@ interface Insight {
 
 interface AIInsightsProps {
   data: any[];
-  pageType: 'dashboard' | 'users' | 'products' | 'suppliers' | 'orders' | 'profile';
+  pageType: 'dashboard' | 'users' | 'products' | 'suppliers' | 'orders' | 'profile' | 'forecasts';
 }
 
 const AIInsights: React.FC<AIInsightsProps> = ({ data, pageType }) => {
@@ -27,146 +28,57 @@ const AIInsights: React.FC<AIInsightsProps> = ({ data, pageType }) => {
 
   const generateInsights = async () => {
     setIsLoading(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const generatedInsights = getInsightsForPage(pageType, data);
-    setInsights(generatedInsights);
+
+    try {
+      // Call Django API for real AI insights
+      const generatedInsights = await aiService.generateInsights(data, pageType);
+      setInsights(generatedInsights);
+    } catch (error) {
+      console.error('Error generating insights:', error);
+      setInsights([]);
+    }
+
     setIsLoading(false);
   };
 
-  const getInsightsForPage = (page: string, data: any[]): Insight[] => {
-    switch (page) {
-      case 'dashboard':
-        return [
-          {
-            id: '1',
-            type: 'positive',
-            title: 'Revenue Growth Trend',
-            description: 'Revenue has increased by 15% this month, primarily driven by electronics sales.',
-            metric: '+15%',
-            impact: 'high'
-          },
-          {
-            id: '2',
-            type: 'warning',
-            title: 'Inventory Alert',
-            description: '3 products are running low on stock and may need reordering soon.',
-            impact: 'medium'
-          }
-        ];
-      
-      case 'users':
-        return [
-          {
-            id: '1',
-            type: 'info',
-            title: 'Team Composition',
-            description: 'Managers represent only 10% of your workforce. Consider promoting high-performing employees.',
-            impact: 'medium'
-          },
-          {
-            id: '2',
-            type: 'positive',
-            title: 'User Engagement',
-            description: 'Employee productivity has increased by 8% this quarter.',
-            metric: '+8%',
-            impact: 'high'
-          }
-        ];
-      
-      case 'products':
-        return [
-          {
-            id: '1',
-            type: 'positive',
-            title: 'Top Performers',
-            description: 'Top 3 products generate 70% of total revenue. Focus marketing efforts on similar items.',
-            metric: '70%',
-            impact: 'high'
-          },
-          {
-            id: '2',
-            type: 'warning',
-            title: 'Profit Margin Alert',
-            description: 'Office supplies have the lowest profit margin at 12%. Consider price adjustments.',
-            impact: 'medium'
-          }
-        ];
-      
-      case 'suppliers':
-        return [
-          {
-            id: '1',
-            type: 'warning',
-            title: 'Supplier Dependency',
-            description: 'TechSource Ltd accounts for 60% of electronics revenue. High dependency risk detected.',
-            impact: 'high'
-          },
-          {
-            id: '2',
-            type: 'info',
-            title: 'Cost Optimization',
-            description: 'Consider diversifying suppliers to reduce costs and improve reliability.',
-            impact: 'medium'
-          }
-        ];
-      
-      case 'orders':
-        return [
-          {
-            id: '1',
-            type: 'warning',
-            title: 'Order Processing',
-            description: 'Pending orders increased by 25% this week. Review processing workflows.',
-            metric: '+25%',
-            impact: 'medium'
-          },
-          {
-            id: '2',
-            type: 'positive',
-            title: 'Customer Satisfaction',
-            description: 'Delivered orders maintain 95% customer satisfaction rate.',
-            metric: '95%',
-            impact: 'high'
-          }
-        ];
-      
-      case 'profile':
-        return [
-          {
-            id: '1',
-            type: 'info',
-            title: 'Purchase Pattern',
-            description: 'You primarily order electronics, representing 80% of your purchases.',
-            metric: '80%',
-            impact: 'low'
-          },
-          {
-            id: '2',
-            type: 'positive',
-            title: 'Order Efficiency',
-            description: 'Your average order processing time is 20% faster than company average.',
-            metric: '+20%',
-            impact: 'medium'
-          }
-        ];
-      
-      default:
-        return [];
+  const generateMoreInsights = async () => {
+    setIsLoading(true);
+
+    try {
+      const moreInsights = await aiService.generateInsights(data, pageType);
+      setInsights(prev => [...prev, ...moreInsights]);
+    } catch (error) {
+      console.error('Error generating more insights:', error);
     }
+
+    setIsLoading(false);
   };
 
-  const getInsightIcon = (type: string) => {
-    switch (type) {
-      case 'positive':
-        return <CheckCircle className="h-5 w-5 text-success" />;
-      case 'warning':
-        return <AlertCircle className="h-5 w-5 text-warning" />;
-      default:
-        return <TrendingUp className="h-5 w-5 text-primary" />;
+  const getInsightIcon = (type: string, title?: string) => {
+    const titleLower = title?.toLowerCase() || '';
+
+    if (type === 'positive') {
+      if (titleLower.includes('revenue') || titleLower.includes('growth') || titleLower.includes('profit')) {
+        return <TrendingUp className="h-5 w-5 text-success" />;
+      }
+      return <CheckCircle className="h-5 w-5 text-success" />;
     }
+
+    if (type === 'warning') {
+      if (titleLower.includes('stock') || titleLower.includes('inventory')) {
+        return <AlertCircle className="h-5 w-5 text-warning" />;
+      }
+      if (titleLower.includes('dependency') || titleLower.includes('risk')) {
+        return <AlertCircle className="h-5 w-5 text-destructive" />;
+      }
+      return <AlertCircle className="h-5 w-5 text-warning" />;
+    }
+
+    if (titleLower.includes('pattern') || titleLower.includes('trend')) {
+      return <TrendingUp className="h-5 w-5 text-primary" />;
+    }
+
+    return <Sparkles className="h-5 w-5 text-primary" />;
   };
 
   const getImpactColor = (impact: string) => {
@@ -195,8 +107,8 @@ const AIInsights: React.FC<AIInsightsProps> = ({ data, pageType }) => {
             <p className="text-muted-foreground mb-4">
               {t.generateAiInsights}
             </p>
-            <Button 
-              onClick={generateInsights} 
+            <Button
+              onClick={generateInsights}
               disabled={isLoading}
               className="bg-gradient-primary hover:opacity-90"
             >
@@ -225,7 +137,7 @@ const AIInsights: React.FC<AIInsightsProps> = ({ data, pageType }) => {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-3">
-                    {getInsightIcon(insight.type)}
+                    {getInsightIcon(insight.type, insight.title)}
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-medium text-foreground">
@@ -248,10 +160,10 @@ const AIInsights: React.FC<AIInsightsProps> = ({ data, pageType }) => {
                 </div>
               </motion.div>
             ))}
-            
-            <div className="flex justify-center pt-4">
-              <Button 
-                variant="outline" 
+
+            <div className="flex justify-center gap-3 pt-4">
+              <Button
+                variant="outline"
                 onClick={generateInsights}
                 disabled={isLoading}
                 size="sm"
@@ -259,9 +171,20 @@ const AIInsights: React.FC<AIInsightsProps> = ({ data, pageType }) => {
                 {isLoading ? (
                   <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
                 ) : (
-                  <Sparkles className="h-4 w-4 mr-2" />
+                  <RotateCcw className="h-4 w-4 mr-2" />
                 )}
                 Refresh Insights
+              </Button>
+
+              <Button
+                variant="ghost"
+                onClick={generateMoreInsights}
+                disabled={isLoading}
+                size="sm"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Generate More
               </Button>
             </div>
           </div>

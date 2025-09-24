@@ -14,7 +14,8 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env file from parent directory
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / '.env')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -45,6 +46,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'accounts',
     'inventory',
+    'ai_insights',
+    'notifications',
 ]
 
 MIDDLEWARE = [

@@ -14,6 +14,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
+import { NotificationProvider } from '@/contexts/NotificationContext';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 interface TopNavbarProps {
   onToggleSidebar: () => void;
@@ -63,23 +65,11 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ onToggleSidebar }) => {
         {/* Right side - Actions */}
         <div className="flex items-center space-x-3">
           {/* Notifications */}
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="relative p-2 rounded-xl hover:bg-muted/50 transition-all duration-200"
-            >
-              <Bell className="h-5 w-5" />
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.3, type: "spring" }}
-                className="absolute -top-1 -right-1 h-5 w-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center font-medium"
-              >
-                3
-              </motion.span>
-            </Button>
-          </motion.div>
+          <NotificationProvider>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <NotificationBell />
+            </motion.div>
+          </NotificationProvider>
 
           {/* Theme Toggle */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
