@@ -26,13 +26,24 @@ def api_root(request):
         'version': '1.0',
         'endpoints': {
             'admin': '/admin/',
-            'auth': '/api/auth/',
-            'products': '/api/products/',
-            'suppliers': '/api/suppliers/',
-            'orders': '/api/orders/',
-            'users': '/api/auth/users/',
-            'ai_insights': '/api/ai-insights/',
-            'notifications': '/api/notifications/',
+            'auth': {
+                'login': '/api/auth/login/',
+                'logout': '/api/auth/logout/',
+                'users': '/api/auth/users/',
+            },
+            'inventory': {
+                'products': '/api/products/',
+                'suppliers': '/api/suppliers/',
+                'orders': '/api/orders/',
+            },
+            'ai_insights': {
+                'generate': '/api/ai-insights/generate/',
+                'status': '/api/ai-insights/status/',
+            },
+            'notifications': {
+                'list': '/api/notifications/',
+                'preferences': '/api/notifications/preferences/',
+            }
         }
     })
 

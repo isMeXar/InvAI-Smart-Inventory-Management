@@ -1,0 +1,16 @@
+{
+  "visible_data": {
+    "totalCounts": {
+      "products": 15,
+      "orders": 20,
+      "users": 3
+    },
+    "lowStockProductsCount": 3,
+    "recentOrders": [
+      {"id": 1, "status": "Pending", "total": 5199.96},
+      {"id": 2, "status": "Completed", "total": 2399.95}
+    ]
+  },
+  "page_type": "dashboard",
+  "count": 3
+}

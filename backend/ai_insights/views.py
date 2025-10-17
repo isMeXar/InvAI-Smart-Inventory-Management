@@ -25,22 +25,23 @@ def generate_insights(request):
             "lowStockCount": 5,
             ...
         },
-        "page_type": "products"
+        "page_type": "products",
+        "count": 3  // Optional: number of insights to generate (default: 3)
     }
     """
     try:
         visible_data = request.data.get('visible_data', {})
         page_type = request.data.get('page_type', 'dashboard')
+        count = request.data.get('count', 3)  # Number of insights to generate
 
         if not visible_data:
             return Response({
                 'error': 'visible_data is required'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        if not page_type:
-            return Response({
-                'error': 'page_type is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
+        # Validate count
+        if not isinstance(count, int) or count < 1 or count > 10:
+            count = 3  # Default to 3 if invalid
 
         # Validate page_type
         valid_page_types = ['dashboard', 'products', 'users', 'orders', 'suppliers', 'profile', 'forecasts']
@@ -53,25 +54,29 @@ def generate_insights(request):
         if not gemini_service.is_configured():
             return Response({
                 'error': 'AI service not configured. Please set GEMINI_API_KEY environment variable.',
-                'insights': []
+                'insights': [],
+                'service_available': False
             }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         # Generate insights
-        logger.info(f"Generating insights for user {request.user.id}, page: {page_type}")
-        insights = gemini_service.generate_insights(visible_data, page_type)
+        logger.info(f"Generating {count} insights for page: {page_type}")
+        insights = gemini_service.generate_insights(visible_data, page_type, count)
 
         return Response({
             'success': True,
             'insights': insights,
             'page_type': page_type,
-            'total_insights': len(insights)
+            'total_insights': len(insights),
+            'service_available': True
         }, status=status.HTTP_200_OK)
 
     except Exception as e:
         logger.error(f"Error in generate_insights view: {e}")
         return Response({
             'error': 'Internal server error occurred while generating insights',
-            'insights': []
+            'details': str(e),
+            'insights': [],
+            'service_available': False
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

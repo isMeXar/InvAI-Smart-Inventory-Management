@@ -32,13 +32,14 @@ class GeminiService:
             logger.error(f"❌ Failed to initialize Gemini Pro: {e}")
             self.model = None
 
-    def generate_insights(self, visible_data: Dict[str, Any], page_type: str) -> List[Dict[str, Any]]:
+    def generate_insights(self, visible_data: Dict[str, Any], page_type: str, count: int = 3) -> List[Dict[str, Any]]:
         """
         Generate AI insights based on visible data
 
         Args:
             visible_data: Dictionary containing the data visible to user
             page_type: Type of page (dashboard, products, users, etc.)
+            count: Number of insights to generate (default: 3, max: 10)
 
         Returns:
             List of insight dictionaries
@@ -48,9 +49,12 @@ class GeminiService:
             return []
 
         try:
-            logger.info(f"🔄 Generating insights for {page_type}")
+            # Ensure count is within bounds
+            count = max(1, min(count, 10))
+            
+            logger.info(f"🔄 Generating {count} insights for {page_type}")
 
-            prompt = self._build_prompt(visible_data, page_type)
+            prompt = self._build_prompt(visible_data, page_type, count)
             logger.debug(f"📤 Sending prompt to Gemini: {prompt[:200]}...")
 
             response = self.model.generate_content(prompt)
@@ -64,7 +68,7 @@ class GeminiService:
             logger.error(f"❌ Error generating insights: {e}")
             return []
 
-    def _build_prompt(self, visible_data: Dict[str, Any], page_type: str) -> str:
+    def _build_prompt(self, visible_data: Dict[str, Any], page_type: str, count: int) -> str:
         """Build the prompt for Gemini based on visible data and page type"""
 
         # Summarize the data to keep prompt concise
@@ -72,23 +76,25 @@ class GeminiService:
 
         prompt = f"""You are a business intelligence analyst for an inventory management system.
 
-Analyze the following {page_type} data and provide exactly 3 actionable business insights.
+Analyze the following {page_type} data and provide exactly {count} actionable business insights.
 
 DATA SUMMARY:
 {data_summary}
 
 REQUIREMENTS:
-1. Return exactly 3 insights as valid JSON array
+1. Return exactly {count} insights as valid JSON array
 2. Use specific numbers from the data provided
 3. Focus on actionable business recommendations
 4. Each insight should be unique and valuable
+5. Prioritize insights by impact (high impact first)
+6. Include specific metrics and percentages when possible
 
 RESPONSE FORMAT (JSON only):
 [
   {{
     "type": "positive|warning|info",
     "title": "Clear, specific title",
-    "description": "Detailed insight using actual data numbers",
+    "description": "Detailed insight using actual data numbers and actionable recommendations",
     "impact": "high|medium|low",
     "metric": "relevant number/percentage from data"
   }}
