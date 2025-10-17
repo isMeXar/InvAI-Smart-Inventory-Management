@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Sparkles, TrendingUp, AlertCircle, CheckCircle, Lightbulb, RefreshCw, Plus, AlertTriangle } from 'lucide-react';
+import { Brain, Sparkles, TrendingUp, AlertCircle, CheckCircle, RefreshCw, Plus, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import aiService from '@/services/aiService';
 
@@ -17,54 +16,35 @@ interface Insight {
   impact: 'high' | 'medium' | 'low';
 }
 
-interface AIInsightsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  pageType: 'dashboard' | 'products' | 'orders' | 'forecasts' | 'users' | 'suppliers' | 'profile';
-  pageData: Record<string, unknown>;
+interface AIInsightsSectionProps {
+  data: Record<string, unknown>;
+  pageType: 'dashboard' | 'users' | 'products' | 'suppliers' | 'orders' | 'profile' | 'forecasts';
 }
 
-const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, pageType, pageData }) => {
+const AIInsightsSection: React.FC<AIInsightsSectionProps> = ({ data, pageType }) => {
   const { t } = useLanguage();
   const [insights, setInsights] = useState<Insight[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [insightCount, setInsightCount] = useState(3);
   const [prefetchedInsights, setPrefetchedInsights] = useState<Insight[]>([]);
   const [isPrefetching, setIsPrefetching] = useState(false);
-  const insightsContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (isOpen && pageData) {
-      generateInsights();
-    }
-    // Reset state when modal closes
-    if (!isOpen) {
-      setInsights([]);
-      setPrefetchedInsights([]);
-      setInsightCount(3);
-      setError(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, pageType]);
 
   // Prefetch next 7 insights in background after initial load
   useEffect(() => {
-    if (insights.length === 3 && !isPrefetching && !error && isOpen) {
+    if (insights.length === 3 && !isPrefetching && !error) {
       prefetchMoreInsights();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [insights.length, isOpen]);
+  }, [insights.length]);
 
-  const generateInsights = async (count: number = 3) => {
+  const generateInsights = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      console.log(`🔄 Generating ${count} AI insights for ${pageType}...`);
-      const generatedInsights = await aiService.generateInsights(pageData, pageType, count);
+      console.log(`🔄 Generating 3 AI insights for ${pageType}...`);
+      const generatedInsights = await aiService.generateInsights(data, pageType, 3);
       setInsights(generatedInsights);
-      setInsightCount(count);
     } catch (error) {
       console.error('Error generating insights:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate insights. Please check your API key configuration.';
@@ -82,7 +62,7 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
     setIsPrefetching(true);
     try {
       console.log('🔮 Prefetching next 7 insights in background...');
-      const nextInsights = await aiService.generateInsights(pageData, pageType, 10);
+      const nextInsights = await aiService.generateInsights(data, pageType, 10);
       // Store insights 4-10 (indices 3-9) for later use
       setPrefetchedInsights(nextInsights.slice(3));
       console.log('✅ Prefetched 7 insights successfully');
@@ -103,12 +83,8 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
       // Append new insights without replacing existing ones
       setInsights(prev => [...prev, ...newInsights]);
       setPrefetchedInsights(prev => prev.slice(insightsToAdd));
-      setInsightCount(currentCount + insightsToAdd);
       
       console.log(`✨ Added ${insightsToAdd} insights from prefetch cache`);
-      
-      // Auto-scroll to show new insights after a brief delay
-      setTimeout(() => scrollToBottom(), 100);
     } else {
       // Fallback: fetch new insights if prefetch failed
       fetchAndAppendInsights();
@@ -123,31 +99,17 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
       const totalNeeded = Math.min(currentCount + 3, 10);
       
       console.log(`🔄 Fetching ${totalNeeded} insights (appending ${totalNeeded - currentCount})...`);
-      const allInsights = await aiService.generateInsights(pageData, pageType, totalNeeded);
+      const allInsights = await aiService.generateInsights(data, pageType, totalNeeded);
       
       // Only append the new ones
       const newInsights = allInsights.slice(currentCount);
       setInsights(prev => [...prev, ...newInsights]);
-      setInsightCount(totalNeeded);
-      
-      // Auto-scroll to show new insights after a brief delay
-      setTimeout(() => scrollToBottom(), 100);
     } catch (error) {
       console.error('Error generating more insights:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate more insights.';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Smooth scroll to bottom to show new insights
-  const scrollToBottom = () => {
-    if (insightsContainerRef.current) {
-      insightsContainerRef.current.scrollTo({
-        top: insightsContainerRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
     }
   };
 
@@ -235,17 +197,38 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-card border-border">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2 text-xl">
-            <Brain className="h-6 w-6 text-primary" />
-            <span>{t.aiInsights} - {pageType.charAt(0).toUpperCase() + pageType.slice(1)}</span>
-          </DialogTitle>
-        </DialogHeader>
-
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-16">
+    <Card className="mt-8 border-0 dark:border shadow-lg">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Brain className="h-5 w-5 text-primary" />
+          {t.aiInsights}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {insights.length === 0 && !isLoading && !error ? (
+          <div className="text-center py-8">
+            <div className="mb-6">
+              <div className="inline-flex p-4 bg-gradient-to-br from-primary/20 to-purple-500/20 rounded-full mb-4">
+                <Brain className="h-12 w-12 text-primary" />
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              Get AI-Powered Insights
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+              Let AI analyze your {pageType} data and provide actionable business insights powered by Google Gemini.
+            </p>
+            <Button
+              onClick={generateInsights}
+              disabled={isLoading}
+              className="bg-gradient-primary hover:opacity-90"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              {t.generateInsights}
+            </Button>
+          </div>
+        ) : isLoading && insights.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
@@ -253,16 +236,16 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
             />
             <div className="text-center">
               <p className="text-lg font-medium text-foreground mb-1">Analyzing your data...</p>
-              <p className="text-sm text-muted-foreground">AI is generating {insightCount} insights</p>
+              <p className="text-sm text-muted-foreground">AI is generating insights</p>
             </div>
           </div>
         ) : error ? (
-          <div className="text-center py-12">
-            <AlertTriangle className="h-16 w-16 text-destructive mx-auto mb-4" />
+          <div className="text-center py-8">
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Failed to Generate Insights</h3>
             <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">{error}</p>
             <Button
-              onClick={() => generateInsights()}
+              onClick={generateInsights}
               variant="outline"
               className="border-primary text-primary hover:bg-primary/10"
             >
@@ -270,7 +253,7 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
               Try Again
             </Button>
           </div>
-        ) : insights.length > 0 ? (
+        ) : (
           <div className="space-y-6">
             {/* Header Stats */}
             <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-lg border border-primary/20">
@@ -289,8 +272,8 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
               </Badge>
             </div>
 
-            {/* AI Generated Insights */}
-            <div ref={insightsContainerRef} className="space-y-2 max-h-[50vh] overflow-y-auto pr-2">
+            {/* AI Generated Insights - No internal scroll, expands downward */}
+            <div className="space-y-2">
               <AnimatePresence mode="popLayout">
                 {insights.map((insight, index) => (
                   <motion.div
@@ -335,69 +318,47 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-between pt-4 border-t">
-              <Button variant="outline" onClick={onClose}>
-                {t.close}
-              </Button>
-              <div className="flex gap-2">
-                {insights.length < 10 && (
-                  <Button
-                    onClick={generateMoreInsights}
-                    variant="outline"
-                    className="border-primary text-primary hover:bg-primary/10"
-                    disabled={isLoading || (isPrefetching && prefetchedInsights.length === 0)}
-                  >
-                    {isLoading ? (
-                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
-                    ) : (
-                      <Plus className="h-4 w-4 mr-2" />
-                    )}
-                    Generate More
-                  </Button>
-                )}
-                <Button
-                  onClick={() => {
-                    setInsights([]);
-                    setPrefetchedInsights([]);
-                    setInsightCount(3);
-                    generateInsights(3);
-                  }}
-                  className="bg-gradient-primary hover:opacity-90"
-                  disabled={isLoading}
-                >
+            <div className="flex items-center justify-center gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setInsights([]);
+                  setPrefetchedInsights([]);
+                  generateInsights();
+                }}
+                disabled={isLoading}
+                size="sm"
+              >
+                {isLoading ? (
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
+                ) : (
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Regenerate
+                )}
+                Refresh Insights
+              </Button>
+
+              {insights.length < 10 && (
+                <Button
+                  onClick={generateMoreInsights}
+                  variant="outline"
+                  className="border-primary text-primary hover:bg-primary/10"
+                  disabled={isLoading || (isPrefetching && prefetchedInsights.length === 0)}
+                  size="sm"
+                >
+                  {isLoading ? (
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-2" />
+                  )}
+                  Generate More
                 </Button>
-              </div>
+              )}
             </div>
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <div className="mb-6">
-              <div className="inline-flex p-4 bg-gradient-to-br from-primary/20 to-purple-500/20 rounded-full mb-4">
-                <Brain className="h-16 w-16 text-primary" />
-              </div>
-            </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              Get AI-Powered Insights
-            </h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Let AI analyze your {pageType} data and provide actionable business insights powered by Google Gemini.
-            </p>
-            <Button
-              onClick={() => generateInsights()}
-              disabled={isLoading}
-              size="lg"
-              className="bg-gradient-primary hover:opacity-90 shadow-lg"
-            >
-              <Sparkles className="h-5 w-5 mr-2" />
-              Generate AI Insights
-            </Button>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+    </Card>
   );
 };
 
-export default AIInsightsModal;
+export default AIInsightsSection;

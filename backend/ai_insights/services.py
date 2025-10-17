@@ -80,86 +80,57 @@ class GeminiService:
             return []
 
     def _build_prompt(self, visible_data: Dict[str, Any], page_type: str, count: int) -> str:
-        """Build the prompt for Gemini based on visible data and page type"""
+        """Build the prompt for Gemini with actual raw data for dynamic analysis"""
 
-        # Summarize the data to keep prompt concise
-        data_summary = self._summarize_data(visible_data, page_type)
+        # Convert data to JSON for Gemini to analyze
+        data_json = json.dumps(visible_data, indent=2, default=str)
 
-        prompt = f"""Analyze this {page_type} data and return {count} business insights as JSON only.
+        prompt = f"""You are a business analyst for an inventory management system. Analyze the ACTUAL DATA below and generate {count} SHORT, actionable business insights for a manager.
 
-DATA: {data_summary}
+PAGE TYPE: {page_type}
 
-Return ONLY a JSON array with {count} objects:
-[{{"type":"positive|warning|info","title":"specific title","description":"actionable insight with numbers","impact":"high|medium|low","metric":"key metric"}}]
+ACTUAL DATA (analyze this real data):
+{data_json}
 
-Requirements: Use actual numbers, prioritize by impact, be concise."""
+CRITICAL FORMATTING RULES:
+1. Keep insights SHORT - maximum 1-2 lines (one sentence or two short sentences)
+2. Include at most 1-2 examples when illustrating a point (e.g., "Keyboard, Mouse" not a full list)
+3. Use minimal numbers - only 1-2 key figures if essential to the insight
+4. DO NOT include user names, employee names, or overly specific details
+5. Focus on BUSINESS MEANING - what the manager needs to know (risks, opportunities, actions)
+6. Optionally add a brief suggestion at the end (e.g., "Consider restocking high-demand items")
+7. DO NOT explain calculations or reference backend logic
+8. DO NOT make up examples or use placeholder names
+9. DO NOT mention UI elements, page layout, filters, or technical details
+10. Prioritize: CRITICAL issues first (high impact), then patterns (medium), then opportunities (low)
+
+INSIGHT FOCUS BY PAGE TYPE:
+- products: Stock levels, stockout risks, best/worst performers, revenue patterns
+- suppliers: Dependency concentration, reliability, diversification needs
+- orders: Completion rates, fulfillment efficiency, pending revenue, bottlenecks
+- users: Workload distribution, activity levels, role balance
+
+GOOD EXAMPLES (short and clear):
+✓ "5 products critically low on stock (e.g., Keyboard, Mouse). Immediate restocking recommended."
+✓ "Top supplier handles 65% of inventory - high dependency risk. Consider diversifying suppliers."
+✓ "Order completion rate at 78% - investigate delays to improve fulfillment efficiency."
+
+BAD EXAMPLES (too long or detailed):
+✗ "There are 5 products that have fallen below the critical stock threshold of 20 units, including Keyboard with 12 units, Mouse with 8 units, and Monitor with 15 units remaining in inventory."
+✗ "The system shows that supplier ABC Corp provides 15 out of 23 products which equals 65.2% of total inventory."
+
+Return ONLY a valid JSON array with exactly {count} insight objects:
+[{{"type":"warning|positive|info","title":"Clear, short title","description":"1-2 line insight with key data and optional brief suggestion","impact":"high|medium|low","metric":"Key metric if relevant"}}]
+
+IMPORTANT: 
+- Use ONLY actual data from the JSON above
+- Keep descriptions to 1-2 lines maximum
+- Include only essential numbers and 1-2 examples max
+- Focus on business value, not data enumeration
+"""
 
         return prompt
 
-    def _summarize_data(self, data: Dict[str, Any], page_type: str) -> str:
-        """Summarize the visible data for the prompt"""
-
-        try:
-            if page_type == 'dashboard':
-                total_products = data.get('totalCounts', {}).get('products', 0)
-                total_orders = data.get('totalCounts', {}).get('orders', 0)
-                total_users = data.get('totalCounts', {}).get('users', 0)
-                low_stock = data.get('lowStockProductsCount', 0)
-                recent_orders = len(data.get('recentOrders', []))
-
-                return f"Dashboard Overview: {total_products} total products, {total_orders} total orders, {total_users} users, {low_stock} products with low stock, {recent_orders} recent orders visible"
-
-            elif page_type == 'products':
-                total = data.get('totalProducts', 0)
-                displayed = data.get('displayedProducts', 0)
-                low_stock = data.get('lowStockCount', 0)
-                category = data.get('selectedCategory', 'all')
-                search = data.get('searchTerm', '')
-
-                return f"Products Page: Showing {displayed} of {total} products, {low_stock} with low stock, filtered by category '{category}', search term '{search}'"
-
-            elif page_type == 'users':
-                total = data.get('totalUsers', 0)
-                displayed = data.get('displayedUsers', 0)
-                role = data.get('selectedRole', 'all')
-                search = data.get('searchTerm', '')
-                roles = data.get('roleDistribution', {})
-
-                return f"Users Page: Showing {displayed} of {total} users, filtered by role '{role}', search '{search}', role distribution: {roles}"
-
-            elif page_type == 'orders':
-                total = data.get('totalOrders', 0)
-                displayed = data.get('displayedOrders', 0)
-                status_filter = data.get('statusFilter', 'all')
-                statuses = data.get('statusCounts', {})
-
-                return f"Orders Page: Showing {displayed} of {total} orders, filtered by status '{status_filter}', status distribution: {statuses}"
-
-            elif page_type == 'suppliers':
-                total = data.get('totalSuppliers', 0)
-                displayed = data.get('displayedSuppliers', 0)
-                search = data.get('searchTerm', '')
-
-                return f"Suppliers Page: Showing {displayed} of {total} suppliers, search term '{search}'"
-
-            elif page_type == 'profile':
-                orders_count = len(data.get('userOrders', []))
-                recent_activity = len(data.get('recentActivity', []))
-
-                return f"Profile Page: User has {orders_count} total orders, {recent_activity} recent activities"
-
-            elif page_type == 'forecasts':
-                total_forecasts = data.get('totalForecasts', 0)
-                trends = data.get('forecastTrends', [])
-
-                return f"Forecasts Page: {total_forecasts} demand forecasts available, trend analysis shows {len(trends)} product predictions"
-
-            else:
-                return f"Page {page_type}: General data analysis available"
-
-        except Exception as e:
-            logger.error(f"Error summarizing data: {e}")
-            return f"Basic {page_type} data available for analysis"
 
     def _parse_response(self, response_text: str) -> List[Dict[str, Any]]:
         """Parse Gemini response into structured insights"""

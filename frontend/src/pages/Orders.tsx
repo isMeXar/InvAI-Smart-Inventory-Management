@@ -53,7 +53,7 @@ import {
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import AIInsights from '@/components/shared/AIInsights';
+import AIInsightsSection from '@/components/shared/AIInsightsSection';
 import { ordersAPI, productsAPI, usersAPI } from '@/lib/api';
 
 interface Order {
@@ -1088,8 +1088,9 @@ const Orders = () => {
       </Card>
 
       {/* AI Insights */}
-      <AIInsights 
+      <AIInsightsSection 
         data={{
+          orders: filteredAndSortedOrders,
           totalOrders: orders.length,
           displayedOrders: filteredAndSortedOrders.length,
           statusFilter: statusFilter,
@@ -1098,7 +1099,15 @@ const Orders = () => {
             Shipped: orders.filter(o => o.status === 'Shipped').length,
             Delivered: orders.filter(o => o.status === 'Delivered').length,
             Cancelled: orders.filter(o => o.status === 'Cancelled').length,
-          }
+          },
+          products: products,
+          users: users,
+          totalRevenue: orders
+            .filter(o => o.status === 'Delivered')
+            .reduce((sum, order) => sum + (Number(order.total_price) || 0), 0),
+          pendingRevenue: orders
+            .filter(o => o.status === 'Pending' || o.status === 'Shipped')
+            .reduce((sum, order) => sum + (Number(order.total_price) || 0), 0)
         }} 
         pageType="orders" 
       />

@@ -48,7 +48,7 @@ import {
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, Legend, CartesianGrid } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import AIInsights from '@/components/shared/AIInsights';
+import AIInsightsSection from '@/components/shared/AIInsightsSection';
 import { suppliersAPI, productsAPI, ordersAPI } from '@/lib/api';
 
 interface Supplier {
@@ -786,11 +786,27 @@ const Suppliers = () => {
       </Card>
 
       {/* AI Insights */}
-      <AIInsights 
+      <AIInsightsSection 
         data={{
+          suppliers: filteredAndSortedSuppliers,
           totalSuppliers: suppliers.length,
           displayedSuppliers: filteredAndSortedSuppliers.length,
-          searchTerm: searchTerm
+          searchTerm: searchTerm,
+          products: products,
+          orders: orders,
+          supplierProducts: products.reduce((acc, product) => {
+            const supplierId = product.supplier;
+            acc[supplierId] = (acc[supplierId] || 0) + 1;
+            return acc;
+          }, {} as Record<number, number>),
+          supplierRevenue: products.reduce((acc, product) => {
+            const supplierId = product.supplier;
+            const revenue = orders
+              .filter(order => order.product === product.id && order.status === 'Delivered')
+              .reduce((sum, order) => sum + order.quantity * product.price, 0);
+            acc[supplierId] = (acc[supplierId] || 0) + revenue;
+            return acc;
+          }, {} as Record<number, number>)
         }} 
         pageType="suppliers" 
       />

@@ -48,7 +48,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import AIInsights from '@/components/shared/AIInsights';
+import AIInsightsSection from '@/components/shared/AIInsightsSection';
 import { productsAPI, suppliersAPI, ordersAPI } from '@/lib/api';
 
 interface Product {
@@ -1195,12 +1195,20 @@ const Products = () => {
       </Dialog>
 
       {/* AI Insights */}
-      <AIInsights 
+      <AIInsightsSection 
         data={{
+          products: filteredAndSortedProducts,
           totalProducts: products.length,
           displayedProducts: filteredAndSortedProducts.length,
-          lowStockCount: products.filter(p => p.quantity < 10).length,
+          lowStockCount: products.filter(p => p.quantity < 50).length,
+          criticalStockCount: products.filter(p => p.quantity < 20).length,
+          categories: categories,
+          suppliers: suppliers,
+          orders: orders,
+          totalRevenue: getTotalRevenue(),
           selectedCategory: categoryFilter,
+          selectedSupplier: supplierFilter,
+          stockFilter: stockFilter,
           searchTerm: searchTerm
         }} 
         pageType="products" 

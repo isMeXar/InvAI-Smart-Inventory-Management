@@ -47,7 +47,7 @@ import {
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import AIInsights from '@/components/shared/AIInsights';
+import AIInsightsSection from '@/components/shared/AIInsightsSection';
 import { usersAPI, ordersAPI, productsAPI } from '@/lib/api';
 
 interface User {
@@ -317,6 +317,8 @@ const Users = () => {
   const { t } = useLanguage();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
@@ -362,15 +364,19 @@ const Users = () => {
   const fetchUsers = async () => {
     try {
       // Fetch data from APIs
-      const [userData, orders, products] = await Promise.all([
+      const [userData, ordersData, productsData] = await Promise.all([
         usersAPI.getAll(),
         ordersAPI.getAll(),
         productsAPI.getAll()
       ]);
 
       const userList = userData.results || userData;
-      const orderList = orders.results || orders;
-      const productList = products.results || products;
+      const orderList = ordersData.results || ordersData;
+      const productList = productsData.results || productsData;
+
+      // Store orders and products in state
+      setOrders(orderList);
+      setProducts(productList);
 
       // Calculate orders and revenue for each user
       const enrichedUsers = userList.map(user => {
@@ -944,8 +950,9 @@ const Users = () => {
       )}
 
       {/* AI Insights */}
-      <AIInsights 
+      <AIInsightsSection 
         data={{
+          users: filteredAndSortedUsers,
           totalUsers: users.length,
           displayedUsers: filteredAndSortedUsers.length,
           selectedRole: roleFilter,
@@ -954,7 +961,14 @@ const Users = () => {
             Admin: users.filter(u => u.role === 'Admin').length,
             Manager: users.filter(u => u.role === 'Manager').length,
             Employee: users.filter(u => u.role === 'Employee').length,
-          }
+          },
+          orders: orders,
+          products: products,
+          userOrders: orders.reduce((acc, order) => {
+            const userId = order.user;
+            acc[userId] = (acc[userId] || 0) + 1;
+            return acc;
+          }, {} as Record<number, number>)
         }} 
         pageType="users" 
       />

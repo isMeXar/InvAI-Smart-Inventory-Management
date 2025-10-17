@@ -28,7 +28,7 @@ import {
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import AIInsights from '@/components/shared/AIInsights';
+import AIInsightsSection from '@/components/shared/AIInsightsSection';
 
 interface Forecast {
   productId: number;
@@ -388,30 +388,3 @@ const Forecasts = () => {
                     </div>
                   </TableCell>
                   <TableCell>{forecast.productCategory}</TableCell>
-                  <TableCell>{forecast.month}</TableCell>
-                  <TableCell>{forecast.currentStock}</TableCell>
-                  <TableCell>{forecast.predictedDemand}</TableCell>
-                  <TableCell>${forecast.predictedRevenue.toLocaleString()}</TableCell>
-                  <TableCell>
-                    {forecast.currentStock >= forecast.predictedDemand ? (
-                      <span className="text-success font-medium">{t.sufficient}</span>
-                    ) : (
-                      <span className="text-destructive font-medium">
-                        {t.needMore.replace('{count}', (forecast.predictedDemand - forecast.currentStock).toString())}
-                      </span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* AI Insights */}
-      <AIInsights data={forecasts} pageType="forecasts" />
-    </motion.div>
-  );
-};
-
-export default Forecasts;
