@@ -38,7 +38,7 @@ import {
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import AIInsights from '@/components/shared/AIInsights';
+import AIInsightsSection from '@/components/shared/AIInsightsSection';
 import { DatePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -1329,10 +1329,13 @@ const Profile: React.FC = () => {
       </Card>
 
       {/* AI Insights */}
-      <AIInsights 
+      <AIInsightsSection 
         data={{
-          userOrders: getUserOrders().length,
-          recentActivity: getUserOrders().slice(0, 5).length
+          orders: getUserOrders(),
+          totalOrders: getUserOrders().length,
+          totalSpent: getTotalSpent(),
+          ordersByCategory: getOrdersByCategory(),
+          recentActivity: getUserOrders().slice(0, 5)
         }} 
         pageType="profile" 
       />

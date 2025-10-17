@@ -29,6 +29,23 @@ const AIInsightsSection: React.FC<AIInsightsSectionProps> = ({ data, pageType })
   const [prefetchedInsights, setPrefetchedInsights] = useState<Insight[]>([]);
   const [isPrefetching, setIsPrefetching] = useState(false);
 
+  // Check if data is empty
+  const isDataEmpty = () => {
+    // Check for common data indicators
+    const totalCount = data.totalProducts || data.totalOrders || data.totalUsers || data.totalSuppliers || data.totalForecasts || 0;
+    const arrayData = data.products || data.orders || data.users || data.suppliers || data.forecasts || [];
+    
+    // For profile page, check if user has any orders or activity
+    if (pageType === 'profile') {
+      const orders = data.orders as any[] || [];
+      const totalOrders = data.totalOrders as number || 0;
+      return orders.length === 0 && totalOrders === 0;
+    }
+    
+    // For other pages, check if there's any data to analyze
+    return totalCount === 0 && (Array.isArray(arrayData) && arrayData.length === 0);
+  };
+
   // Prefetch next 7 insights in background after initial load
   useEffect(() => {
     if (insights.length === 3 && !isPrefetching && !error) {
@@ -205,7 +222,24 @@ const AIInsightsSection: React.FC<AIInsightsSectionProps> = ({ data, pageType })
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {insights.length === 0 && !isLoading && !error ? (
+        {isDataEmpty() ? (
+          <div className="text-center py-12">
+            <div className="mb-4">
+              <div className="inline-flex p-4 bg-muted/20 rounded-full mb-4">
+                <AlertTriangle className="h-12 w-12 text-muted-foreground" />
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              No Data Available
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              {pageType === 'profile' 
+                ? 'No user activity detected. Start placing orders to see AI-powered insights about your activity patterns.'
+                : `No ${pageType} data available to generate insights. Add some ${pageType} to see AI-powered analysis.`
+              }
+            </p>
+          </div>
+        ) : insights.length === 0 && !isLoading && !error ? (
           <div className="text-center py-8">
             <div className="mb-6">
               <div className="inline-flex p-4 bg-gradient-to-br from-primary/20 to-purple-500/20 rounded-full mb-4">
