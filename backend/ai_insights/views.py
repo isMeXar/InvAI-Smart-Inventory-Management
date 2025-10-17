@@ -94,7 +94,7 @@ def service_status(request):
 
         return Response({
             'service_available': is_configured,
-            'service_name': 'Google Gemini Pro',
+            'service_name': 'Google Gemini 2.0 Flash',
             'message': 'AI insights service is ready' if is_configured else 'AI insights service not configured'
         }, status=status.HTTP_200_OK)
 

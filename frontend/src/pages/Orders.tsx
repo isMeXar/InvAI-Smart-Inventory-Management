@@ -179,7 +179,7 @@ const Orders = () => {
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number | Date, bValue: string | number | Date;
 
       switch (sortField) {
         case 'id':
@@ -452,7 +452,7 @@ const Orders = () => {
                 </div>
                 <div>
                   <Label htmlFor="status">{t.status}</Label>
-                  <Select value={newOrder.status} onValueChange={(value) => setNewOrder({ ...newOrder, status: value as any })}>
+                  <Select value={newOrder.status} onValueChange={(value) => setNewOrder({ ...newOrder, status: value as Order['status'] })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -641,9 +641,9 @@ const Orders = () => {
                       if (active && payload && payload.length) {
                         return (
                           <div className="p-2 rounded-md border bg-[hsl(var(--card))] shadow-md">
-                            <p className="font-medium text-foreground">{payload[0].payload.fullName}</p> {/* full name */}
-                            <p className="text-sm text-muted-foreground">{t.orders}: {payload[0].value}</p>
-                          </div>
+                          <p className="font-medium text-foreground">{payload[0].payload.fullName}</p> {/* full name */}
+                          <p className="text-sm text-muted-foreground">{t.orders}: {payload[0].value}</p>
+                        </div>
                         );
                       }
                       return null;
@@ -923,7 +923,9 @@ const Orders = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={`${getStatusColor(order.status)} flex items-center gap-1 w-fit`}>
+                      <Badge className={`${getStatusColor(
+                        order.status
+                      )} flex items-center gap-1 w-fit`}>
                         {getStatusIcon(order.status)}
                         {order.status}
                       </Badge>
@@ -1086,7 +1088,20 @@ const Orders = () => {
       </Card>
 
       {/* AI Insights */}
-      <AIInsights data={orders} pageType="orders" />
+      <AIInsights 
+        data={{
+          totalOrders: orders.length,
+          displayedOrders: filteredAndSortedOrders.length,
+          statusFilter: statusFilter,
+          statusCounts: {
+            Pending: orders.filter(o => o.status === 'Pending').length,
+            Shipped: orders.filter(o => o.status === 'Shipped').length,
+            Delivered: orders.filter(o => o.status === 'Delivered').length,
+            Cancelled: orders.filter(o => o.status === 'Cancelled').length,
+          }
+        }} 
+        pageType="orders" 
+      />
 
       {/* View Order Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
@@ -1344,7 +1359,7 @@ const Orders = () => {
               <Select
                 value={newOrder.status}
                 onValueChange={(value) =>
-                  setNewOrder({ ...newOrder, status: value as any })
+                  setNewOrder({ ...newOrder, status: value as Order['status'] })
                 }
               >
                 <SelectTrigger>

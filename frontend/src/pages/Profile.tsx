@@ -1329,7 +1329,13 @@ const Profile: React.FC = () => {
       </Card>
 
       {/* AI Insights */}
-      <AIInsights data={getUserOrders()} pageType="profile" />
+      <AIInsights 
+        data={{
+          userOrders: getUserOrders().length,
+          recentActivity: getUserOrders().slice(0, 5).length
+        }} 
+        pageType="profile" 
+      />
 
       {/* View Order Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>

@@ -25,8 +25,19 @@ class GeminiService:
                 return
 
             genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-pro')
-            logger.info("✅ Gemini Pro initialized successfully")
+            # Use gemini-2.0-flash (latest stable flash model)
+            # Configure for faster responses
+            generation_config = {
+                'temperature': 0.7,
+                'top_p': 0.95,
+                'top_k': 40,
+                'max_output_tokens': 1024,
+            }
+            self.model = genai.GenerativeModel(
+                'gemini-2.0-flash',
+                generation_config=generation_config
+            )
+            logger.info("✅ Gemini 2.0 Flash initialized successfully")
 
         except Exception as e:
             logger.error(f"❌ Failed to initialize Gemini Pro: {e}")
@@ -74,33 +85,14 @@ class GeminiService:
         # Summarize the data to keep prompt concise
         data_summary = self._summarize_data(visible_data, page_type)
 
-        prompt = f"""You are a business intelligence analyst for an inventory management system.
+        prompt = f"""Analyze this {page_type} data and return {count} business insights as JSON only.
 
-Analyze the following {page_type} data and provide exactly {count} actionable business insights.
+DATA: {data_summary}
 
-DATA SUMMARY:
-{data_summary}
+Return ONLY a JSON array with {count} objects:
+[{{"type":"positive|warning|info","title":"specific title","description":"actionable insight with numbers","impact":"high|medium|low","metric":"key metric"}}]
 
-REQUIREMENTS:
-1. Return exactly {count} insights as valid JSON array
-2. Use specific numbers from the data provided
-3. Focus on actionable business recommendations
-4. Each insight should be unique and valuable
-5. Prioritize insights by impact (high impact first)
-6. Include specific metrics and percentages when possible
-
-RESPONSE FORMAT (JSON only):
-[
-  {{
-    "type": "positive|warning|info",
-    "title": "Clear, specific title",
-    "description": "Detailed insight using actual data numbers and actionable recommendations",
-    "impact": "high|medium|low",
-    "metric": "relevant number/percentage from data"
-  }}
-]
-
-Return only the JSON array, no other text."""
+Requirements: Use actual numbers, prioritize by impact, be concise."""
 
         return prompt
 

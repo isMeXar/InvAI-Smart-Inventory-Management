@@ -34,6 +34,10 @@ class AIService {
     try {
       console.log(`🔄 Calling Django API for ${count} ${pageType} insights...`);
 
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       const response = await fetch(`${API_BASE_URL}/ai-insights/generate/`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
@@ -42,7 +46,10 @@ class AIService {
           page_type: pageType,
           count: count,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         if (response.status === 401) {

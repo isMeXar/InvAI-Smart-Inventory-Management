@@ -17,7 +17,7 @@ interface Insight {
 }
 
 interface AIInsightsProps {
-  data: any[];
+  data: Record<string, unknown>;
   pageType: 'dashboard' | 'users' | 'products' | 'suppliers' | 'orders' | 'profile' | 'forecasts';
 }
 

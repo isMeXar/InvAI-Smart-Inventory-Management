@@ -786,7 +786,14 @@ const Suppliers = () => {
       </Card>
 
       {/* AI Insights */}
-      <AIInsights data={filteredAndSortedSuppliers} pageType="suppliers" />
+      <AIInsights 
+        data={{
+          totalSuppliers: suppliers.length,
+          displayedSuppliers: filteredAndSortedSuppliers.length,
+          searchTerm: searchTerm
+        }} 
+        pageType="suppliers" 
+      />
 
       {/* View Supplier Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>

@@ -207,7 +207,7 @@ const Products = () => {
       return matchesSearch && matchesCategory && matchesSupplier && matchesStock;
     })
     .sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number, bValue: string | number;
 
       switch (sortField) {
         case 'id':
@@ -1195,7 +1195,16 @@ const Products = () => {
       </Dialog>
 
       {/* AI Insights */}
-      <AIInsights data={filteredAndSortedProducts} pageType="products" />
+      <AIInsights 
+        data={{
+          totalProducts: products.length,
+          displayedProducts: filteredAndSortedProducts.length,
+          lowStockCount: products.filter(p => p.quantity < 10).length,
+          selectedCategory: categoryFilter,
+          searchTerm: searchTerm
+        }} 
+        pageType="products" 
+      />
     </motion.div>
   );
 };

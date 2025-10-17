@@ -77,22 +77,31 @@ interface Product {
   price: number;
 }
 
+interface UserFormData {
+  name: string;
+  email: string;
+  role: string;
+  phone: string;
+  password?: string;
+  status?: string;
+}
+
 interface EditUserModalProps {
   user: User | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (userData: any) => void;
+  onUpdate: (userData: UserFormData) => void;
 }
 
 interface AddUserModalProps {
-  onAddUser: (userData: any) => void;
+  onAddUser: (userData: UserFormData) => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 const EditUserModal: React.FC<EditUserModalProps> = ({ user, isOpen, onClose, onUpdate }) => {
   const { t } = useLanguage();
-  const [userData, setUserData] = useState({
+  const [userData, setUserData] = useState<UserFormData>({
     name: '',
     email: '',
     role: '',
@@ -407,7 +416,7 @@ const Users = () => {
       return matchesSearch && matchesRole;
     })
     .sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number, bValue: string | number;
 
       switch (sortField) {
         case 'id':
@@ -449,6 +458,7 @@ const Users = () => {
   // Update filteredUsers for backward compatibility
   useEffect(() => {
     setFilteredUsers(filteredAndSortedUsers);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [users, searchTerm, roleFilter, sortField, sortDirection]);
 
   const getRoleColor = (role: string) => {
@@ -479,7 +489,7 @@ const Users = () => {
 
   const canEditUsers = user?.role === 'Admin' || user?.role === 'Manager';
 
-  const handleAddUser = async (userData: any) => {
+  const handleAddUser = async (userData: UserFormData) => {
     try {
       // Parse the name to first_name and last_name
       const nameParts = userData.name.split(' ');
@@ -515,7 +525,7 @@ const Users = () => {
     setIsViewModalOpen(true);
   };
 
-  const handleUpdateUser = async (updatedUser: any) => {
+  const handleUpdateUser = async (updatedUser: UserFormData) => {
     try {
       if (!selectedUser) return;
 
@@ -934,7 +944,20 @@ const Users = () => {
       )}
 
       {/* AI Insights */}
-      <AIInsights data={users} pageType="users" />
+      <AIInsights 
+        data={{
+          totalUsers: users.length,
+          displayedUsers: filteredAndSortedUsers.length,
+          selectedRole: roleFilter,
+          searchTerm: searchTerm,
+          roleDistribution: {
+            Admin: users.filter(u => u.role === 'Admin').length,
+            Manager: users.filter(u => u.role === 'Manager').length,
+            Employee: users.filter(u => u.role === 'Employee').length,
+          }
+        }} 
+        pageType="users" 
+      />
 
       {/* View User Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
