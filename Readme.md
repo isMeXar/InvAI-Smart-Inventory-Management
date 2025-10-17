@@ -43,9 +43,12 @@ InvAI streamlines inventory operations with smart automation, real-time tracking
 ## 🚀 Quick Start
 
 ### 📋 Prerequisites
+
 - Python 3.8+
 - Node.js 16+
 - PostgreSQL 12+
+
+> **Note:** A `.env.example` file is provided. Copy it to `.env` and update with your settings.
 
 ### 🔧 Backend Setup
 
@@ -66,11 +69,11 @@ psql -U postgres
 CREATE DATABASE invai_db;
 \q
 
-# 5. Configure environment (update .env with your settings)
-# DB_NAME=invai_db
-# DB_USER=postgres
-# DB_PASSWORD=your_password
-# GEMINI_API_KEY=your_gemini_key  # Optional for AI features
+# 5. Configure environment variables
+cp .env.example .env
+# Edit .env and update:
+# - DB_PASSWORD with your PostgreSQL password
+# - GEMINI_API_KEY with your API key (optional, for AI features)
 
 # 6. Run migrations
 python manage.py migrate
