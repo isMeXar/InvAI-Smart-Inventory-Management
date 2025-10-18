@@ -10,6 +10,7 @@ import {
   ShoppingCart
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { 
   Table, 
   TableBody, 
@@ -143,13 +144,16 @@ const Forecasts = () => {
     return forecasts.map(forecast => {
       const product = getProduct(forecast.productId);
       const predictedRevenue = product ? forecast.predictedDemand * product.price : 0;
+      const currentStock = product?.quantity || 0;
+      const stockStatus = currentStock >= forecast.predictedDemand ? t.sufficient : t.needMore.replace('{count}', String(Math.ceil(forecast.predictedDemand - currentStock)));
       
       return {
         ...forecast,
         productName: product?.name || 'Unknown Product',
         productCategory: product?.category || 'Unknown',
-        currentStock: product?.quantity || 0,
-        predictedRevenue
+        currentStock,
+        predictedRevenue,
+        stockStatus
       };
     });
   };
