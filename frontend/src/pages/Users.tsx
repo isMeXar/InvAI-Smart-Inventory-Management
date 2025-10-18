@@ -317,8 +317,8 @@ const Users = () => {
   const { t } = useLanguage();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  const [orders, setOrders] = useState<unknown[]>([]);
+  const [products, setProducts] = useState<unknown[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
@@ -964,11 +964,12 @@ const Users = () => {
           },
           orders: orders,
           products: products,
-          userOrders: orders.reduce((acc, order) => {
-            const userId = order.user;
-            acc[userId] = (acc[userId] || 0) + 1;
+          userOrders: (orders as Record<string, unknown>[]).reduce((acc, order) => {
+            const userId = (order as Record<string, unknown>).user as number;
+            const currentCount = (acc[userId] as number | undefined) || 0;
+            acc[userId] = currentCount + 1;
             return acc;
-          }, {} as Record<number, number>)
+          }, {} as Record<number, unknown>)
         }} 
         pageType="users" 
       />

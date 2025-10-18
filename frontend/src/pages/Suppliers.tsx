@@ -190,7 +190,7 @@ const Suppliers = () => {
 
   const filteredAndSortedSuppliers = filteredSuppliers
     .sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: number | string, bValue: number | string;
 
       switch (sortField) {
         case 'id':
@@ -282,9 +282,18 @@ const Suppliers = () => {
   const canViewRevenue = user?.role === 'Admin' || user?.role === 'Manager';
 
   // inside your component:
-  const supplierDistributionData = useMemo(() => getSupplierDistributionData(), [suppliers, products]);
+  const supplierDistributionData = useMemo(() => {
+    const colors = ['hsl(var(--primary))', 'hsl(var(--warning))', 'hsl(var(--success))', 'hsl(var(--accent))'];
 
-  const CustomPieTooltip = ({ active, payload }: any) => {
+    return suppliers.map((supplier, index) => ({
+      name: supplier.name,
+      value: getProductsBySupplier(supplier.id).length,
+      fill: colors[index % colors.length]
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suppliers, products]);
+
+  const CustomPieTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: { name: string; value: number } }> }) => {
     if (active && payload && payload.length) {
       const { name, value } = payload[0].payload;
       const total = supplierDistributionData.reduce((acc, cur) => acc + cur.value, 0);

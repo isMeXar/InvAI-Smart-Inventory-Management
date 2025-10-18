@@ -33,6 +33,7 @@ def generate_insights(request):
         visible_data = request.data.get('visible_data', {})
         page_type = request.data.get('page_type', 'dashboard')
         count = request.data.get('count', 3)  # Number of insights to generate
+        language = request.data.get('language', 'en')  # User's current language
 
         if not visible_data:
             return Response({
@@ -42,6 +43,11 @@ def generate_insights(request):
         # Validate count
         if not isinstance(count, int) or count < 1 or count > 10:
             count = 3  # Default to 3 if invalid
+
+        # Validate language
+        valid_languages = ['en', 'de', 'fr']
+        if language not in valid_languages:
+            language = 'en'  # Default to English if invalid
 
         # Validate page_type
         valid_page_types = ['dashboard', 'products', 'users', 'orders', 'suppliers', 'profile', 'forecasts']
@@ -59,8 +65,8 @@ def generate_insights(request):
             }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         # Generate insights
-        logger.info(f"Generating {count} insights for page: {page_type}")
-        insights = gemini_service.generate_insights(visible_data, page_type, count)
+        logger.info(f"Generating {count} insights for page: {page_type} in language: {language}")
+        insights = gemini_service.generate_insights(visible_data, page_type, count, language)
 
         return Response({
             'success': True,

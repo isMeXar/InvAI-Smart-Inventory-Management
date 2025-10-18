@@ -35,12 +35,24 @@ interface TranslationValues {
   // AI Insights translations
   aiInsights: string;
   analyzingData: string;
+  analyzingYourData: string;
+  aiIsGeneratingInsights: string;
+  aiIsGeneratingXInsights: string;
   dataVisualization: string;
   aiRecommendations: string;
   close: string;
   regenerateInsights: string;
   generateInsights: string;
+  generateMore: string;
   generateAiInsights: string;
+  getAiPoweredInsights: string;
+  letAiAnalyzeYourData: string;
+  poweredByGemini: string;
+  aiPoweredAnalysis: string;
+  insightsGenerated: string;
+  refreshInsights: string;
+  high: string;
+  medium: string;
   smartInventoryAIInsights: string;
   basedOnInventoryData: string;
   laptopProLow: string;
@@ -434,12 +446,24 @@ const translations: Record<Language, TranslationValues> = {
     // AI Insights translations
     aiInsights: 'AI Insights',
     analyzingData: 'Analyzing data with AI...',
+    analyzingYourData: 'Analyzing your data...',
+    aiIsGeneratingInsights: 'AI is generating insights',
+    aiIsGeneratingXInsights: 'AI is generating {count} insights',
     dataVisualization: 'Data Visualization',
     aiRecommendations: 'AI Recommendations',
     close: 'Close',
     regenerateInsights: 'Regenerate Insights',
     generateInsights: 'Generate Insights',
+    generateMore: 'Generate More',
     generateAiInsights: 'Generate AI-powered insights from your data',
+    getAiPoweredInsights: 'Get AI-Powered Insights',
+    letAiAnalyzeYourData: 'Let AI analyze your {pageType} data and provide actionable business insights powered by Google Gemini.',
+    poweredByGemini: 'Powered by Gemini',
+    aiPoweredAnalysis: 'AI-Powered Analysis',
+    insightsGenerated: '{count} Insights Generated',
+    refreshInsights: 'Refresh Insights',
+    high: 'High',
+    medium: 'Medium',
     smartInventoryAIInsights: 'Smart Inventory AI Insights',
     basedOnInventoryData: 'Based on your current inventory data and trends, here are the key insights:',
     laptopProLow: 'Laptop Pro inventory is running low - consider restocking within 2 weeks',
@@ -829,19 +853,31 @@ const translations: Record<Language, TranslationValues> = {
     delivered: 'Geliefert',
     shipped: 'Versendet',
     processing: 'In Bearbeitung',
-    totalProducts: 'Produkte gesamt', // Added to match interface
-    totalUsers: 'Benutzer gesamt',    // Added to match interface
-    totalSuppliers: 'Lieferanten gesamt', // Added to match interface
+    totalProducts: 'Produkte gesamt',
+    totalUsers: 'Benutzer gesamt',
+    totalSuppliers: 'Lieferanten gesamt',
 
     // AI Insights translations
     aiInsights: 'KI-Erkenntnisse',
     analyzingData: 'Analysiere Daten mit KI...',
+    analyzingYourData: 'Analysiere Ihre Daten...',
+    aiIsGeneratingInsights: 'KI generiert Erkenntnisse',
+    aiIsGeneratingXInsights: 'KI generiert {count} Erkenntnisse',
     dataVisualization: 'Datenvisualisierung',
     aiRecommendations: 'KI-Empfehlungen',
     close: 'Schließen',
     regenerateInsights: 'Erkenntnisse neu generieren',
     generateInsights: 'Erkenntnisse generieren',
+    generateMore: 'Mehr generieren',
     generateAiInsights: 'Generieren Sie KI-gestützte Erkenntnisse aus Ihren Daten',
+    getAiPoweredInsights: 'KI-gestützte Erkenntnisse erhalten',
+    letAiAnalyzeYourData: 'Lassen Sie die KI Ihre {pageType}-Daten analysieren und umsetzbare Geschäftserkenntnisse bereitstellen, unterstützt von Google Gemini.',
+    poweredByGemini: 'Unterstützt von Gemini',
+    aiPoweredAnalysis: 'KI-gestützte Analyse',
+    insightsGenerated: '{count} Erkenntnisse generiert',
+    refreshInsights: 'Erkenntnisse aktualisieren',
+    high: 'Hoch',
+    medium: 'Mittel',
     smartInventoryAIInsights: 'Smart Inventory KI-Erkenntnisse',
     basedOnInventoryData: 'Basierend auf Ihren aktuellen Bestandsdaten und Trends, hier die wichtigsten Erkenntnisse:',
     laptopProLow: 'Laptop Pro Bestand ist niedrig - erwägen Sie eine Nachbestellung innerhalb von 2 Wochen',
@@ -1227,16 +1263,31 @@ const translations: Record<Language, TranslationValues> = {
     delivered: 'Livré',
     shipped: 'Expédié',
     processing: 'En traitement',
+    totalProducts: 'Total des produits',
+    totalUsers: 'Total des utilisateurs',
+    totalSuppliers: 'Total des fournisseurs',
 
     // AI Insights translations
     aiInsights: 'Insights IA',
     analyzingData: 'Analyse des données avec l\'IA...',
+    analyzingYourData: 'Analyse de vos données...',
+    aiIsGeneratingInsights: 'L\'IA génère des informations',
+    aiIsGeneratingXInsights: 'L\'IA génère {count} informations',
     dataVisualization: 'Visualisation des données',
     aiRecommendations: 'Recommandations IA',
     close: 'Fermer',
     regenerateInsights: 'Régénérer les insights',
     generateInsights: 'Générer des insights',
+    generateMore: 'Générer plus',
     generateAiInsights: 'Générer des insights alimentés par l\'IA à partir de vos données',
+    getAiPoweredInsights: 'Obtenir des informations alimentées par l\'IA',
+    letAiAnalyzeYourData: 'Laissez l\'IA analyser vos données {pageType} et fournir des informations commerciales exploitables alimentées par Google Gemini.',
+    poweredByGemini: 'Propulsé par Gemini',
+    aiPoweredAnalysis: 'Analyse alimentée par l\'IA',
+    insightsGenerated: '{count} informations générées',
+    refreshInsights: 'Actualiser les informations',
+    high: 'Élevé',
+    medium: 'Moyen',
     smartInventoryAIInsights: 'Insights IA Smart Inventory',
     basedOnInventoryData: 'Basé sur vos données d\'inventaire actuelles et les tendances, voici les principaux insights:',
     laptopProLow: 'Le stock de Laptop Pro est bas - envisagez un réapprovisionnement dans les 2 semaines',
@@ -1388,7 +1439,6 @@ const translations: Record<Language, TranslationValues> = {
     // User Management
     userManagement: 'Gestion des utilisateurs',
     addUser: 'Ajouter un utilisateur',
-    totalUsers: 'Total des utilisateurs',
     administrators: 'Administrateurs',
     managers: 'Managers',
     userDirectory: 'Répertoire des utilisateurs',
@@ -1408,7 +1458,6 @@ const translations: Record<Language, TranslationValues> = {
     // Products
     productManagement: 'Gestion des produits',
     addProduct: 'Ajouter un produit',
-    totalProducts: 'Total des produits',
     lowStockItems: 'Articles en stock faible',
     categories: 'Catégories',
     inventoryLevel: 'Niveau d\'inventaire',
@@ -1461,7 +1510,6 @@ const translations: Record<Language, TranslationValues> = {
     // Suppliers
     supplierManagement: 'Gestion des fournisseurs',
     addSupplier: 'Ajouter un fournisseur',
-    totalSuppliers: 'Total des fournisseurs',
     supplierDirectory: 'Répertoire des fournisseurs',
     manageSupplierRelationships: 'Gérer les relations avec les fournisseurs et suivre les performances',
     trackPerformance: 'Suivre les performances',
@@ -1600,6 +1648,7 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
   if (context === undefined) {

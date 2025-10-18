@@ -22,7 +22,7 @@ interface AIInsightsSectionProps {
 }
 
 const AIInsightsSection: React.FC<AIInsightsSectionProps> = ({ data, pageType }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [insights, setInsights] = useState<Insight[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,8 +37,8 @@ const AIInsightsSection: React.FC<AIInsightsSectionProps> = ({ data, pageType })
     
     // For profile page, check if user has any orders or activity
     if (pageType === 'profile') {
-      const orders = data.orders as any[] || [];
-      const totalOrders = data.totalOrders as number || 0;
+      const orders = (data.orders as unknown[]) || [];
+      const totalOrders = (data.totalOrders as number) || 0;
       return orders.length === 0 && totalOrders === 0;
     }
     
@@ -59,8 +59,8 @@ const AIInsightsSection: React.FC<AIInsightsSectionProps> = ({ data, pageType })
     setError(null);
 
     try {
-      console.log(`🔄 Generating 3 AI insights for ${pageType}...`);
-      const generatedInsights = await aiService.generateInsights(data, pageType, 3);
+      console.log(`🔄 Generating 3 AI insights for ${pageType} in ${language}...`);
+      const generatedInsights = await aiService.generateInsights(data, pageType, 3, language);
       setInsights(generatedInsights);
     } catch (error) {
       console.error('Error generating insights:', error);
@@ -78,8 +78,8 @@ const AIInsightsSection: React.FC<AIInsightsSectionProps> = ({ data, pageType })
     
     setIsPrefetching(true);
     try {
-      console.log('🔮 Prefetching next 7 insights in background...');
-      const nextInsights = await aiService.generateInsights(data, pageType, 10);
+      console.log(`🔮 Prefetching next 7 insights in background (${language})...`);
+      const nextInsights = await aiService.generateInsights(data, pageType, 10, language);
       // Store insights 4-10 (indices 3-9) for later use
       setPrefetchedInsights(nextInsights.slice(3));
       console.log('✅ Prefetched 7 insights successfully');
@@ -115,8 +115,8 @@ const AIInsightsSection: React.FC<AIInsightsSectionProps> = ({ data, pageType })
       const currentCount = insights.length;
       const totalNeeded = Math.min(currentCount + 3, 10);
       
-      console.log(`🔄 Fetching ${totalNeeded} insights (appending ${totalNeeded - currentCount})...`);
-      const allInsights = await aiService.generateInsights(data, pageType, totalNeeded);
+      console.log(`🔄 Fetching ${totalNeeded} insights (appending ${totalNeeded - currentCount}) in ${language}...`);
+      const allInsights = await aiService.generateInsights(data, pageType, totalNeeded, language);
       
       // Only append the new ones
       const newInsights = allInsights.slice(currentCount);
@@ -247,10 +247,10 @@ const AIInsightsSection: React.FC<AIInsightsSectionProps> = ({ data, pageType })
               </div>
             </div>
             <h3 className="text-lg font-semibold text-foreground mb-2">
-              Get AI-Powered Insights
+              {t.getAiPoweredInsights}
             </h3>
             <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-              Let AI analyze your {pageType} data and provide actionable business insights powered by Google Gemini.
+              {t.letAiAnalyzeYourData.replace('{pageType}', pageType)}
             </p>
             <Button
               onClick={generateInsights}
@@ -269,8 +269,8 @@ const AIInsightsSection: React.FC<AIInsightsSectionProps> = ({ data, pageType })
               className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full mb-4"
             />
             <div className="text-center">
-              <p className="text-lg font-medium text-foreground mb-1">Analyzing your data...</p>
-              <p className="text-sm text-muted-foreground">AI is generating insights</p>
+              <p className="text-lg font-medium text-foreground mb-1">{t.analyzingYourData}</p>
+              <p className="text-sm text-muted-foreground">{t.aiIsGeneratingInsights}</p>
             </div>
           </div>
         ) : error ? (
@@ -296,13 +296,13 @@ const AIInsightsSection: React.FC<AIInsightsSectionProps> = ({ data, pageType })
                   <Brain className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">AI-Powered Analysis</p>
-                  <p className="text-lg font-semibold text-foreground">{insights.length} Insights Generated</p>
+                  <p className="text-sm text-muted-foreground">{t.aiPoweredAnalysis}</p>
+                  <p className="text-lg font-semibold text-foreground">{t.insightsGenerated.replace('{count}', insights.length.toString())}</p>
                 </div>
               </div>
               <Badge variant="outline" className="text-sm px-3 py-1">
                 <Sparkles className="h-3 w-3 mr-1" />
-                Powered by Gemini
+                {t.poweredByGemini}
               </Badge>
             </div>
 
@@ -329,7 +329,7 @@ const AIInsightsSection: React.FC<AIInsightsSectionProps> = ({ data, pageType })
                                 {insight.title}
                               </h4>
                               <Badge className={`text-xs shrink-0 ${getImpactColor(insight.impact)}`}>
-                                {insight.impact}
+                                {insight.impact === 'high' ? t.high : insight.impact === 'medium' ? t.medium : t.low}
                               </Badge>
                             </div>
                             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -368,7 +368,7 @@ const AIInsightsSection: React.FC<AIInsightsSectionProps> = ({ data, pageType })
                 ) : (
                   <RefreshCw className="h-4 w-4 mr-2" />
                 )}
-                Refresh Insights
+                {t.refreshInsights}
               </Button>
 
               {insights.length < 10 && (
@@ -384,7 +384,7 @@ const AIInsightsSection: React.FC<AIInsightsSectionProps> = ({ data, pageType })
                   ) : (
                     <Plus className="h-4 w-4 mr-2" />
                   )}
-                  Generate More
+                  {t.generateMore}
                 </Button>
               )}
             </div>

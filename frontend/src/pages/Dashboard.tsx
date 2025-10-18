@@ -20,10 +20,10 @@ import AIInsightsModal from '@/components/AIInsightsModal';
 import { productsAPI, ordersAPI, usersAPI, suppliersAPI } from '@/lib/api';
 
 interface DashboardData {
-  products: any[];
-  orders: any[];
-  users: any[];
-  suppliers: any[];
+  products: unknown[];
+  orders: unknown[];
+  users: unknown[];
+  suppliers: unknown[];
 }
 
 const Dashboard = () => {
@@ -49,7 +49,7 @@ const Dashboard = () => {
       // Simulate real-time data updates
       setData(prevData => ({
         ...prevData,
-        orders: prevData.orders.map(order => ({
+        orders: (prevData.orders as Record<string, unknown>[]).map((order: Record<string, unknown>) => ({
           ...order,
           // Randomly update some order statuses
           status: Math.random() > 0.95 ? getRandomStatus() : order.status
@@ -99,7 +99,7 @@ const Dashboard = () => {
     },
     {
       title: t.pendingOrders,
-      value: data.orders.filter(o => o.status !== 'Delivered').length,
+      value: (data.orders as Record<string, unknown>[]).filter((o: Record<string, unknown>) => o.status !== 'Delivered').length,
       icon: ShoppingCart,
       color: 'text-warning',
       bgColor: 'bg-warning/10',
@@ -134,16 +134,16 @@ const Dashboard = () => {
 
   // Pagination for Low Stock Alerts
   const allAlerts = [
-    ...data.products.filter(p => p.quantity <= 20),
-    ...data.products.filter(p => p.quantity > 20 && p.quantity <= 50)
+    ...(data.products as Record<string, unknown>[]).filter((p: Record<string, unknown>) => (p.quantity as number) <= 20),
+    ...(data.products as Record<string, unknown>[]).filter((p: Record<string, unknown>) => (p.quantity as number) > 20 && (p.quantity as number) <= 50)
   ];
   const totalAlertsPages = Math.ceil(allAlerts.length / itemsPerPage);
   const startAlertIndex = (alertsPage - 1) * itemsPerPage;
   const endAlertIndex = startAlertIndex + itemsPerPage;
   const paginatedAlerts = allAlerts.slice(startAlertIndex, endAlertIndex);
 
-  const lowStockProducts = data.products.filter(p => p.quantity <= 20);
-  const warningStockProducts = data.products.filter(p => p.quantity > 20 && p.quantity <= 50);
+  const lowStockProducts = (data.products as Record<string, unknown>[]).filter((p: Record<string, unknown>) => (p.quantity as number) <= 20);
+  const warningStockProducts = (data.products as Record<string, unknown>[]).filter((p: Record<string, unknown>) => (p.quantity as number) > 20 && (p.quantity as number) <= 50);
 
 
   const getStatusIcon = (status: string) => {
@@ -251,31 +251,32 @@ const Dashboard = () => {
             <CardContent className="flex-1 flex flex-col">
               <div className="space-y-4 flex-1 overflow-y-auto">
                 {paginatedOrders.map((order, index) => {
+                  const orderData = order as Record<string, unknown>;
                   return (
                     <motion.div
-                      key={order.id}
+                      key={orderData.id as number}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.1 * index }}
                       className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
                     >
                       <div className="flex items-center space-x-3">
-                        {getStatusIcon(order.status)}
+                        {getStatusIcon(orderData.status as string)}
                         <div>
                           <p className="text-sm font-medium text-foreground">
-                            {order.product?.name || order.product_name || 'Product Not Found'}
+                            {String((orderData.product as Record<string, unknown>)?.name || orderData.product_name || 'Product Not Found')}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Ordered by {order.user_name || order.user?.name || order.user?.username || 'Employee Not Found'}
+                            Ordered by {String(orderData.user_name || (orderData.user as Record<string, unknown>)?.name || (orderData.user as Record<string, unknown>)?.username || 'Employee Not Found')}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium text-foreground">
-                          Qty: {order.quantity}
+                          Qty: {orderData.quantity as number}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {order.status}
+                          {orderData.status as string}
                         </p>
                       </div>
                     </motion.div>
@@ -340,10 +341,11 @@ const Dashboard = () => {
               <div className="space-y-4 flex-1 overflow-y-auto">
                 {paginatedAlerts.length > 0 ? (
                   paginatedAlerts.map((product, index) => {
-                    const isLowStock = product.quantity <= 20;
+                    const productData = product as Record<string, unknown>;
+                    const isLowStock = (productData.quantity as number) <= 20;
                     return (
                       <motion.div
-                        key={product.id}
+                        key={productData.id as number}
                         initial={{ opacity: 0, x: 10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.1 * index }}
@@ -355,17 +357,17 @@ const Dashboard = () => {
                       >
                         <div>
                           <p className="text-sm font-medium text-foreground">
-                            {product.name}
+                            {productData.name as string}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {product.category}
+                            {productData.category as string}
                           </p>
                         </div>
                         <div className="text-right">
                           <p className={`text-sm font-bold ${
                             isLowStock ? 'text-destructive' : 'text-warning'
                           }`}>
-                            {product.quantity} {t.left}
+                            {productData.quantity as number} {t.left}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {t.reorderNeeded}
@@ -437,7 +439,7 @@ const Dashboard = () => {
             users: data.users.length,
             suppliers: data.suppliers.length
           },
-          lowStockProductsCount: data.products.filter(p => p.quantity < 50).length,
+          lowStockProductsCount: (data.products as Record<string, unknown>[]).filter((p: Record<string, unknown>) => (p.quantity as number) < 50).length,
           recentOrders: data.orders.slice(0, 5),
           products: data.products,
           orders: data.orders,

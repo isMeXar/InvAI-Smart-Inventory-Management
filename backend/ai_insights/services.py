@@ -43,7 +43,7 @@ class GeminiService:
             logger.error(f"❌ Failed to initialize Gemini Pro: {e}")
             self.model = None
 
-    def generate_insights(self, visible_data: Dict[str, Any], page_type: str, count: int = 3) -> List[Dict[str, Any]]:
+    def generate_insights(self, visible_data: Dict[str, Any], page_type: str, count: int = 3, language: str = 'en') -> List[Dict[str, Any]]:
         """
         Generate AI insights based on visible data
 
@@ -51,6 +51,7 @@ class GeminiService:
             visible_data: Dictionary containing the data visible to user
             page_type: Type of page (dashboard, products, users, etc.)
             count: Number of insights to generate (default: 3, max: 10)
+            language: User's current language (en, de, fr)
 
         Returns:
             List of insight dictionaries
@@ -63,9 +64,9 @@ class GeminiService:
             # Ensure count is within bounds
             count = max(1, min(count, 10))
             
-            logger.info(f"🔄 Generating {count} insights for {page_type}")
+            logger.info(f"🔄 Generating {count} insights for {page_type} in {language}")
 
-            prompt = self._build_prompt(visible_data, page_type, count)
+            prompt = self._build_prompt(visible_data, page_type, count, language)
             logger.debug(f"📤 Sending prompt to Gemini: {prompt[:200]}...")
 
             response = self.model.generate_content(prompt)
@@ -79,11 +80,19 @@ class GeminiService:
             logger.error(f"❌ Error generating insights: {e}")
             return []
 
-    def _build_prompt(self, visible_data: Dict[str, Any], page_type: str, count: int) -> str:
+    def _build_prompt(self, visible_data: Dict[str, Any], page_type: str, count: int, language: str = 'en') -> str:
         """Build the prompt for Gemini with actual raw data for dynamic analysis"""
 
         # Convert data to JSON for Gemini to analyze
         data_json = json.dumps(visible_data, indent=2, default=str)
+
+        # Language mapping
+        language_names = {
+            'en': 'English',
+            'de': 'German',
+            'fr': 'French'
+        }
+        language_name = language_names.get(language, 'English')
 
         prompt = f"""You are a business analyst for an inventory management system. Analyze the ACTUAL DATA below and generate {count} SHORT, actionable business insights for a manager.
 
@@ -127,6 +136,9 @@ IMPORTANT:
 - Keep descriptions to 1-2 lines maximum
 - Include only essential numbers and 1-2 examples max
 - Focus on business value, not data enumeration
+
+LANGUAGE INSTRUCTION:
+Generate ALL insights (title, description, metric) in {language_name}. The user's interface is in {language_name}, so all text must be in {language_name}.
 """
 
         return prompt

@@ -388,3 +388,22 @@ const Forecasts = () => {
                     </div>
                   </TableCell>
                   <TableCell>{forecast.productCategory}</TableCell>
+                  <TableCell>{forecast.month}</TableCell>
+                  <TableCell>{forecast.predictedDemand}</TableCell>
+                  <TableCell>{forecast.currentStock}</TableCell>
+                  <TableCell>
+                    <Badge className={forecast.stockStatus === t.sufficient ? 'bg-success text-success-foreground' : 'bg-warning text-warning-foreground'}>
+                      {forecast.stockStatus}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
+export default Forecasts;

@@ -30,9 +30,9 @@ class AIService {
     };
   }
 
-  async generateInsights(visibleData: Record<string, unknown>, pageType: string, count: number = 3): Promise<AIInsight[]> {
+  async generateInsights(visibleData: Record<string, unknown>, pageType: string, count: number = 3, language: string = 'en'): Promise<AIInsight[]> {
     try {
-      console.log(`🔄 Calling Django API for ${count} ${pageType} insights...`);
+      console.log(`🔄 Calling Django API for ${count} ${pageType} insights in ${language}...`);
 
       // Add timeout to prevent hanging
       const controller = new AbortController();
@@ -45,6 +45,7 @@ class AIService {
           visible_data: visibleData,
           page_type: pageType,
           count: count,
+          language: language,
         }),
         signal: controller.signal,
       });

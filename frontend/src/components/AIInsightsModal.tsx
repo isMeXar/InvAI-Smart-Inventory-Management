@@ -24,8 +24,8 @@ interface AIInsightsModalProps {
   pageData: Record<string, unknown>;
 }
 
-const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, pageType, pageData }) => {
-  const { t } = useLanguage();
+const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, pageData, pageType }) => {
+  const { t, language } = useLanguage();
   const [insights, setInsights] = useState<Insight[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,8 +61,8 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
     setError(null);
 
     try {
-      console.log(`🔄 Generating ${count} AI insights for ${pageType}...`);
-      const generatedInsights = await aiService.generateInsights(pageData, pageType, count);
+      console.log(`🔄 Generating ${count} AI insights for ${pageType} in ${language}...`);
+      const generatedInsights = await aiService.generateInsights(pageData, pageType, count, language);
       setInsights(generatedInsights);
       setInsightCount(count);
     } catch (error) {
@@ -81,8 +81,8 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
     
     setIsPrefetching(true);
     try {
-      console.log('🔮 Prefetching next 7 insights in background...');
-      const nextInsights = await aiService.generateInsights(pageData, pageType, 10);
+      console.log(`🔮 Prefetching next 7 insights in background (${language})...`);
+      const nextInsights = await aiService.generateInsights(pageData, pageType, 10, language);
       // Store insights 4-10 (indices 3-9) for later use
       setPrefetchedInsights(nextInsights.slice(3));
       console.log('✅ Prefetched 7 insights successfully');
@@ -122,8 +122,8 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
       const currentCount = insights.length;
       const totalNeeded = Math.min(currentCount + 3, 10);
       
-      console.log(`🔄 Fetching ${totalNeeded} insights (appending ${totalNeeded - currentCount})...`);
-      const allInsights = await aiService.generateInsights(pageData, pageType, totalNeeded);
+      console.log(`🔄 Fetching ${totalNeeded} insights (appending ${totalNeeded - currentCount}) in ${language}...`);
+      const allInsights = await aiService.generateInsights(pageData, pageType, totalNeeded, language);
       
       // Only append the new ones
       const newInsights = allInsights.slice(currentCount);
@@ -252,8 +252,8 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
               className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full mb-4"
             />
             <div className="text-center">
-              <p className="text-lg font-medium text-foreground mb-1">Analyzing your data...</p>
-              <p className="text-sm text-muted-foreground">AI is generating {insightCount} insights</p>
+              <p className="text-lg font-medium text-foreground mb-1">{t.analyzingYourData}</p>
+              <p className="text-sm text-muted-foreground">{t.aiIsGeneratingXInsights.replace('{count}', insightCount.toString())}</p>
             </div>
           </div>
         ) : error ? (
@@ -279,13 +279,13 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
                   <Brain className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">AI-Powered Analysis</p>
-                  <p className="text-lg font-semibold text-foreground">{insights.length} Insights Generated</p>
+                  <p className="text-sm text-muted-foreground">{t.aiPoweredAnalysis}</p>
+                  <p className="text-lg font-semibold text-foreground">{t.insightsGenerated.replace('{count}', insights.length.toString())}</p>
                 </div>
               </div>
               <Badge variant="outline" className="text-sm px-3 py-1">
                 <Sparkles className="h-3 w-3 mr-1" />
-                Powered by Gemini
+                {t.poweredByGemini}
               </Badge>
             </div>
 
@@ -312,7 +312,7 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
                                 {insight.title}
                               </h4>
                               <Badge className={`text-xs shrink-0 ${getImpactColor(insight.impact)}`}>
-                                {insight.impact}
+                                {insight.impact === 'high' ? t.high : insight.impact === 'medium' ? t.medium : t.low}
                               </Badge>
                             </div>
                             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -352,7 +352,7 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
                     ) : (
                       <Plus className="h-4 w-4 mr-2" />
                     )}
-                    Generate More
+                    {t.generateMore}
                   </Button>
                 )}
                 <Button
@@ -379,10 +379,10 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
               </div>
             </div>
             <h3 className="text-xl font-semibold text-foreground mb-2">
-              Get AI-Powered Insights
+              {t.getAiPoweredInsights}
             </h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Let AI analyze your {pageType} data and provide actionable business insights powered by Google Gemini.
+              {t.letAiAnalyzeYourData.replace('{pageType}', pageType)}
             </p>
             <Button
               onClick={() => generateInsights()}

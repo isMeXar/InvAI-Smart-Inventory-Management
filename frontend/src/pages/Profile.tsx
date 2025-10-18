@@ -97,7 +97,7 @@ const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [userStats, setUserStats] = useState<any>(null);
+  const [userStats, setUserStats] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -351,25 +351,20 @@ const Profile: React.FC = () => {
   };
 
   const canGoNext = () => {
-    let tempStart = selectedRefDate ? selectedRefDate.clone() : currentDate;
+    let tempStart: Dayjs;
     let tempEnd: Dayjs;
-
+    
     switch (chartView) {
-      case 'yearly':
+      case 'yearly': {
         const [start, end] = selectedYearRange;
         if (!start || !end) return false;
         tempStart = end.add(1, 'year');
-        return tempStart <= currentDate;
-      case 'daily':
-        tempStart = tempStart.add(1, 'day');
         tempEnd = getPeriodEnd(chartView, tempStart);
         return tempEnd <= currentDate;
-      case 'weekly':
-        tempStart = tempStart.add(7, 'day');
-        tempEnd = getPeriodEnd(chartView, tempStart);
-        return tempEnd <= currentDate;
+      }
       case 'monthly':
-        tempStart = tempStart.add(1, 'year');
+        if (!selectedRefDate) return false;
+        tempStart = selectedRefDate.add(1, 'year');
         tempEnd = getPeriodEnd(chartView, tempStart);
         return tempStart <= currentDate;
       default:
@@ -536,7 +531,7 @@ const Profile: React.FC = () => {
     // Use API data if available and matches current view
     if (userStats?.monthly_orders && chartView === "monthly" && selectedRefDate?.year() === currentDate.year()) {
       // Transform API data to include localized month names
-      return userStats.monthly_orders.map((item: any, index: number) => ({
+      return (userStats.monthly_orders as Array<{period: string; orders: number; spent: number}>).map((item, index: number) => ({
         period: shortMonths[index] || item.period,
         orders: item.orders,
         fullMonth: fullMonths[index] || item.period
@@ -1002,7 +997,7 @@ const Profile: React.FC = () => {
                     <span className="text-sm font-medium text-foreground">{t.totalOrders}</span>
                   </div>
                   <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {userStats?.total_orders || getUserOrders().length}
+                    {(userStats?.total_orders as number) || getUserOrders().length}
                   </span>
                 </div>
               </div>
@@ -1028,17 +1023,20 @@ const Profile: React.FC = () => {
                 {t.favoriteCategories}
               </h4>
               <div className="space-y-3">
-                {(userStats?.favorite_categories || getOrdersByCategory()).slice(0, 3).map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <span className="text-sm font-medium text-foreground truncate">
-                      {item.product__category || item.category}
-                    </span>
-                    <span className="text-sm font-bold text-primary bg-primary/10 px-2 py-1 rounded">
-                      {item.count || item.percentage}
-                      {item.percentage ? '%' : ' orders'}
-                    </span>
-                  </div>
-                ))}
+                {((userStats?.favorite_categories as unknown[]) || getOrdersByCategory()).slice(0, 3).map((item, index) => {
+                  const itemData = item as Record<string, unknown>;
+                  return (
+                    <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <span className="text-sm font-medium text-foreground truncate">
+                        {(itemData.product__category as string) || (itemData.category as string)}
+                      </span>
+                      <span className="text-sm font-bold text-primary bg-primary/10 px-2 py-1 rounded">
+                        {(itemData.count as number) || (itemData.percentage as number)}
+                        {itemData.percentage ? '%' : ' orders'}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </CardContent>
