@@ -173,12 +173,22 @@ const Suppliers = () => {
     // Calculate total revenue from actual orders
     return supplierOrders.reduce((total, order) => {
       if (order.total_price) {
-        return total + parseFloat(order.total_price);
+        // Handle both string and number prices
+        const price = typeof order.total_price === 'string' 
+          ? parseFloat(order.total_price.replace(/[$,]/g, ''))
+          : order.total_price;
+        return total + (isNaN(price) ? 0 : price);
       }
       // Fallback calculation if total_price is missing
       const product = supplierProducts.find(p => p.id === order.product);
-      const price = product ? parseFloat(product.price.toString()) : 0;
-      return total + (price * order.quantity);
+      if (product) {
+        const priceValue = product.price;
+        const price = typeof priceValue === 'string'
+          ? parseFloat(priceValue.replace(/[$,]/g, ''))
+          : Number(priceValue);
+        return total + (isNaN(price) ? 0 : price) * order.quantity;
+      }
+      return total;
     }, 0);
   };
 

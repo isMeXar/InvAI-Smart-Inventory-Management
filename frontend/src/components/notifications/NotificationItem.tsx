@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -9,28 +9,28 @@ interface NotificationItemProps {
   notification: Notification;
   className?: string;
   compact?: boolean;
+  onClick?: () => void;
 }
 
 export default function NotificationItem({
   notification,
   className,
   compact = false,
+  onClick,
 }: NotificationItemProps) {
   const { markAsRead } = useNotifications();
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
     // Mark as read when clicked
     if (!notification.is_read) {
       markAsRead(notification.id);
     }
 
-    // Navigate if there's an action URL
-    if (notification.action_url) {
-      if (notification.action_url.startsWith('/')) {
-        window.location.href = notification.action_url;
-      } else {
-        window.open(notification.action_url, '_blank');
-      }
+    // Call parent onClick handler
+    if (onClick) {
+      onClick();
     }
   };
 
@@ -116,10 +116,7 @@ export default function NotificationItem({
                 variant="ghost"
                 size="sm"
                 className="h-6 text-xs px-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClick();
-                }}
+                onClick={handleClick}
               >
                 {notification.action_text}
                 <ExternalLink className="ml-1 h-3 w-3" />

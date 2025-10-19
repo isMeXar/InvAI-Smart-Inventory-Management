@@ -366,7 +366,7 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, page
                   disabled={isLoading}
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Regenerate
+                  {t.regenerateInsights}
                 </Button>
               </div>
             </div>

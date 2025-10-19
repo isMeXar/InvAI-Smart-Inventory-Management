@@ -11,6 +11,7 @@ class NotificationType(models.TextChoices):
     ERROR = 'error', 'Error'
     INVENTORY_LOW = 'inventory_low', 'Low Inventory'
     ORDER_STATUS = 'order_status', 'Order Status'
+    ORDER_HIGH_VALUE = 'order_high_value', 'High Value Order'
     USER_ACTION = 'user_action', 'User Action'
     SYSTEM = 'system', 'System'
 
@@ -73,6 +74,7 @@ class NotificationPreference(models.Model):
     email_enabled = models.BooleanField(default=True)
     email_inventory_low = models.BooleanField(default=True)
     email_order_status = models.BooleanField(default=True)
+    email_order_high_value = models.BooleanField(default=True)
     email_user_action = models.BooleanField(default=False)
     email_system = models.BooleanField(default=True)
 
@@ -80,6 +82,7 @@ class NotificationPreference(models.Model):
     push_enabled = models.BooleanField(default=True)
     push_inventory_low = models.BooleanField(default=True)
     push_order_status = models.BooleanField(default=True)
+    push_order_high_value = models.BooleanField(default=True)
     push_user_action = models.BooleanField(default=True)
     push_system = models.BooleanField(default=True)
 

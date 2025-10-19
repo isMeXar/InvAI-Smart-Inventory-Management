@@ -18,11 +18,13 @@ interface NotificationPreference {
   email_enabled: boolean;
   email_inventory_low: boolean;
   email_order_status: boolean;
+  email_order_high_value: boolean;
   email_user_action: boolean;
   email_system: boolean;
   push_enabled: boolean;
   push_inventory_low: boolean;
   push_order_status: boolean;
+  push_order_high_value: boolean;
   push_user_action: boolean;
   push_system: boolean;
   auto_delete_read_after_days: number;
@@ -47,9 +49,21 @@ interface ApiResponse<T> {
   previous?: string;
 }
 
-const BASE_URL = 'http://localhost:8000/api/notifications/api';
+const BASE_URL = 'http://localhost:8000/api/notifications';
 
 class NotificationService {
+  private getAuthToken(): string | null {
+    return localStorage.getItem('token');
+  }
+
+  private getAuthHeaders(): HeadersInit {
+    const token = this.getAuthToken();
+    return {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    };
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -58,7 +72,7 @@ class NotificationService {
 
     const defaultOptions: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
         ...(options.headers || {}),
       },
       credentials: 'include',
@@ -99,25 +113,25 @@ class NotificationService {
     }
 
     const queryString = searchParams.toString();
-    const endpoint = `/notifications/${queryString ? `?${queryString}` : ''}`;
+    const endpoint = `/${queryString ? `?${queryString}` : ''}`;
 
     return this.request<Notification[]>(endpoint);
   }
 
   // Get unread notifications count
   async getUnreadCount(): Promise<number> {
-    const response = await this.request<{ unread_count: number }>('/notifications/unread_count/');
+    const response = await this.request<{ unread_count: number }>('/unread_count/');
     return response.unread_count;
   }
 
   // Get notification statistics
   async getStats(): Promise<NotificationStats> {
-    return this.request<NotificationStats>('/notifications/stats/');
+    return this.request<NotificationStats>('/stats/');
   }
 
   // Create a new notification (admin only)
   async createNotification(notification: Partial<Notification>): Promise<Notification> {
-    return this.request<Notification>('/notifications/', {
+    return this.request<Notification>('/', {
       method: 'POST',
       body: JSON.stringify(notification),
     });
@@ -125,28 +139,28 @@ class NotificationService {
 
   // Mark a specific notification as read
   async markAsRead(notificationId: number): Promise<Notification> {
-    return this.request<Notification>(`/notifications/${notificationId}/mark_read/`, {
+    return this.request<Notification>(`/${notificationId}/mark_read/`, {
       method: 'POST',
     });
   }
 
   // Mark a specific notification as unread
   async markAsUnread(notificationId: number): Promise<Notification> {
-    return this.request<Notification>(`/notifications/${notificationId}/mark_unread/`, {
+    return this.request<Notification>(`/${notificationId}/mark_unread/`, {
       method: 'POST',
     });
   }
 
   // Mark all notifications as read
   async markAllAsRead(): Promise<{ message: string; updated_count: number }> {
-    return this.request<{ message: string; updated_count: number }>('/notifications/mark_all_read/', {
+    return this.request<{ message: string; updated_count: number }>('/mark_all_read/', {
       method: 'POST',
     });
   }
 
   // Perform bulk actions on notifications
   async bulkAction(action: BulkActionRequest): Promise<{ message: string; affected_count: number }> {
-    return this.request<{ message: string; affected_count: number }>('/notifications/bulk_action/', {
+    return this.request<{ message: string; affected_count: number }>('/bulk_action/', {
       method: 'POST',
       body: JSON.stringify(action),
     });
@@ -154,14 +168,14 @@ class NotificationService {
 
   // Delete a specific notification
   async deleteNotification(notificationId: number): Promise<void> {
-    await this.request(`/notifications/${notificationId}/`, {
+    await this.request(`/${notificationId}/`, {
       method: 'DELETE',
     });
   }
 
   // Delete all read notifications
   async deleteAllRead(): Promise<{ message: string; deleted_count: number }> {
-    return this.request<{ message: string; deleted_count: number }>('/notifications/delete_all_read/', {
+    return this.request<{ message: string; deleted_count: number }>('/delete_all_read/', {
       method: 'DELETE',
     });
   }
@@ -189,6 +203,7 @@ class NotificationService {
       error: '❌',
       inventory_low: '📦',
       order_status: '📋',
+      order_high_value: '💰',
       user_action: '👤',
       system: '⚙️',
     };
@@ -203,6 +218,7 @@ class NotificationService {
       error: 'red',
       inventory_low: 'orange',
       order_status: 'purple',
+      order_high_value: 'emerald',
       user_action: 'indigo',
       system: 'gray',
     };

@@ -201,6 +201,7 @@ class NotificationService:
         type_mapping = {
             NotificationType.INVENTORY_LOW: preferences.push_inventory_low,
             NotificationType.ORDER_STATUS: preferences.push_order_status,
+            NotificationType.ORDER_HIGH_VALUE: preferences.push_order_high_value,
             NotificationType.USER_ACTION: preferences.push_user_action,
             NotificationType.SYSTEM: preferences.push_system,
         }

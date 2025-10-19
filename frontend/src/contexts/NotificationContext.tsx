@@ -72,7 +72,7 @@ function notificationReducer(state: NotificationState, action: NotificationActio
         ),
       };
 
-    case 'REMOVE_NOTIFICATION':
+    case 'REMOVE_NOTIFICATION': {
       const removedNotification = state.notifications.find(n => n.id === action.payload);
       return {
         ...state,
@@ -81,6 +81,7 @@ function notificationReducer(state: NotificationState, action: NotificationActio
           ? state.unreadCount - 1
           : state.unreadCount,
       };
+    }
 
     case 'MARK_AS_READ':
       return {
@@ -152,24 +153,26 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const fetchNotifications = useCallback(async (force = false) => {
     // If we have recent data and it's not forced, skip the fetch
-    if (!force && state.lastFetched && Date.now() - state.lastFetched.getTime() < 30000) {
+    if (!force && state.lastFetched && Date.now() - state.lastFetched.getTime() < 5000) {
       return;
     }
 
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const notifications = await NotificationService.getNotifications();
+      console.log('✅ Fetched notifications:', notifications.length);
       dispatch({ type: 'SET_NOTIFICATIONS', payload: notifications });
       dispatch({ type: 'SET_LAST_FETCHED', payload: new Date() });
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: 'Failed to fetch notifications' });
-      console.error('Error fetching notifications:', error);
+      console.error('❌ Error fetching notifications:', error);
     }
   }, [state.lastFetched]);
 
   const fetchUnreadCount = useCallback(async () => {
     try {
       const count = await NotificationService.getUnreadCount();
+      console.log('✅ Fetched unread count:', count);
       dispatch({ type: 'SET_UNREAD_COUNT', payload: count });
     } catch (error) {
       console.error('Error fetching unread count:', error);
@@ -305,15 +308,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   // Auto-fetch notifications on mount and set up polling
   useEffect(() => {
+    console.log('🔔 Notification system initialized');
     fetchNotifications();
     fetchPreferences();
 
-    // Set up polling for unread count every 30 seconds
+    // Set up aggressive polling for real-time updates (every 5 seconds)
     const interval = setInterval(() => {
+      console.log('🔄 Polling for new notifications...');
+      fetchNotifications(true);
       fetchUnreadCount();
-    }, 30000);
+    }, 5000);
 
-    return () => clearInterval(interval);
+    return () => {
+      console.log('🔕 Notification system cleanup');
+      clearInterval(interval);
+    };
   }, [fetchNotifications, fetchUnreadCount, fetchPreferences]);
 
   const contextValue: NotificationContextType = {

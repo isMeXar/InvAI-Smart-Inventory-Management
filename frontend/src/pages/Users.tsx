@@ -388,10 +388,21 @@ const Users = () => {
 
         // Calculate total revenue
         const totalRevenue = userOrders.reduce((sum, order) => {
-          if (order.total_price) return sum + parseFloat(order.total_price);
+          if (order.total_price) {
+            const price = typeof order.total_price === 'string'
+              ? parseFloat(order.total_price.replace(/[$,]/g, ''))
+              : order.total_price;
+            return sum + (isNaN(price) ? 0 : price);
+          }
           const product = productList.find(p => p.id === order.product);
-          const price = product ? parseFloat(product.price) : 0;
-          return sum + (price * order.quantity);
+          if (product) {
+            const priceValue = product.price;
+            const price = typeof priceValue === 'string'
+              ? parseFloat(priceValue.replace(/[$,]/g, ''))
+              : Number(priceValue);
+            return sum + (isNaN(price) ? 0 : price) * order.quantity;
+          }
+          return sum;
         }, 0);
 
         return {
@@ -777,7 +788,7 @@ const Users = () => {
                     onClick={() => handleSort('orders')}
                     className="flex items-center justify-between w-full hover:text-primary transition-colors"
                   >
-                    <span>Orders</span>
+                    <span>{t.orders}</span>
                     {getSortIcon('orders')}
                   </button>
                 </TableHead>
@@ -786,7 +797,7 @@ const Users = () => {
                     onClick={() => handleSort('revenue')}
                     className="flex items-center justify-between w-full hover:text-primary transition-colors"
                   >
-                    <span>Revenue</span>
+                    <span>{t.revenue}</span>
                     {getSortIcon('revenue')}
                   </button>
                 </TableHead>
@@ -1037,11 +1048,11 @@ const Users = () => {
                 </div>
                 <div className="flex gap-4">
                   <div className="flex-1 p-3 bg-muted rounded-lg flex flex-col items-center">
-                    <p className="text-sm text-muted-foreground">Orders</p>
+                    <p className="text-sm text-muted-foreground">{t.orders}</p>
                     <p className="text-lg font-bold text-foreground">{selectedUser.orders.toLocaleString()}</p>
                   </div>
                   <div className="flex-1 p-3 bg-muted rounded-lg flex flex-col items-center">
-                    <p className="text-sm text-muted-foreground">Revenue</p>
+                    <p className="text-sm text-muted-foreground">{t.revenue}</p>
                     <p className="text-lg font-bold text-foreground">${selectedUser.revenue.toLocaleString()}</p>
                   </div>
                 </div>

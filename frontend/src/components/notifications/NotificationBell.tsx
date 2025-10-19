@@ -9,6 +9,8 @@ import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { useNotifications } from '../../contexts/NotificationContext';
 import NotificationItem from './NotificationItem';
+import NotificationDetailModal from './NotificationDetailModal';
+import { type Notification } from '../../services/notificationService';
 
 export default function NotificationBell() {
   const {
@@ -20,6 +22,8 @@ export default function NotificationBell() {
   } = useNotifications();
 
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   const displayedNotifications = notifications.slice(0, 8); // Show latest 8
 
@@ -28,6 +32,12 @@ export default function NotificationBell() {
     if (open && notifications.length === 0) {
       fetchNotifications(true);
     }
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    setSelectedNotification(notification);
+    setShowDetailModal(true);
+    setIsOpen(false); // Close popover
   };
 
   return (
@@ -44,7 +54,7 @@ export default function NotificationBell() {
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-80 p-0 shadow-xl border-0"
+        className="w-80 sm:w-96 p-0 shadow-xl border-0 max-w-[calc(100vw-2rem)]"
         align="end"
         sideOffset={8}
       >
@@ -65,7 +75,7 @@ export default function NotificationBell() {
           </div>
         </div>
 
-        <ScrollArea className="max-h-80">
+        <ScrollArea className="h-96">
           <div className="p-2">
             {isLoading && notifications.length === 0 ? (
               <div className="flex items-center justify-center h-20">
@@ -83,6 +93,7 @@ export default function NotificationBell() {
                     key={notification.id}
                     notification={notification}
                     compact={true}
+                    onClick={() => handleNotificationClick(notification)}
                   />
                 ))}
               </div>
@@ -106,6 +117,15 @@ export default function NotificationBell() {
           </div>
         )}
       </PopoverContent>
+
+      {/* Detail Modal - Rendered outside popover */}
+      {selectedNotification && (
+        <NotificationDetailModal
+          notification={selectedNotification}
+          open={showDetailModal}
+          onOpenChange={setShowDetailModal}
+        />
+      )}
     </Popover>
   );
 }
