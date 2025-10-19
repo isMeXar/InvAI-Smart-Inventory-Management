@@ -44,55 +44,72 @@ InvAI streamlines inventory operations with smart automation, real-time tracking
 
 ### 📋 Prerequisites
 
-- Python 3.8+
-- Node.js 16+
-- PostgreSQL 12+
+- **Python** 3.8 or higher
+- **Node.js** 16 or higher  
+- **PostgreSQL** 12 or higher
+- **Git** (to clone the repository)
 
-> **Note:** A `.env.example` file is provided. Copy it to `.env` and update with your settings.
+> **Note:** A `.env.example` file is provided in the backend folder. Copy it to `.env` and configure your settings.
 
 ### 🔧 Backend Setup
 
 ```bash
-# 1. Navigate to backend
+# 1. Clone the repository
+git clone https://github.com/yourusername/InvAI-Smart-Inventory-Management.git
+cd InvAI-Smart-Inventory-Management
+
+# 2. Navigate to backend
 cd backend
 
-# 2. Create virtual environment
+# 3. Create virtual environment
 python -m venv venv
+
+# 4. Activate virtual environment
 venv\Scripts\activate  # Windows
 # source venv/bin/activate  # macOS/Linux
 
-# 3. Install dependencies
+# 5. Install dependencies
 pip install -r requirements.txt
 
-# 4. Create PostgreSQL database
+# 6. Create PostgreSQL database
 psql -U postgres
 CREATE DATABASE invai_db;
 \q
 
-# 5. Configure environment variables
+# 7. Configure environment variables
 cp .env.example .env
 # Edit .env and update:
-# - DB_PASSWORD with your PostgreSQL password
-# - GEMINI_API_KEY with your API key (optional, for AI features)
+# - DB_NAME=invai_db
+# - DB_USER=postgres
+# - DB_PASSWORD=your_postgresql_password
+# - DB_HOST=localhost
+# - DB_PORT=5432
+# - SECRET_KEY=your_secret_key_here
+# - GEMINI_API_KEY=your_api_key (optional, for AI features)
 
-# 6. Run migrations
+# 8. Run migrations
 python manage.py migrate
 
-# 7. Create admin user
+# 9. Create admin user
 python manage.py createsuperuser
+# Follow prompts to create username and password
 
-# 8. (Optional) Populate with sample data
+# 10. Populate with sample data (recommended)
 python manage.py populate_data
 python manage.py create_sample_notifications --count 15
 
-# 9. Start server
+# 11. Start development server
 python manage.py runserver
 ```
 
+✅ Backend should now be running at `http://localhost:8000`
+
 ### 🎨 Frontend Setup
 
+**Open a new terminal** (keep backend running)
+
 ```bash
-# 1. Navigate to frontend
+# 1. Navigate to frontend folder
 cd frontend
 
 # 2. Install dependencies
@@ -102,11 +119,23 @@ npm install
 npm run dev
 ```
 
+✅ Frontend should now be running at `http://localhost:8080`
+
 ### 🌐 Access the Application
 
-- **Frontend:** http://localhost:8080
-- **Backend API:** http://localhost:8000
-- **Admin Panel:** http://localhost:8000/admin
+- **Frontend**: http://localhost:8080
+- **Backend API**: http://localhost:8000/api/
+- **Admin Panel**: http://localhost:8000/admin
+
+### 👤 Default Login
+
+Use the superuser credentials you created during setup.
+
+### 📚 Additional Documentation
+
+- **[API Endpoints](API_ENDPOINTS.md)** - Complete API reference
+- **[AI Insights](AI_INSIGHTS.md)** - AI features setup and usage
+- **[Notifications](NOTIFICATIONS.md)** - Notification system guide
 
 ## 🔮 Future Enhancements
 

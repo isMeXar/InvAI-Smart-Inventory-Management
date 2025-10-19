@@ -181,10 +181,10 @@ const Suppliers = () => {
       }
       // Fallback calculation if total_price is missing
       const product = supplierProducts.find(p => p.id === order.product);
-      if (product) {
-        const priceValue = product.price;
+      if (product && product.price !== undefined) {
+        const priceValue: string | number = product.price;
         const price = typeof priceValue === 'string'
-          ? parseFloat(priceValue.replace(/[$,]/g, ''))
+          ? parseFloat(String(priceValue).replace(/[$,]/g, ''))
           : Number(priceValue);
         return total + (isNaN(price) ? 0 : price) * order.quantity;
       }
