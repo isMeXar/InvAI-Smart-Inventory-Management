@@ -31,7 +31,7 @@ SECRET_KEY = 'django-insecure-rpip^)r!s9vtq(n5+3dxg3fng8zg6rq))c+o99y501n96)+g3)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'backend', 'frontend', '*']
 
 
 # Application definition
@@ -148,9 +148,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",  # React dev server
     "http://127.0.0.1:8080",
+    "http://localhost",  # Docker frontend
+    "http://localhost:80",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True  # For Docker development
 
 # Django REST Framework settings
 REST_FRAMEWORK = {
@@ -167,7 +170,12 @@ REST_FRAMEWORK = {
 # Disable CSRF for API endpoints
 CSRF_COOKIE_HTTPONLY = False
 CSRF_USE_SESSIONS = False
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8080', 'http://127.0.0.1:8080']
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8080', 
+    'http://127.0.0.1:8080',
+    'http://localhost',
+    'http://localhost:80',
+]
 
 # Custom user model
 AUTH_USER_MODEL = 'accounts.User'

@@ -82,6 +82,64 @@ htmlcov/
 *.bak
 *.swp
 *~
-cookies.txt
-MODAL_FLASH_FIX.md
-THREE_TASKS_COMPLETE.md
+
+# Internal documentation (don't push)
+BEFORE_PUSH.txt
+DOCKER_SETUP.txt
+TODO.txt
+NOTES.txt
+
+# OS specific
+Thumbs.db
+Desktop.ini
+
+# Docker volumes and data
+postgres_data/
+pgdata/
+
+# Bun (if used)
+bun.lockb
+
+# Package manager locks (keep package-lock.json, but ignore others if needed)
+# yarn.lock
+# pnpm-lock.yaml
+
+# Frontend build artifacts
+frontend/dist/
+frontend/build/
+frontend/.vite/
+
+# Backend migrations (optional - comment out if you want to track them)
+# backend/*/migrations/
+
+# Database dumps
+*.sql
+*.dump
+
+# Secrets and credentials
+*.pem
+*.key
+*.cert
+secrets/
+credentials/
+
+# IDE and editor configs (keep what's useful)
+.vscode/settings.json
+.vscode/launch.json
+*.code-workspace
+
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*

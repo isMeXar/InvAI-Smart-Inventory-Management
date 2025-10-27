@@ -40,102 +40,78 @@ InvAI streamlines inventory operations with smart automation, real-time tracking
 **AI:** Google Gemini Pro API  
 **Auth:** JWT Authentication
 
-## 🚀 Quick Start
+## 🚀 Quick Start with Docker
 
-### 📋 Prerequisites
+### Prerequisites
 
-- **Python** 3.8 or higher
-- **Node.js** 16 or higher  
-- **PostgreSQL** 12 or higher
+- **Docker Desktop** installed ([Download here](https://www.docker.com/products/docker-desktop))
 - **Git** (to clone the repository)
 
-> **Note:** A `.env.example` file is provided in the backend folder. Copy it to `.env` and configure your settings.
-
-### 🔧 Backend Setup
+### Setup (3 Simple Steps!)
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/yourusername/InvAI-Smart-Inventory-Management.git
 cd InvAI-Smart-Inventory-Management
 
-# 2. Navigate to backend
-cd backend
+# 2. (Optional) Add your Gemini API key for AI features
+echo "GEMINI_API_KEY=your_api_key_here" > .env
 
-# 3. Create virtual environment
-python -m venv venv
-
-# 4. Activate virtual environment
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # macOS/Linux
-
-# 5. Install dependencies
-pip install -r requirements.txt
-
-# 6. Create PostgreSQL database
-psql -U postgres
-CREATE DATABASE invai_db;
-\q
-
-# 7. Configure environment variables
-cp .env.example .env
-# Edit .env and update:
-# - DB_NAME=invai_db
-# - DB_USER=postgres
-# - DB_PASSWORD=your_postgresql_password
-# - DB_HOST=localhost
-# - DB_PORT=5432
-# - SECRET_KEY=your_secret_key_here
-# - GEMINI_API_KEY=your_api_key (optional, for AI features)
-
-# 8. Run migrations
-python manage.py migrate
-
-# 9. Create admin user
-python manage.py createsuperuser
-# Follow prompts to create username and password
-
-# 10. Populate with sample data (recommended)
-python manage.py populate_data
-python manage.py create_sample_notifications --count 15
-
-# 11. Start development server
-python manage.py runserver
+# 3. Start all services with Docker Compose
+docker-compose up --build
 ```
 
-✅ Backend should now be running at `http://localhost:8000`
-
-### 🎨 Frontend Setup
-
-**Open a new terminal** (keep backend running)
-
-```bash
-# 1. Navigate to frontend folder
-cd frontend
-
-# 2. Install dependencies
-npm install
-
-# 3. Start development server
-npm run dev
-```
-
-✅ Frontend should now be running at `http://localhost:8080`
+**That's it!** Wait for the containers to start (first time takes a few minutes).
 
 ### 🌐 Access the Application
 
-- **Frontend**: http://localhost:8080
+- **Frontend**: http://localhost
 - **Backend API**: http://localhost:8000/api/
 - **Admin Panel**: http://localhost:8000/admin
 
-### 👤 Default Login
+### 👤 Default Login Credentials
 
-Use the superuser credentials you created during setup.
+- **Username**: `admin`
+- **Password**: `admin123`
+
+### ✨ What Docker Does Automatically
+
+- ✅ Installs PostgreSQL database
+- ✅ Runs all migrations
+- ✅ Creates admin user
+- ✅ Populates sample data (products, orders, suppliers, notifications)
+- ✅ Configures all services and networking
 
 ### 📚 Additional Documentation
 
 - **[API Endpoints](API_ENDPOINTS.md)** - Complete API reference
-- **[AI Insights](AI_INSIGHTS.md)** - AI features setup and usage
+- **[AI Insights Guide](AI_INSIGHTS_GUIDE.md)** - AI features setup and usage
 - **[Notifications](NOTIFICATIONS.md)** - Notification system guide
+
+## 🐳 Docker Commands
+
+```bash
+# Start services
+docker-compose up
+
+# Start in background
+docker-compose up -d
+
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f
+
+# Reset database (fresh start)
+docker-compose down -v && docker-compose up --build
+```
+
+### Troubleshooting
+
+- **Port conflicts**: Edit `docker-compose.yml` to change port mappings
+- **Database issues**: Run `docker-compose down -v && docker-compose up --build`
+- **View logs**: Run `docker-compose logs -f backend`
 
 ## 🔮 Future Enhancements
 
@@ -156,10 +132,6 @@ Contributions are welcome! Feel free to:
 - 💡 Suggest improvements
 
 For major changes, please open an issue first.
-
-## 📄 License
-
-MIT License - feel free to use this project for learning and development.
 
 ---
 

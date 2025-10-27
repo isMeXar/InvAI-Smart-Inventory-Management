@@ -49,7 +49,7 @@ interface ApiResponse<T> {
   previous?: string;
 }
 
-const BASE_URL = 'http://localhost:8000/api/notifications';
+const BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/notifications`;
 
 class NotificationService {
   private getAuthToken(): string | null {

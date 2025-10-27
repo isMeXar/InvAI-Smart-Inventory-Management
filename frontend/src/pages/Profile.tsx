@@ -137,15 +137,16 @@ const Profile: React.FC = () => {
   }, [user]);
 
   const fetchData = async () => {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
     try {
       const [ordersRes, productsRes, statsRes] = await Promise.all([
-        fetch('http://localhost:8000/api/orders/', {
+        fetch(`${API_URL}/orders/`, {
           credentials: 'include'
         }),
-        fetch('http://localhost:8000/api/products/', {
+        fetch(`${API_URL}/products/`, {
           credentials: 'include'
         }),
-        fetch('http://localhost:8000/api/auth/users/stats/', {
+        fetch(`${API_URL}/auth/users/stats/`, {
           credentials: 'include'
         })
       ]);
@@ -182,9 +183,10 @@ const Profile: React.FC = () => {
   };
 
   const handleSaveProfile = async () => {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
     setSaving(true);
     try {
-      const response = await fetch('http://localhost:8000/api/auth/users/update_profile/', {
+      const response = await fetch(`${API_URL}/auth/users/update_profile/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
