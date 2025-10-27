@@ -132,7 +132,3 @@ Contributions are welcome! Feel free to:
 - 💡 Suggest improvements
 
 For major changes, please open an issue first.
-
----
-
-**Made with ❤️ using React, Django, and AI**
